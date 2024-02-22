@@ -1,5 +1,7 @@
 #include "shaderproc.h"
 
+#include <cstring>
+
 void exportShaderDefinition(const fs::path& outputDir,
     const fs::path& shaderPath,
     const std::string& shaderName,

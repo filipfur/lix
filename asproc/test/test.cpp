@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstring>
 
 #include "gen/shaders/object_color_vert.h"
 #include "gen/objects/cube.h"

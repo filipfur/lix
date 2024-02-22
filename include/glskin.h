@@ -1,5 +1,8 @@
 #pragma once
 
+#include <memory>
+#include <vector>
+#include <map>
 #include "glskinanimation.h"
 
 namespace lix

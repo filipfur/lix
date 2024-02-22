@@ -1,5 +1,7 @@
 #include "polygon.h"
 
+#include <algorithm>
+
 namespace
 {
 inline glm::vec3 centerOfPolygon(const std::vector<glm::vec3>& points)

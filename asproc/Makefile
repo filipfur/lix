@@ -17,7 +17,7 @@ clean:
 
 bin/asproc: src/asproc.cpp src/common.cpp src/shaderproc.cpp src/imageproc.cpp src/objectproc.cpp src/fontproc.cpp ../json/json.cpp
 	mkdir -p bin
-	clang++ $(WFLAGS) -std=c++17 -g -Iinclude -I../../glm/glm -I../gltf -I../json -I../ttf $^ -o $@
+	clang++ $(WFLAGS) -std=c++17 -g -Iinclude -I../glm/glm -I../gltf -I../json -I../ttf $^ -o $@
 	./$@ --version-override "300 es" -s test/shaders test/gen/shaders
 	./$@ -o test/objects test/gen/objects
 	./$@ -i test/images test/gen/images
@@ -25,5 +25,5 @@ bin/asproc: src/asproc.cpp src/common.cpp src/shaderproc.cpp src/imageproc.cpp s
 
 test/bin/test: test/test.cpp ${GEN_SOURCES}
 	mkdir -p test/bin
-	g++ -std=c++17 -Iinclude -I../../glm/glm -I../gltf -I../ttf -Itest $^ -o $@
+	g++ -std=c++17 -Iinclude -I../glm/glm -I../gltf -I../ttf -Itest $^ -o $@
 	./$@

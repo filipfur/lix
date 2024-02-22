@@ -1,6 +1,7 @@
 #include "glvertexarraybuffer.h"
 
 #include <cassert>
+#include <algorithm>
 
 lix::VertexArrayBuffer::VertexArrayBuffer(GLenum usage,
             const lix::Attributes& attributes,

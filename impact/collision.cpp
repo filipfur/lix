@@ -1,5 +1,6 @@
 #include "collision.h"
 
+#include <algorithm>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -303,7 +304,7 @@ bool impact::epa(Shape& shapeA, Shape& shapeB, std::vector<glm::vec3>& simplex,
 
         float f = glm::dot(p, e.normal);
 
-        if(abs(f - e.distance) < 0.00001f)
+        if(glm::abs(f - e.distance) < 0.00001f)
         {
             collisionVector = e.normal;
             penetration = f;

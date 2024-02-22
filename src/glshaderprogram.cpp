@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <iostream>
+#include <iterator>
 
 lix::Shader::Shader(GLenum type)
 {

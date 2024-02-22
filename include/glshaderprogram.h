@@ -8,6 +8,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "gtc/type_ptr.hpp"
 #include "glelement.h"

@@ -1,5 +1,6 @@
 #include "common.h"
 
+#include <algorithm>
 #include <sstream>
 
 long common::fileSize(const fs::path& filepath)

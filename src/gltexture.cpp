@@ -1,5 +1,7 @@
 #include "gltexture.h"
 
+#include <stdexcept>
+
 #include "glerror.h"
 
 lix::Texture::Texture(unsigned char* bytes, unsigned int width, unsigned int height, GLenum type,

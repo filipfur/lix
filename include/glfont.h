@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include "gltexture.h"
 
 #include "ttf.h"

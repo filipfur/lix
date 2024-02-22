@@ -1,5 +1,7 @@
 #include "glskinanimation.h"
 
+#include <stdexcept>
+
 #include "glnode.h"
 
 void lix::SkinAnimation::setTime(float time)

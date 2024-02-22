@@ -377,7 +377,7 @@ void loadTextures(const json::Json& obj,
                     if (f <= 0.04045f) {
                         f = f / 12.92f;
                     } else {
-                        f = pow((f + 0.055f) / 1.055f, 2.4f);
+                        f = glm::pow((f + 0.055f) / 1.055f, 2.4f);
                     }
                     data[i] = static_cast<unsigned char>(f * 255.0f);
                 }

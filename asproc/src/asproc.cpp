@@ -1,5 +1,6 @@
 #define LOG(stream) std::cout << stream << std::endl;
 
+#include <cstring>
 #include "shaderproc.h"
 #include "imageproc.h"
 #include "objectproc.h"
