@@ -1,0 +1,37 @@
+#pragma once
+
+#include "glm.hpp"
+
+namespace lix
+{
+    class Color
+    {
+    public:
+        Color(float r, float g, float b);
+        Color(float r, float g, float b, float a);
+        Color(const Color& color);
+        Color(Color&& color);
+        Color(const glm::vec3& rgb);
+        Color(const glm::vec4& rgba);
+
+        Color& operator=(const Color& color);
+        Color& operator=(Color&& color);
+
+        operator glm::vec4() const;
+
+        const glm::vec4& vec4() const;
+
+        static const Color white;
+        static const Color red;
+        static const Color green;
+        static const Color blue;
+        static const Color yellow;
+        static const Color magenta;
+        static const Color cyan;
+        static const Color black;
+
+    private:
+        glm::vec4 _rgba{1.0f, 1.0f, 1.0f, 1.0f};
+    };
+    
+}

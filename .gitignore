@@ -1,0 +1,9 @@
+*.o
+bin
+gen
+coverage
+deploy
+*.gcov
+*.gcno
+*.gcda
+.DS_Store
