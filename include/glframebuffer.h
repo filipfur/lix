@@ -48,11 +48,13 @@ namespace lix
 
         std::shared_ptr<lix::RenderBuffer> renderBuffer(size_t i=0) const;
 
-        void blit(std::shared_ptr<lix::FrameBuffer> frameBuffer, GLuint fromComponment, GLuint toComponment,
-    GLbitfield mask=GL_COLOR_BUFFER_BIT, GLenum filter=GL_NEAREST);
+        void blit(std::shared_ptr<lix::FrameBuffer> frameBuffer,
+            GLuint fromComponent, GLuint toComponent,
+            GLbitfield mask=GL_COLOR_BUFFER_BIT, GLenum filter=GL_NEAREST);
 
-        void blit(std::shared_ptr<lix::FrameBuffer> frameBuffer, const glm::ivec2& resolution, GLuint fromComponment, GLuint toComponment,
-    GLbitfield mask=GL_COLOR_BUFFER_BIT, GLenum filter=GL_NEAREST);
+        void blit(std::shared_ptr<lix::FrameBuffer> frameBuffer, const glm::ivec2& resolution,
+            GLuint fromComponent, GLuint toComponent,
+            GLbitfield mask=GL_COLOR_BUFFER_BIT, GLenum filter=GL_NEAREST);
 
         static const char* getFramebufferStatusString(GLenum status);
 

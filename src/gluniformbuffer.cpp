@@ -1,9 +1,12 @@
 #include "gluniformbuffer.h"
 
+#include <cassert>
+#include "glm.hpp"
 
 lix::UniformBuffer::UniformBuffer(GLuint size, void* data, const std::string& label, GLuint bindingPoint, GLuint usage)
     : Buffer{GL_UNIFORM_BUFFER, usage}, _size{size}, _data{data}, _label{label}, _bindingPoint{bindingPoint}
 {
+    assert(_size % static_cast<int>(sizeof(glm::vec4)) == 0);
     bufferData();
 }
 

@@ -32,10 +32,22 @@ $(foreach subdir,$(AS_OBJECTS),$(eval $(call create_rule,$(subdir))))
 gen_assets: $(AS_OBJECTS_CPP) $(AS_SHADERS_CPP) $(AS_IMAGES_CPP) $(AS_FONTS_CPP)
 
 .PHONY: gen
-gen:
+gen: gen_shaders gen_images gen_objects gen_fonts
+
+.PHONY: gen_shaders
+gen_shaders:
 	@$(ASPROC_HOME)/bin/asproc --version-override "$(GLSL_VERSION)" -s assets/shaders gen/shaders
+
+.PHONY: gen_images
+gen_images:
 	@$(ASPROC_HOME)/bin/asproc --flip-y -i assets/images gen/images
+
+.PHONY: gen_objects
+gen_objects:
 	@$(ASPROC_HOME)/bin/asproc --convert-to-srgb -o assets/objects gen/objects
+
+.PHONY: gen_fonts
+gen_fonts:
 	@$(ASPROC_HOME)/bin/asproc -f assets/fonts gen/fonts
 
 .PHONY: clean_gen

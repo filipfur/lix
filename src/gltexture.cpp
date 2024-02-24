@@ -30,7 +30,7 @@ std::shared_ptr<lix::Texture> lix::Texture::Basic(lix::Color color)
         static_cast<unsigned char>(255.0f * color.vec4().g),
         static_cast<unsigned char>(255.0f * color.vec4().b)
     };
-    return std::make_shared<lix::Texture>(data, 1, 1, GL_UNSIGNED_BYTE, GL_RGB, GL_RGB);
+    return std::make_shared<lix::Texture>(data, 1, 1, GL_UNSIGNED_BYTE, GL_RGB8, GL_RGB);
 }
 
 lix::Texture* lix::Texture::setUnpackAlignment(GLuint unpackAlignment)

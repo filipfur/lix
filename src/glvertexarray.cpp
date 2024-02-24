@@ -136,7 +136,7 @@ void lix::VertexArray::draw() const
         switch(_mode)
         {
         case GL_TRIANGLES:
-            n = _vbos.at(0)->count() / _vbos.at(0)->components();
+            n = _vbos.at(0)->count() / _vbos.at(0)->components(); // TODO: Oversight
             glDrawArrays(_mode, 0, n);
             break;
         default:

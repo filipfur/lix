@@ -96,15 +96,13 @@ std::shared_ptr<lix::RenderBuffer> lix::FrameBuffer::renderBuffer(size_t i) cons
 }
 
 void lix::FrameBuffer::blit(std::shared_ptr<lix::FrameBuffer> toFrameBuffer,
-    GLuint fromComponment, GLuint toComponment,
-    GLbitfield mask, GLenum filter)
+    GLuint fromComponent, GLuint toComponent, GLbitfield mask, GLenum filter)
 {
-    blit(toFrameBuffer, _resolution, toComponment, fromComponment, mask, filter);
+    blit(toFrameBuffer, _resolution, fromComponent, toComponent, mask, filter);
 }
 
 void lix::FrameBuffer::blit(std::shared_ptr<lix::FrameBuffer> toFrameBuffer, const glm::ivec2& resolution,
-    GLuint fromComponment, GLuint toComponment,
-    GLbitfield mask, GLenum filter)
+    GLuint fromComponent, GLuint toComponent, GLbitfield mask, GLenum filter)
 {
     bindAsReadBuffer();
     if(toFrameBuffer)
@@ -115,8 +113,9 @@ void lix::FrameBuffer::blit(std::shared_ptr<lix::FrameBuffer> toFrameBuffer, con
     {
         glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 );
     }
-    glReadBuffer( fromComponment );
-    glDrawBuffer( toComponment );
+    glReadBuffer( fromComponent );
+    GLenum arr[] = { toComponent };
+    glDrawBuffers(1, arr);
     glBlitFramebuffer( 0, 0, resolution.x, resolution.y, 0, 0, resolution.x, resolution.y, mask, filter );
 }
 

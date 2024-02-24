@@ -74,10 +74,7 @@ namespace gltf
                     }
                 }
                 else {
-                    static unsigned char texData[] = {0xFF, 0xFF, 0xFF};
-                    static lix::TexturePtr basicTexture = std::make_shared<lix::Texture>(
-                        texData, 1, 1, GL_UNSIGNED_BYTE, GL_RGB, GL_RGB
-                    );
+                    static lix::TexturePtr basicTexture = lix::Texture::Basic();
                     material->setDiffuseMap(basicTexture);
                 }
             }
@@ -103,8 +100,9 @@ namespace gltf
                     case gltf::Buffer::VEC4:
                     if(attrib->componentType == GL_UNSIGNED_BYTE)
                     {
-                        attr = lix::Attribute::UVEC4;
+                        attr = lix::Attribute::UVEC4; // TODO: Oversight
                         attr = lix::Attribute::VEC4;
+                        attrib->componentType = GL_FLOAT;
 
                         std::vector<GLfloat> floatVec; // TODO: Quickfix, problem with glVertexAttribIPointer ?
                         floatVec.reserve(attrib->data.size());

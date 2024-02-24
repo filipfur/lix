@@ -2,7 +2,6 @@
 
 lix::Buffer::Buffer(GLenum target, GLenum usage) : _target{target}, _usage{usage}
 {
-    _id = 1;
     glGenBuffers(1, &_id);
 }
  

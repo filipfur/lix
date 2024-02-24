@@ -73,6 +73,10 @@
 #define SCREEN_WIDTH MID_RES_X
 #define SCREEN_HEIGHT MID_RES_Y
 
+#define LOGONCE(msg) do { static bool _logOnceFlag = true; if (_logOnceFlag) { std::cout << (msg) << std::endl; _logOnceFlag = false; } } while(0)
+
+#define RUNONCE(actions) do { static bool _runOnceFlag = true; if (_runOnceFlag) { actions; _runOnceFlag = false; } } while(0)
+
 const float aspectRatio = static_cast<float>(SCREEN_WIDTH) / static_cast<float>(SCREEN_HEIGHT);
 
 void unitTest()
@@ -151,7 +155,6 @@ private:
     void renderBoneInstances();
     void renderSkinnedModels();
     void renderText();
-    void renderLines();
     void renderPolygons();
 
     glm::mat4 model{1.0f};
@@ -161,8 +164,6 @@ private:
     std::shared_ptr<lix::ShaderProgram> customBlurShader;
     std::shared_ptr<lix::ShaderProgram> testShader;
     std::shared_ptr<lix::ShaderProgram> screenShader;
-    std::shared_ptr<lix::ShaderProgram> lineShader;
-    std::shared_ptr<lix::VertexArray> lineVAO;
     lix::NodePtr mooseNode;
     std::shared_ptr<lix::SkinAnimation> mooseAnim;
     std::shared_ptr<lix::Node> monkeyStageNode;
@@ -172,7 +173,6 @@ private:
     lix::NodePtr spikesNode;
     lix::NodePtr donutNode;
     lix::MeshPtr bushMesh;
-    lix::MeshPtr cubeMesh;
     lix::MeshPtr boneMesh;
     lix::MeshPtr quadMesh;
     std::vector<ecs::Entity> _entities;
@@ -200,6 +200,7 @@ private:
         glm::mat4 projection{glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 200.0f)};
         glm::mat4 view{1.0f};
         glm::vec3 position{0.0f, 0.0f, 0.0f};
+        float padding;
     } cameraBlock;
 
     std::shared_ptr<lix::UniformBuffer> cameraUBO;
@@ -241,8 +242,6 @@ void App::init()
         assets::shaders::bloom_frag));
     screenShader->bind();
     screenShader->setUniform("u_bright", 1);
-    lineShader.reset(new lix::ShaderProgram(assets::shaders::line_vert,
-        assets::shaders::line_frag));
     customBlurShader.reset(new lix::ShaderProgram(assets::shaders::screen_vert,
         assets::shaders::blur_frag));
     customBlurShader->bind();
@@ -289,27 +288,28 @@ void App::init()
         actor->shape = poly.get();
         actor->velocity = glm::vec3{0.0f, -1.0f, 0.0f};
     }
-
-    mooseNode = gltf::loadNode(assets::objects::moose::Armature_node);
+    
     monkeyStageNode = gltf::loadNode(assets::objects::monkey_stage::Cube_node);
     monkeyStageNode->setTranslation(glm::vec3{20.0f, 0.0f, -40.0f});
     monkeyStageNode->setScale(glm::vec3(4.0f));
-    cubeMesh = gltf::loadMesh(assets::objects::cube::Cube_mesh);
     boneMesh = gltf::loadMesh(assets::objects::bone::Cube_mesh);
     donutNode = gltf::loadNode(assets::objects::donut::Torus_node);
     bushMesh = gltf::loadMesh(assets::objects::bush::Plane_003_mesh);
     planetsNode = gltf::loadNode(assets::objects::planets::Icosphere_001_node);
     planetsNode->setTranslation(glm::vec3{-20.0f, 20.0f, -4.0f});
     planetsNode->setScale(glm::vec3{2.0f});
+    spikesNode = gltf::loadNode(assets::objects::spikes::Cone_node);
+    spikesNode->setTranslation(glm::vec3{-14.0f, 0.0f, 10.0f});
+    
+    arialFont.reset(new lix::Font(assets::fonts::arial::create()));
+
+    mooseNode = gltf::loadNode(assets::objects::moose::Armature_node);
     animatedCubeNode = gltf::loadNode(assets::objects::animated_cube::Armature_node);
     animatedCubeNode->setTranslation(glm::vec3{4.0f, 0.0f, 6.0f});
     animatedCubeNode->setScale(glm::vec3{4.0f});
     gltf::loadSkin(animatedCubeNode.get(), assets::objects::animated_cube::Armature_skin);
     cubeAnim = gltf::loadAnimation(animatedCubeNode.get(), assets::objects::animated_cube::ArmatureAction_anim);
-    spikesNode = gltf::loadNode(assets::objects::spikes::Cone_node);
-    spikesNode->setTranslation(glm::vec3{-14.0f, 0.0f, 10.0f});
 
-    arialFont.reset(new lix::Font(assets::fonts::arial::create()));
 
     for(size_t i{0}; i < 100; ++i)
     {
@@ -341,8 +341,7 @@ void App::init()
         shaderProgram.get(),
         animShader.get(),
         instShader.get(),
-        testShader.get(),
-        lineShader.get()
+        testShader.get()
     });
 
     gltf::loadSkin(mooseNode.get(), assets::objects::moose::Armature_skin);
@@ -355,28 +354,30 @@ void App::init()
         assets::images::tex_rgba::width,
         assets::images::tex_rgba::height,
         GL_UNSIGNED_BYTE, GL_RGBA, GL_RGBA));
+
     texture->bind();
     texture->setWrap(GL_CLAMP_TO_EDGE);
+
     texture->generateMipmap();
     texture->setFilter(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR);
 
-    setOnKeyDown(SDLK_ESCAPE, [this](auto key, auto mod) {
+    setOnKeyDown(SDLK_ESCAPE, [this](auto, auto) {
         this->quit();
     });
 
-    setOnKeyUp(SDLK_ESCAPE, [this](auto key, auto mod) {
+    setOnKeyUp(SDLK_ESCAPE, [](auto, auto) {
 
     });
 
-    setOnMouseDown(SDL_BUTTON_LEFT, [this](auto key, auto mod) {
+    setOnMouseDown(SDL_BUTTON_LEFT, [](auto, auto) {
 
     });
 
-    setOnMouseUp(SDL_BUTTON_LEFT, [this](auto key, auto mod) {
+    setOnMouseUp(SDL_BUTTON_LEFT, [](auto, auto) {
 
     });
 
-    setOnMouseDrag(SDL_BUTTON_LEFT, [this](auto key, auto mod, auto dragState) {
+    setOnMouseDrag(SDL_BUTTON_LEFT, [this](auto /*key*/, auto mod, auto dragState) {
         static auto lastMP{normalizedMousePosition()};
         auto mp = normalizedMousePosition();
         auto mouseDelta{mp - lastMP};
@@ -403,19 +404,6 @@ void App::init()
                 break;
         }
     });
-
-    lineVAO.reset(new lix::VertexArray(GL_LINE_STRIP));
-    std::vector<GLfloat> floatVec{
-        0.5f, 0.5f, 0.0f,
-        1.0f, 1.0f, 0.0f
-    };
-    lineVAO->bind();
-    lineVAO->createVbo(GL_STATIC_DRAW, lix::Attributes{lix::VEC3},
-        floatVec.size() * sizeof(GLfloat),
-        sizeof(glm::vec3),
-        floatVec.data(),
-        0,
-        GL_UNSIGNED_BYTE);
 }
 
 void App::tick(float dt)
@@ -431,7 +419,6 @@ void App::tick(float dt)
         {3, 0.5f},
         {1000, 4.0f}
     }};
-
 
     static ecs::System<Component::Actor> collisionSystem;
     collisionSystem.update(_entities, [this](ecs::Entity& entityA, Actor& actorA){
@@ -477,7 +464,7 @@ void App::tick(float dt)
     worldTime.deltaTime = dt;
     Component::Time::set(worldTime);
     static ecs::System<const Component::Time, Component::Actor> actorSystem;
-    actorSystem.update(_entities, [](ecs::Entity& entity, const Time& time, Actor& actor) {
+    actorSystem.update(_entities, [](ecs::Entity& /*entity*/, const Time& time, Actor& actor) {
         if(actor.moveable)
         {
             actor.shape->applyTranslation(actor.velocity * time.deltaTime);
@@ -485,7 +472,7 @@ void App::tick(float dt)
     });
 
     texture->bind();
-    texture->setLodBias(static_cast<float>((static_cast<int>(time()) % 4)));
+    //texture->setLodBias(static_cast<float>((static_cast<int>(time()) % 4)));
 
     planetsNode->applyRotation(glm::angleAxis(dt * 0.16f, glm::vec3{0.0f, 1.0f, 0.0f})
         * glm::angleAxis(dt * -0.08f, glm::vec3{1.0f, 0.0f, 0.0f}));
@@ -586,7 +573,7 @@ void App::renderTest()
     assert(blueTex->width() == 1);
     assert(blueTex->height() == 1);
     assert(blueTex->type() == GL_UNSIGNED_BYTE);
-    assert(blueTex->internalFormat() == GL_RGB);
+    assert(blueTex->internalFormat() == GL_RGB8);
     assert(blueTex->colorFormat() == GL_RGB);
     static glm::mat4 triModel{glm::translate(glm::scale(glm::mat4{1.0f}, glm::vec3{8.0f}), glm::vec3{0.0f, 0.0f, -2.0f})};
     lix::renderMesh(*testShader, triangle, triModel);
@@ -704,14 +691,6 @@ void App::renderText()
     wavyTextRendering.render();
 }
 
-void App::renderLines()
-{
-    lineShader->bind();
-    lineShader->setUniform("u_model", glm::mat4{1.0f});
-    lineVAO->bind();
-    lineVAO->draw();
-}
-
 void App::renderPolygons()
 {
     static std::shared_ptr<lix::Material> polygonMat = lix::Material::Basic({0.5f, 0.5f, 1.0f});
@@ -744,7 +723,6 @@ void App::draw()
     renderSkinnedModels();
     glClear(GL_DEPTH_BUFFER_BIT);
     renderBoneInstances();
-    renderLines();
     postFBO->unbind();
     static lix::BlurPass customBlurPass{glm::ivec2{SCREEN_WIDTH, SCREEN_HEIGHT},
         customBlurShader};
@@ -757,6 +735,7 @@ void App::draw()
     float fp[4];
     postFBO->readPixel(32, 32, GL_RGBA, GL_FLOAT, fp);
     glm::vec4 v = postFBO->readPixel(32, 32);
+    assert(v.x >= 0);
     postFBO->unbind();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -768,22 +747,22 @@ void App::draw()
     renderText();
 }
 
-void App::onKeyDown(lix::KeySym key, lix::KeyMod mod)
+void App::onKeyDown(lix::KeySym /*key*/, lix::KeyMod /*mod*/)
 {
 
 }
 
-void App::onKeyUp(lix::KeySym key, lix::KeyMod mod)
-{
-    
-}
-
-void App::onMouseDown(lix::KeySym key, lix::KeyMod mod)
+void App::onKeyUp(lix::KeySym /*key*/, lix::KeyMod /*mod*/)
 {
     
 }
 
-void App::onMouseUp(lix::KeySym key, lix::KeyMod mod)
+void App::onMouseDown(lix::KeySym /*key*/, lix::KeyMod /*mod*/)
+{
+    
+}
+
+void App::onMouseUp(lix::KeySym /*key*/, lix::KeyMod /*mod*/)
 {
     
 }

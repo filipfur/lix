@@ -2,6 +2,7 @@
 
 #if __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
+#include <emscripten/trace.h>
 #endif
 
 #define GLEW_STATIC

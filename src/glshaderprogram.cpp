@@ -60,6 +60,7 @@ bool lix::ShaderProgram::checkStatus()
         std::cerr << "ERROR::During link of ShaderProgram\n" << infoLog
             << "\n ******************************** " << std::endl;
     }
+    delete[] infoLog;
     return result;
 }
  
