@@ -30,6 +30,7 @@ $(foreach subdir,$(AS_OBJECTS),$(eval $(call create_rule,$(subdir))))
 
 .PHONY: gen_assets
 gen_assets: $(AS_OBJECTS_CPP) $(AS_SHADERS_CPP) $(AS_IMAGES_CPP) $(AS_FONTS_CPP)
+	$(info "GENERATED SOURCES!")
 
 .PHONY: gen
 gen: gen_shaders gen_images gen_objects gen_fonts

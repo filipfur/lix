@@ -2,7 +2,7 @@
 
 #include <memory>
 #include <vector>
-#include "glm.hpp"
+#include "glm/glm.hpp"
 #include "glvertexarray.h"
 #include "gltrs.h"
 #include "glshaderprogram.h"

@@ -4,7 +4,7 @@
 #include <unordered_set>
 #include <algorithm>
 
-#include "gtc/quaternion.hpp"
+#include "glm/gtc/quaternion.hpp"
 #include "gltftypes.h"
 #include "json.h"
 #include "imageproc.h"

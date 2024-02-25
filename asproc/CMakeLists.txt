@@ -5,13 +5,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(asproc)
 
-include_directories(
-    include
-    ../json
-    ../gltf
-    ../ttf
-)
-
 file(GLOB SOURCES
     src/asproc.cpp
     src/common.cpp
@@ -19,10 +12,20 @@ file(GLOB SOURCES
     src/objectproc.cpp
     src/fontproc.cpp
     src/shaderproc.cpp
-    ../json/json.cpp
 )
 
 add_executable(asproc ${SOURCES})
+
+target_link_libraries(asproc json)
+
+target_include_directories(asproc PRIVATE
+    include
+    ${CMAKE_SOURCE_DIR}/glm
+)
+
+target_include_directories(asproc PUBLIC
+    public
+)
 
 set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_SOURCE_DIR})
 

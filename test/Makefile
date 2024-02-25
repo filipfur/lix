@@ -1,6 +1,8 @@
-LIX_SOURCES=$(wildcard src/*.cpp impact/*.cpp ecs/*.cpp)
+LIX_ENGINE=../engine
+ASPROC_HOME=../asproc
+LIX_SOURCES=$(wildcard $(LIX_ENGINE)/*/*.cpp)
 LIX_OBJECTS=$(LIX_SOURCES:.cpp=.o)
-LIX_INCLUDE=-Iinclude -I. -Iglm/glm -Ijson -Igltf -Ittf -Iimpact -Iecs -I$(GLEW_HOME)/include -I$(SDL2_HOME)/include
+LIX_INCLUDE=-I. -I../glm -I../json -I$(ASPROC_HOME)/public -I$(LIX_ENGINE)/core -I$(LIX_ENGINE)/render -I$(LIX_ENGINE)/format -I$(LIX_ENGINE)/impact -I$(LIX_ENGINE)/ecs
 LIX_EXT_LIBS=-L$(GLEW_HOME)/lib -lglew -L$(SDL2_HOME)/lib -lsdl2 -framework OpenGL
 
 TEST_GEN_SOURCES=$(wildcard gen/fonts/*.cpp gen/images/*.cpp gen/objects/*.cpp gen/shaders/*.cpp)
@@ -38,7 +40,7 @@ wasm:
 	emcc --std=c++17 -Wall -Wextra -O3 --memoryprofiler \
 		-s FULL_ES3=1 -s USE_WEBGL2=1 -s MIN_WEBGL_VERSION=2 -s USE_SDL=2 \
 		$(LIX_INCLUDE) \
-		test/test_all.cpp $(TEST_GEN_SOURCES) $(LIX_SOURCES) \
+		test_all/test.cpp $(TEST_GEN_SOURCES) $(LIX_SOURCES) \
 		-o $(DEPLOY)/wasm/app.html
 	cd $(DEPLOY) && node ../server.js
 
@@ -59,14 +61,14 @@ coverage:
 
 %.o: %.cpp
 	@clang++ -c -std=c++17 -O0 -g $(WFLAGS) $(EXTRAS) \
-		$(LIX_INCLUDE) \
+		$(LIX_INCLUDE) -I$(GLEW_HOME)/include -I$(SDL2_HOME)/include \
 		$< \
 		-o $@
 
-$(DEPLOY)/%: test/%.cpp $(LIX_OBJECTS) $(TEST_GEN_OBJECTS)
+$(DEPLOY)/%: %/test.cpp $(LIX_OBJECTS) $(TEST_GEN_OBJECTS)
 	mkdir -p $(DEPLOY)
 	clang++ -std=c++17 $(EXTRAS) $^ -o $@ \
-		$(LIX_INCLUDE) \
+		$(LIX_INCLUDE) -I$(GLEW_HOME)/include -I$(SDL2_HOME)/include \
 		$(LIX_EXT_LIBS)
 
 $(LIX_LIB): $(LIX_OBJECTS)
@@ -88,4 +90,4 @@ clean:
 	rm -f *.gcov *.gcda *.gcno
 	rm -f src/*.gcov src/*.gcda src/*.gcno gen/*/*.gcov gen/*/*.gcda gen/*/*.gcno
 
-include asproc/gen_assets.mk
+include $(ASPROC_HOME)/gen_assets.mk

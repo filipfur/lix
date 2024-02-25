@@ -4,7 +4,7 @@
 #include <fstream>
 #include <random>
 
-#include "glm.hpp"
+#include "glm/glm.hpp"
 
 #include "glshaderprogram.h"
 #include "glvertexarray.h"

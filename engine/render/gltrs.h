@@ -1,7 +1,7 @@
 #pragma once
 
-#include "glm.hpp"
-#include "gtc/quaternion.hpp"
+#include "glm/glm.hpp"
+#include "glm/gtc/quaternion.hpp"
 
 namespace lix
 {

@@ -1,7 +1,7 @@
 #include "glframebuffer.h"
 #include <iostream>
 #include <vector>
-#include "gtc/type_ptr.hpp"
+#include "glm/gtc/type_ptr.hpp"
 
 #include "gltexture.h"
 

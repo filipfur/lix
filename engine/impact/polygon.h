@@ -4,7 +4,7 @@
 #include <memory>
 
 #include "shape.h"
-#include "glm.hpp"
+#include "glm/glm.hpp"
 
 namespace impact
 {

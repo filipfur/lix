@@ -1,6 +1,7 @@
 *.o
 bin
 gen
+build
 coverage
 deploy
 *.gcov
