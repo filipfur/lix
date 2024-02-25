@@ -19,8 +19,8 @@ if(NOT DEFINED ASPROC_HOME)
   message(FATAL_ERROR "ASPROC_HOME is not set.")
 endif()
 
-if(NOT DEFINED GLM_INCLUDE)
-  message(FATAL_ERROR "GLM_INCLUDE is not set.")
+if(NOT DEFINED GLM_HOME)
+  message(FATAL_ERROR "GLM_HOME is not set.")
 endif()
 
 project(${LIX_ENGINE} VERSION 1.0.0 DESCRIPTION "Lightweight C++/OpenGL game engine.")
@@ -36,7 +36,7 @@ target_include_directories(${LIX_ENGINE} PUBLIC
   ecs
   format
   impact
-  ${GLM_INCLUDE}
+  ${GLM_HOME}
   ${ASPROC_HOME}/public
 )
 link_directories(
