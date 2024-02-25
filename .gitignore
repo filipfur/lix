@@ -8,3 +8,4 @@ deploy
 *.gcno
 *.gcda
 .DS_Store
+.vscode

@@ -50,13 +50,15 @@ lib_static: $(LIX_LIB)
 .PHONY: lib_wasm
 lib_wasm: $(LIX_LIB_WASM)
 
+
+#@lcov --ignore-errors inconsistent,inconsistent --remove $(COVDIR)/coverage-initial.info "gen/*" --output-file $(COVDIR)/coverage.info
+
 .PHONY: coverage
 coverage:
 	$(MAKE) $(TARGET_TEST_ALL) EXTRAS=$(COVFLAGS)
 	./$(TARGET_TEST_ALL)
 	@mkdir -p $(COVDIR)/html
-	@lcov --ignore-errors inconsistent,inconsistent --capture --directory . --rc branch_coverage=1 --no-external --output-file $(COVDIR)/coverage-initial.info
-	@lcov --ignore-errors inconsistent,inconsistent --remove $(COVDIR)/coverage-initial.info "glm/*" "gen/*" --output-file $(COVDIR)/coverage.info
+	@lcov --ignore-errors inconsistent,inconsistent --capture --directory . --directory $(LIX_ENGINE)/core --directory $(LIX_ENGINE)/render --directory $(LIX_ENGINE)/impact --directory $(LIX_ENGINE)/format --rc branch_coverage=1 --no-external --output-file $(COVDIR)/coverage.info
 	@genhtml --ignore-errors inconsistent,inconsistent -o $(COVDIR)/html $(COVDIR)/coverage.info --ignore-errors inconsistent
 
 %.o: %.cpp
@@ -88,6 +90,7 @@ clean:
 	rm -rf $(DEPLOY)
 	rm -rf $(COVDIR)
 	rm -f *.gcov *.gcda *.gcno
-	rm -f src/*.gcov src/*.gcda src/*.gcno gen/*/*.gcov gen/*/*.gcda gen/*/*.gcno
+	rm -f $(LIX_ENGINE)/*/*.gcov $(LIX_ENGINE)/*/*.gcda $(LIX_ENGINE)/*/*.gcno \
+		gen/*/*.gcov gen/*/*.gcda gen/*/*.gcno
 
 include $(ASPROC_HOME)/gen_assets.mk
