@@ -24,7 +24,7 @@ gen/images/%_png.cpp : assets/images/%.png
 	@$(ASPROC_HOME)/bin/asproc --flip-y -i $^ gen/images
 
 gen/fonts/%.cpp : assets/fonts/%.json
-	@$(ASPROC_HOME)/bin/asproc --flip-y -f $^ gen/fonts
+	@$(ASPROC_HOME)/bin/asproc -f $^ gen/fonts
 
 $(foreach subdir,$(AS_OBJECTS),$(eval $(call create_rule,$(subdir))))
 

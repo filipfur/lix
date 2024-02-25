@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.9)
 
-set(LIX_ENGINE engine)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(LIX_ENGINE engine)
 
 if(NOT DEFINED ENV{GLEW_HOME})
   message(FATAL_ERROR "GLEW_HOME is not set.")
@@ -13,6 +13,14 @@ if(NOT DEFINED ENV{SDL2_HOME})
   message(FATAL_ERROR "SDL2_HOME is not set.")
 else()
   set(SDL2_HOME $ENV{SDL2_HOME})
+endif()
+
+if(NOT DEFINED ASPROC_HOME)
+  message(FATAL_ERROR "ASPROC_HOME is not set.")
+endif()
+
+if(NOT DEFINED GLM_INCLUDE)
+  message(FATAL_ERROR "GLM_INCLUDE is not set.")
 endif()
 
 project(${LIX_ENGINE} VERSION 1.0.0 DESCRIPTION "Lightweight C++/OpenGL game engine.")
@@ -28,8 +36,8 @@ target_include_directories(${LIX_ENGINE} PUBLIC
   ecs
   format
   impact
-  ${CMAKE_SOURCE_DIR}/glm
-  ${CMAKE_SOURCE_DIR}/asproc/public
+  ${GLM_INCLUDE}
+  ${ASPROC_HOME}/public
 )
 link_directories(
     ${GLEW_HOME}/lib
