@@ -9,13 +9,13 @@ namespace
     uniform mat4 u_view;
     uniform mat4 u_model;
 
-    out vec2 texCoord;
+    out vec2 texCoords;
     out vec2 position;
 
     void main()
     {
         position = vec2(aVertex.x, -aVertex.y);
-        texCoord = aVertex.zw;
+        texCoords = aVertex.zw;
         vec3 p0 = vec3(u_model * vec4(position, 0.0, 1.0));
         gl_Position = u_projection * u_view * vec4(p0, 1.0);
     }
@@ -29,12 +29,12 @@ namespace
     uniform vec4 u_color;
     uniform sampler2D u_texture;
 
-    in vec2 texCoord;
+    in vec2 texCoords;
     in vec2 position;
 
     void main()
     {    
-        float sdfValue = texture(u_texture, texCoord).r;
+        float sdfValue = texture(u_texture, texCoords).r;
 
         float smoothing = 0.08;
         float border = smoothing / 2.0;

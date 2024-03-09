@@ -21,7 +21,7 @@ gen/shaders/%_vert.cpp : assets/shaders/%.vert
 	@$(ASPROC_HOME)/bin/asproc --version-override "" -s $^ gen/shaders
 
 gen/images/%_png.cpp : assets/images/%.png
-	@$(ASPROC_HOME)/bin/asproc --flip-y -i $^ gen/images
+	@$(ASPROC_HOME)/bin/asproc --flip-y --convert-to-srgb -i $^ gen/images
 
 gen/fonts/%.cpp : assets/fonts/%.json
 	@$(ASPROC_HOME)/bin/asproc -f $^ gen/fonts
@@ -41,7 +41,7 @@ gen_shaders:
 
 .PHONY: gen_images
 gen_images:
-	@$(ASPROC_HOME)/bin/asproc --flip-y -i assets/images gen/images
+	@$(ASPROC_HOME)/bin/asproc --flip-y --convert-to-srgb -i assets/images gen/images
 
 .PHONY: gen_objects
 gen_objects:

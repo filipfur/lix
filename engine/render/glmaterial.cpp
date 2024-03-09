@@ -1,6 +1,9 @@
 #include "glmaterial.h"
 
-lix::Material::Material(const lix::Color& baseColor, float metallic, float roughness) : _baseColor{baseColor}, _metallic{metallic}, _roughness{roughness} {}
+lix::Material::Material(const lix::Color& baseColor, float metallic, float roughness,
+    lix::TexturePtr normalMap, lix::TexturePtr diffuseMap, lix::TexturePtr armMap)
+    : _baseColor{baseColor}, _metallic{metallic}, _roughness{roughness},
+    _normalMap{normalMap}, _diffuseMap{diffuseMap}, _armMap{armMap} {}
 
 lix::Material::Material(const Material& other) : _baseColor{other._baseColor}, _metallic{other._metallic}, _roughness{other._roughness},
     _normalMap{other._normalMap}, _diffuseMap{other._diffuseMap}, _armMap{other._armMap}

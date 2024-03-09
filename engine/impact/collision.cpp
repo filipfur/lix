@@ -6,138 +6,13 @@
 #include <sstream>
 #include <fstream>
 
+#include "primer.h"
+
 const float EPSILON{0.00001f};
 
-float distanceFromLine(const glm::vec3& a, const glm::vec3& b, const glm::vec3& p)
+glm::vec3 minkowskiSupportPoint(impact::Shape& a, impact::Shape& b, const glm::vec3& D)
 {
-    // TODO: Optimize (not needing actual distance)
-    // TODO: Cache results since line isn't moving.
-    return glm::abs((b.x - a.x) * (a.y - p.y) - (a.x - p.x) * (b.y - a.y)) / glm::sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
-};
-
-float signDistanceFromLine(const glm::vec3& a, const glm::vec3& b, const glm::vec3& p)
-{
-    // TODO: Optimize (not needing actual distance)
-    // TODO: Cache results since line isn't moving.
-    return ((b.x - a.x) * (a.y - p.y) - (a.x - p.x) * (b.y - a.y)) / glm::sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
-};
-
-float magnitudeFromLine(const glm::vec3& a, const glm::vec3& b, const glm::vec3& p)
-{
-    return glm::abs((b.x - a.x) * (a.y - p.y) - (a.x - p.x) * (b.y - a.y));
-};
-
-float signFromLine(const glm::vec3& a, const glm::vec3& b, const glm::vec3& p)
-{
-    return (b.x - a.x) * (a.y - p.y) - (a.x - p.x) * (b.y - a.y);
-};
-
-float sign(const glm::vec3& a, const glm::vec3& b, const glm::vec3& c)
-{
-    return (a.x - c.x) * (b.y - c.y) - (b.x - c.x) * (a.y - c.y);
-}
-
-bool pointInTriangle(const glm::vec3& p, const glm::vec3& a, const glm::vec3& b, const glm::vec3& c)
-{
-    float d1;
-    float d2;
-    float d3;
-    d1 = sign(p, a, b);
-    d2 = sign(p, b, c);
-    d3 = sign(p, c, a);
-    bool hasNeg = (d1 < 0 || d2 < 0 || d3 < 0);
-    bool hasPos = (d1 > 0 || d2 > 0 || d3 > 0);
-    return !(hasNeg && hasPos);
-}
-
-void findHull(const std::vector<glm::vec3>& s, glm::vec3 p,
-    glm::vec3 q, std::vector<glm::vec3>& CH) {
-    if(s.empty())
-    {
-        return;
-    }
-    float maxDistance{0};
-    auto ret = s.end();
-    for(auto it=s.begin(); it != s.end(); ++it)
-    {
-        float d = distanceFromLine(p, q, *it);
-        if(d > maxDistance)
-        {
-            maxDistance = d;
-            ret = it;
-        }
-    }
-    CH.push_back(*ret);
-    std::vector<glm::vec3> s1;
-    std::vector<glm::vec3> s2;
-    for(const auto& x : s)
-    {
-        if(pointInTriangle(x, p, *ret, q))
-        {
-            //s0.insert(...);
-        }
-        else if(signFromLine(*ret, p, x) > 0)
-        {
-            s1.push_back(x);
-        }
-        else if(signFromLine(q, *ret, x) > 0)
-        {
-            s2.push_back(x);
-        }
-    }
-    findHull(s1, *ret, p, CH);
-    findHull(s2, q, *ret, CH);
-}
-
-void impact::quickHull(const std::vector<glm::vec3>& s, std::vector<glm::vec3>& ch)
-{
-    std::vector<glm::vec3> s1;
-    std::vector<glm::vec3> s2;
-
-    const glm::vec3& a = s.front();
-    const glm::vec3& b = s.back();
-    ch.push_back(a);
-
-    for(size_t i{1}; i < s.size() - 1; ++i)
-    {
-        const glm::vec3& p = s.at(i);
-        float d = signFromLine(a, b, p);
-        if(d < 0)
-        {
-            s1.push_back(p);
-        }
-        else if(d > 0)
-        {
-            s2.push_back(p);
-        }
-        else
-        {
-            ;
-        }
-    }
-
-    findHull(s1, a, b, ch);
-    findHull(s2, b, a, ch);
-
-    ch.push_back(b);
-
-    glm::vec3 center{0.0f, 0.0f, 0.0f};
-    float ratio = 1.0f / static_cast<float>(ch.size());
-    for(const auto& p : ch)
-    {
-        center += p * ratio;
-    }
-
-    std::sort(ch.begin(), ch.end(), [&center](const glm::vec3& a, const glm::vec3& b) -> bool {
-        return atan2(a.y - center.y, a.x - center.x) < atan2(b.y - center.y, b.x - center.x);
-    });
-}
-
-glm::vec3 support(impact::Shape& a, impact::Shape& b, const glm::vec3& D, glm::vec3& spa, glm::vec3& spb)
-{
-    spa = a.supportPoint(D);
-    spb = b.supportPoint(-D);
-    glm::vec3 sp = spa - spb;
+    glm::vec3 sp = a.supportPoint(D) - b.supportPoint(-D);
     if(sp.x == 0)
     {
         sp.x = EPSILON;
@@ -163,21 +38,14 @@ bool isLine(const std::vector<glm::vec3>& s)
     return isNearby(A, B) || isNearby(B, C) || isNearby(C, A);
 }
 
-bool impact::gjk(Shape& a, Shape& b, std::vector<glm::vec3>& simplex,
+bool impact::gjk(Shape& shapeA, Shape& shapeB, std::vector<glm::vec3>& simplex,
     const glm::vec3& initialDirection)
 {    
-    glm::vec3 a1;
-    glm::vec3 b1;
-    glm::vec3 c1;
-    glm::vec3 a2;
-    glm::vec3 b2;
-    glm::vec3 c2;
-
-    glm::vec3 C = support(a, b, initialDirection, c1, c2);
+    glm::vec3 C = minkowskiSupportPoint(shapeA, shapeB, initialDirection);
 
     glm::vec3 D = -C; // CO
 
-    glm::vec3 B = support(a, b, D, b1, b2); // D=C0
+    glm::vec3 B = minkowskiSupportPoint(shapeA, shapeB, D); // D=C0
 
     glm::vec3 BO = -B;
     glm::vec3 BC = C - B;
@@ -191,7 +59,7 @@ bool impact::gjk(Shape& a, Shape& b, std::vector<glm::vec3>& simplex,
 
     D = glm::cross(glm::cross(BC, BO), BC);
 
-    glm::vec3 A = support(a, b, D, a1, a2);
+    glm::vec3 A = minkowskiSupportPoint(shapeA, shapeB, D);
     bool rval{false};
 
     for(size_t i{0}; i < 64; ++i)
@@ -207,10 +75,8 @@ bool impact::gjk(Shape& a, Shape& b, std::vector<glm::vec3>& simplex,
 
         if(glm::dot(ABperp, AO) > 0) {
             //std::cout << "line is outside AB" << std::endl;
-            C = support(a, b, ABperp, c1, c2);
+            C = minkowskiSupportPoint(shapeA, shapeB, ABperp);
             std::swap(B, C);
-            std::swap(b1, c1);
-            std::swap(b2, c2);
             if(glm::dot(B - A, AO) < 0) // Really?
             {
                 //std::cout << "AB perp not pass the origin." << std::endl;
@@ -219,10 +85,8 @@ bool impact::gjk(Shape& a, Shape& b, std::vector<glm::vec3>& simplex,
         }
         else if(glm::dot(ACperp, AO) > 0) {
             //std::cout << "line is outside AC" << std::endl;
-            B = support(a, b, ACperp, b1, b2);
+            B = minkowskiSupportPoint(shapeA, shapeB, ACperp);
             std::swap(B, C);
-            std::swap(b1, c1);
-            std::swap(b2, c2);
             if(glm::dot(C - A, AO) < 0) // Really?
             {
                 //std::cout << "AC perp not pass the origin." << std::endl;
@@ -230,7 +94,7 @@ bool impact::gjk(Shape& a, Shape& b, std::vector<glm::vec3>& simplex,
             }
         }
         else {
-            if(pointInTriangle(glm::vec3{0.0f, 0.0f, 0.0f}, A, B, C))
+            if(impact::pointInTriangle(glm::vec3{0.0f, 0.0f, 0.0f}, A, B, C))
             {
                 simplex.insert(simplex.end(), {A, B, C});
                 rval = true;
@@ -299,8 +163,7 @@ bool impact::epa(Shape& shapeA, Shape& shapeB, std::vector<glm::vec3>& simplex,
         {
             e.normal = -simplex.at(0);
         }
-        glm::vec3 a, b;
-        glm::vec3 p = support(shapeA, shapeB, e.normal, a, b);
+        glm::vec3 p = minkowskiSupportPoint(shapeA, shapeB, e.normal);
 
         float f = glm::dot(p, e.normal);
 

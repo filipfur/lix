@@ -2,17 +2,35 @@
 
 lix::Application* context{nullptr};
 
-void loop()
+void lix::Application::loop()
 {
     static GLuint previousTicks{0};
     GLuint ticks = SDL_GetTicks();
     GLuint deltaTicks = ticks - previousTicks;
     previousTicks = ticks;
 
-    float dt = deltaTicks * 1e-3f;
-    context->setTime(context->time() + dt);
-    context->tick(dt);
+    static float lastTime{0.0f};
+    static float currentTime{0.0f};
+    static size_t frames{0};
+
+    static float debt{0.0f};
+    debt += deltaTicks * 1e-3f;
+    while(debt >= context->_timeStep)
+    {
+        context->tick(context->_timeStep);
+        debt -= context->_timeStep;
+        currentTime = context->time() + context->_timeStep;
+        context->_time = currentTime;
+    }
     context->draw();
+    ++frames;
+
+    if(currentTime - lastTime >= 0.1f)
+    {
+        lastTime = glm::trunc(currentTime * 10.0f) * 0.1f;
+        context->_fps = frames * 10.0f;
+        frames = 0;
+    }
 
     SDL_GL_SwapWindow(context->window());
 }
@@ -43,8 +61,6 @@ lix::Application::Application(int windowX, int windowY, const char* title)
 SDL_Window* lix::Application::window() const { return _window; }
 
 float lix::Application::time() const { return _time; }
-
-void lix::Application::setTime(float time) { _time = time; }
 
 void lix::Application::setOnKeyDown(KeySym key, const KeyCallback& keyCallback)
 {
@@ -96,6 +112,17 @@ glm::vec2 lix::Application::normalizedMousePosition() const
     return _mousePosition / _windowSize;
 }
 
+float lix::Application::fps() const
+{
+    return _fps;
+}
+
+void lix::Application::setTickFrequency(float tickFrequency)
+{
+    _tickFrequency = tickFrequency;
+    _timeStep = 1.0f / tickFrequency;
+}
+
 void lix::Application::handleCallback(lix::Application::KeyAction keyAction,
     lix::KeySym key, lix::KeyMod mod) const
 {
@@ -115,6 +142,10 @@ lix::Application::DragHandler* lix::Application::getDragHandler(KeySym key)
     }
     return nullptr;
 }
+
+// TO BE CONTINUED
+// https://github.com/emscripten-core/emscripten/blob/main/test/test_html5_core.c
+// https://gist.github.com/nus/564e9e57e4c107faa1a45b8332c265b9
 
 void lix::Application::run(bool forever)
 {

@@ -5,8 +5,6 @@
 
 namespace impact
 {
-    void quickHull(const std::vector<glm::vec3>& s, std::vector<glm::vec3>& ch);
-
     bool gjk(Shape& a, Shape& b, std::vector<glm::vec3>& simplex,
         const glm::vec3& initialDirection);
 

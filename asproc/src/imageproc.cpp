@@ -6,6 +6,8 @@
 #include "stb_image.h"
 #pragma clang diagnostic pop
 
+#include "glm/glm.hpp"
+
 unsigned char* imageproc::loadImage(const fs::path& imageFile, bool flipY, int& width, int& height, int& channels)
 {
     stbi_set_flip_vertically_on_load(flipY);
@@ -60,7 +62,8 @@ void exportImageDefinition(const fs::path& outputDir,
     const fs::path& imagePath,
     const std::string& imageName,
     std::string& suffixedName,
-    bool flipOnLoad)
+    bool flipOnLoad,
+    bool convertToSrgb)
 {
     int width;
     int height;
@@ -68,6 +71,23 @@ void exportImageDefinition(const fs::path& outputDir,
     unsigned char* data = imageproc::loadImage(imagePath, flipOnLoad, width, height, channels);
     /*common::log("Read: fileName=" + fileName + ", " + std::to_string(width)
         + "x" + std::to_string(height) + ", channels=" + std::to_string(channels));*/
+
+    int byteSize{width * height * channels};
+
+    if(convertToSrgb)
+    {
+        for(int i{0}; i < byteSize; ++i)
+        {
+            float f = static_cast<float>(data[i]) / 255.0f;
+            if (f <= 0.04045f) {
+                f = f / 12.92f;
+            } else {
+                f = glm::pow((f + 0.055f) / 1.055f, 2.4f);
+            }
+            data[i] = static_cast<unsigned char>(f * 255.0f);
+        }
+        std::cout << "Converted to SRGB: " << imageName << std::endl;
+    }
 
     suffixedName = channelSuffix(imageName, channels);
     const auto imageCpp = imageName + ".cpp";
@@ -105,26 +125,26 @@ void exportImageDefinition(const fs::path& outputDir,
     imageproc::freeImage(data);
 }
 
-void exportImage(const fs::path& outputDir, const fs::path& imagePath, bool flipOnLoad)
+void exportImage(const fs::path& outputDir, const fs::path& imagePath, bool flipOnLoad, bool convertToSrgb)
 {
     const std::string fileName = imagePath.filename().string();
-    const std::string imageName = common::variableName(fileName.substr(0, fileName.rfind('.')));
+    const std::string imageName = common::variableName(fileName/*fileName.substr(0, fileName.rfind('.'))*/);
     std::string suffixedName;
-    exportImageDefinition(outputDir, imagePath, imageName, suffixedName, flipOnLoad);
+    exportImageDefinition(outputDir, imagePath, imageName, suffixedName, flipOnLoad, convertToSrgb);
     exportImageDeclaration(outputDir, imageName, suffixedName);
 }
 
-void imageproc::procImage(fs::path imageDir, fs::path outputDir, bool flipOnLoad)
+void imageproc::procImage(fs::path imageDir, fs::path outputDir, bool flipOnLoad, bool convertToSrgb)
 {
     if(fs::is_directory(imageDir))
     {
         for (const auto& entry : fs::directory_iterator(imageDir))
         {
-            exportImage(outputDir, entry.path(), flipOnLoad);
+            exportImage(outputDir, entry.path(), flipOnLoad, convertToSrgb);
         }
     }
     else if(fs::is_regular_file(imageDir))
     {
-        exportImage(outputDir, imageDir, flipOnLoad);
+        exportImage(outputDir, imageDir, flipOnLoad, convertToSrgb);
     }
 }

@@ -30,7 +30,6 @@ namespace lix
 
         SDL_Window* window() const;
         float time() const;
-        void setTime(float time);
         void run(bool forever=true);
         virtual void init() = 0;
         virtual void tick(float dt) = 0;
@@ -49,8 +48,14 @@ namespace lix
         const glm::vec2& mousePoistion() const;
         glm::vec2 normalizedMousePosition() const; // n.x: -1.0f - 1.0f == left - right, n.y: -1.0f - 1.0f == bottom - top 
 
+        float fps() const;
+
+        void setTickFrequency(float tickFrequency);
+
         void quit();
     private:
+        static void loop();
+
         enum KeyAction
         {
             KEY_DOWN,
@@ -59,9 +64,11 @@ namespace lix
             MOUSE_UP,
             LAST
         };
-
         SDL_Window* _window{nullptr};
         float _time{0.0f};
+        float _fps{0.0f};
+        float _tickFrequency{200.0f};
+        float _timeStep{1.0f / _tickFrequency};
         bool _forever{false};
         SDL_GLContext _glContext{nullptr};
         glm::vec2 _windowSize;

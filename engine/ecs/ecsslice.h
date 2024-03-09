@@ -9,15 +9,14 @@ namespace ecs
     {
     public:
         static void forEach(std::vector<ecs::Entity>& entities,
-            std::function<void(ecs::Entity&, typename T::value_type&...)> callback)
+            std::function<void(ecs::Entity, typename T::value_type&...)> callback)
         {
             auto mask = Slice<T...>::mask();
             for(auto& entity : entities)
             {
-                const uint32_t entityId = entity.id();
-                if(entity.hasComponents(mask))
+                if(EntityRegistry::instance().hasComponents(entity, mask))
                 {
-                    (callback(entity, T::get(entityId)...));
+                    (callback(entity, T::get(entity)...));
                 }
             }
         }

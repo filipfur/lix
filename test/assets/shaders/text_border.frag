@@ -2,7 +2,7 @@
 
 precision highp float;
 
-in vec2 texCoord;
+in vec2 texCoords;
 out vec4 FragColor;
 
 uniform sampler2D u_texture;
@@ -14,7 +14,7 @@ uniform float u_edge_smoothness;
 void main()
 {    
     // Retrieve the alpha value from the SDF texture
-    float sdfValue = texture(u_texture, texCoord).r;
+    float sdfValue = texture(u_texture, texCoords).r;
 
     // Calculate the smoothed alpha value for the text itself
     float border = u_edge_smoothness / 2.0;

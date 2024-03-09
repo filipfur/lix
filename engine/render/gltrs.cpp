@@ -1,6 +1,14 @@
 #include "gltrs.h"
 
+#include <utility>
+
 lix::TRS::TRS()
+{
+    
+}
+
+lix::TRS::TRS(const glm::vec3& translation)
+    : TRS{translation, glm::quat{1.0f, 0.0f, 0.0f, 0.0f}, glm::vec3{1.0f, 1.0f, 1.0f}}
 {
     
 }
@@ -31,6 +39,24 @@ lix::TRS& lix::TRS::operator=(const TRS& other)
     _invalid = other._invalid;
     _model = other._model;
     _rotMat = other._rotMat;
+    return *this;
+}
+
+lix::TRS::TRS(TRS&& other)
+    : _translation{std::move(other._translation)}, _rotation{std::move(other._rotation)}, _scale{std::move(other._scale)},
+    _invalid{other._invalid}, _model{std::move(other._model)}, _rotMat{std::move(other._rotMat)}
+{
+
+}
+
+lix::TRS& lix::TRS::operator=(TRS&& other)
+{
+    _translation = std::move(other._translation);
+    _rotation = std::move(other._rotation);
+    _scale = std::move(other._scale);
+    _invalid = other._invalid;
+    _model = std::move(other._model);
+    _rotMat = std::move(other._rotMat);
     return *this;
 }
 

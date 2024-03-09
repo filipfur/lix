@@ -31,6 +31,26 @@ lix::Node::Node(const lix::TRS& other) : TRS{other}
 
 }
 
+lix::Node::Node(const lix::Node& other)
+    : TRS{other}, _name{other._name}, _mesh{other._mesh}, _skin{other._skin}
+{
+    
+}
+
+std::shared_ptr<lix::Node> lix::Node::clone() const
+{
+    auto node = std::shared_ptr<lix::Node>(
+        new lix::Node(*this)
+    );
+    for(auto& child : _children)
+    {
+        auto c = child->clone();
+        node->_children.push_back(c);
+        c->_parent = node.get();
+    }
+    return node;
+}
+
 void lix::Node::appendChild(NodePtr child)
 {
     _children.emplace_back(child);

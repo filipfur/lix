@@ -22,6 +22,12 @@ impact::Polygon::Polygon(const std::vector<glm::vec3>& points)
 {
 }
 
+impact::Polygon::~Polygon() noexcept
+{
+    _points.clear();
+    _transformedPoints.clear();
+}
+
 void impact::Polygon::setPoints(const std::vector<glm::vec3>& points)
 {
     _points = points;
@@ -61,6 +67,51 @@ const std::vector<glm::vec3>& impact::Polygon::transformedPoints()
 glm::vec3 impact::Polygon::center()
 {
     return glm::vec3(model() * glm::vec4(_center, 1.0f));
+}
+
+const glm::vec3& impact::Polygon::position()
+{
+    return lix::TRS::translation();
+}
+
+impact::Polygon* impact::Polygon::setPosition(const glm::vec3& position)
+{
+    lix::TRS::setTranslation(position);
+    _transformedPointsInvalid = true;
+    if(_simplified)
+    {
+        _simplified->setPosition(position);
+    }
+    return this;
+}
+
+impact::Polygon* impact::Polygon::move(const glm::vec3& delta)
+{
+    lix::TRS::applyTranslation(delta);
+    _transformedPointsInvalid = true;
+    if(_simplified)
+    {
+        _simplified->move(delta);
+    }
+    return this;
+}
+
+bool impact::Polygon::intersects(impact::Sphere& /*sphere*/)
+{
+    throw std::runtime_error("polygon-sphere collision not implemented");
+    return false;
+}
+
+bool impact::Polygon::intersects(impact::Polygon& /*polygon*/)
+{
+    throw std::runtime_error("polygon-polygon collision not implemented");
+    return false;
+}
+
+bool impact::Polygon::test(impact::Shape& /*shape*/)
+{
+    throw std::runtime_error("Polygon does not support simple test");
+    return false;
 }
 
 bool impact::Polygon::updateTransformedPoints()

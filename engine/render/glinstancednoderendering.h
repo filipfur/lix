@@ -1,14 +1,13 @@
 #pragma once
 
-#include <vector>
 #include "glrendering.h"
 
 namespace lix
 {
-    class InstancedRendering
+    class InstancedNodeRendering
     {
     public:
-        InstancedRendering(MeshPtr mesh, const std::vector<lix::TRS>& instances);
+        InstancedNodeRendering(MeshPtr mesh, const std::list<std::shared_ptr<Node>>& nodes);
 
         void render(ShaderProgram& shaderProgram, size_t maxCount=SIZE_MAX);
 
@@ -18,7 +17,7 @@ namespace lix
         void allocateInstanceData(size_t maxCount);
 
         MeshPtr _mesh;
-        std::vector<lix::TRS> _instances;
+        std::list<std::shared_ptr<Node>> _nodes;
         std::shared_ptr<lix::VertexArrayBuffer> _instancesVBO;
         std::vector<GLfloat> _instancesData;
     };

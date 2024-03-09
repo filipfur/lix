@@ -7,12 +7,12 @@ out vec4 FragColor;
 uniform vec4 u_color;
 uniform sampler2D u_texture;
 
-in vec2 texCoord;
+in vec2 texCoords;
 in vec2 position;
 
 void main()
 {    
-    float sdfValue = texture(u_texture, texCoord).r;
+    float sdfValue = texture(u_texture, texCoords).r;
 
     float smoothing = 0.08;
     float border = smoothing / 2.0;

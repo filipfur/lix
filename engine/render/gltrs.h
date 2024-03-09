@@ -10,6 +10,7 @@ namespace lix
     public:
         TRS();
 
+        TRS(const glm::vec3& translation);
         TRS(const glm::vec3& translation, const glm::quat& rotation, const glm::vec3& scale);
 
         virtual ~TRS() noexcept;
@@ -17,8 +18,8 @@ namespace lix
         TRS(const TRS& other);
         TRS& operator=(const TRS& other);
         
-        TRS(TRS&& other) = delete;
-        TRS& operator=(TRS&& other) = delete;
+        TRS(TRS&& other);
+        TRS& operator=(TRS&& other);
 
         const glm::vec3& translation() const;
         lix::TRS* setTranslation(const glm::vec3& translation);

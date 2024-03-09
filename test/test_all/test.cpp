@@ -2,7 +2,6 @@
 #include <cmath>
 #include <string>
 #include <fstream>
-#include <random>
 
 #include "glm/glm.hpp"
 
@@ -17,7 +16,7 @@
 #include "glframebuffer.h"
 
 #include "glrendering.h"
-#include "glinstancedrendering.h"
+#include "glinstancednoderendering.h"
 #include "glanimation.h"
 #include "glskinanimation.h"
 #include "glfont.h"
@@ -175,13 +174,12 @@ private:
     lix::MeshPtr bushMesh;
     lix::MeshPtr boneMesh;
     lix::MeshPtr quadMesh;
-    std::vector<ecs::Entity> _entities;
+    std::vector<ecs::Entity> entities;
     std::shared_ptr<impact::Polygon> rectangle;
     std::shared_ptr<impact::Polygon> circle;
     std::shared_ptr<impact::Polygon> circle2;
     std::shared_ptr<lix::FrameBuffer> postFBO;
     std::shared_ptr<lix::FrameBuffer> blitFBO;
-    lix::Node mooseForestNode;
     std::shared_ptr<lix::Texture> texture;
     std::shared_ptr<lix::Font> arialFont;
     const glm::vec3 upVector{0.0f, 1.0f, 0.0f};
@@ -256,7 +254,7 @@ void App::init()
     rectangle.reset(
         new impact::Polygon(vert_0)
     );
-    rectangle->setTranslation(glm::vec3{2.0f, 0.0f, 0.0f})
+    rectangle->setPosition(glm::vec3{2.0f, 0.0f, 0.0f})
         ->setRotation(glm::angleAxis(glm::pi<float>() * 0.05f, glm::vec3{0.0f, 0.0f, 1.0f}))
         ->setScale(glm::vec3{4.0f});
 
@@ -270,20 +268,20 @@ void App::init()
     circle.reset(
         new impact::Polygon(vert_1)
     );
-    circle->setTranslation(glm::vec3{12.0f, 20.0f, 0.0f})
+    circle->setPosition(glm::vec3{12.0f, 20.0f, 0.0f})
         ->setScale(glm::vec3{2.0f});
 
     circle2.reset(
         new impact::Polygon(vert_1)
     );
-    circle2->setTranslation(glm::vec3{13.0f, 26.0f, 0.0f})
+    circle2->setPosition(glm::vec3{13.0f, 26.0f, 0.0f})
         ->setScale(glm::vec3{1.4f});
 
     for(auto& poly : {rectangle, circle, circle2})
     {
-        ecs::Entity& entity = _entities.emplace_back();
+        ecs::Entity entity = entities.emplace_back(ecs::EntityRegistry::createEntity());
         ecs::attach<Component::Time, Component::Actor>(entity);
-        Actor* actor = entity.get<Component::Actor>();
+        Actor* actor = &Component::Actor::get(entity);
         actor->moveable = poly != rectangle;
         actor->shape = poly.get();
         actor->velocity = glm::vec3{0.0f, -1.0f, 0.0f};
@@ -309,17 +307,6 @@ void App::init()
     animatedCubeNode->setScale(glm::vec3{4.0f});
     gltf::loadSkin(animatedCubeNode.get(), assets::objects::animated_cube::Armature_skin);
     cubeAnim = gltf::loadAnimation(animatedCubeNode.get(), assets::objects::animated_cube::ArmatureAction_anim);
-
-
-    for(size_t i{0}; i < 100; ++i)
-    {
-        auto node = std::make_shared<lix::Node>();
-        node->setTranslation(glm::vec3{(rand() % 10000) * 0.02f - 100.0f,
-            0.0f,
-            (rand() % 10000) * 0.02f - 100.0f
-        });
-        mooseForestNode.appendChild(node);
-    }
 
     postFBO.reset(new lix::FrameBuffer(glm::ivec2{SCREEN_WIDTH, SCREEN_HEIGHT}));
     postFBO->bind();
@@ -421,9 +408,9 @@ void App::tick(float dt)
     }};
 
     static ecs::System<Component::Actor> collisionSystem;
-    collisionSystem.update(_entities, [this](ecs::Entity& entityA, Actor& actorA){
-        ecs::Slice<Component::Actor>::forEach(_entities, [&entityA, &actorA](ecs::Entity& entityB, Actor& actorB){
-            if(entityA.id() >= entityB.id())
+    collisionSystem.update(entities, [this](ecs::Entity entityA, Actor& actorA){
+        ecs::Slice<Component::Actor>::forEach(entities, [&entityA, &actorA](ecs::Entity entityB, Actor& actorB){
+            if(entityA >= entityB)
             {
                 return;
             }
@@ -431,43 +418,41 @@ void App::tick(float dt)
             impact::Shape& shapeB = *actorB.shape;
 
             std::vector<glm::vec3> simplex;
-            const glm::vec3 D{shapeB.center() - shapeA.center()};
+            const glm::vec3 D{shapeB.position() - shapeA.position()};
             if(impact::gjk(shapeA, shapeB, simplex, D))
             {
                 glm::vec3 collisionVector;
                 float penetration;
-                static std::default_random_engine gen;
-                static std::uniform_real_distribution<float> dist(0.0f, 1.0f);
                 if(impact::epa(shapeA, shapeB, simplex, collisionVector, penetration))
                 {
                     if(actorA.moveable)
                     {
                         actorA.velocity = -collisionVector;
-                        shapeA.applyTranslation(-collisionVector * penetration);
+                        shapeA.move(-collisionVector * penetration);
                     }
                     if(actorB.moveable)
                     {
                         actorB.velocity = collisionVector;
-                        shapeB.applyTranslation(-collisionVector * penetration);
+                        shapeB.move(-collisionVector * penetration);
                     }
                 }
             }
         });
     });
     
-    if(circle->translation().y < 0)
+    if(circle->position().y < 0)
     {
-        circle->setTranslation(glm::vec3{12.0f, 20.0f, 0.0f});
+        circle->setPosition(glm::vec3{12.0f, 20.0f, 0.0f});
     }
     static Time worldTime{0, 0};
     worldTime.time += dt;
     worldTime.deltaTime = dt;
     Component::Time::set(worldTime);
     static ecs::System<const Component::Time, Component::Actor> actorSystem;
-    actorSystem.update(_entities, [](ecs::Entity& /*entity*/, const Time& time, Actor& actor) {
+    actorSystem.update(entities, [](ecs::Entity /*entity*/, const Time& time, Actor& actor) {
         if(actor.moveable)
         {
-            actor.shape->applyTranslation(actor.velocity * time.deltaTime);
+            actor.shape->move(actor.velocity * time.deltaTime);
         }
     });
 
@@ -587,8 +572,18 @@ void App::renderTest()
 
 void App::renderTerrainInstances()
 {
-    static lix::InstancedRendering bushRendering{
-        std::shared_ptr<lix::Mesh>(bushMesh->clone()), mooseForestNode.listNodes(),
+    static std::list<std::shared_ptr<lix::Node>> nodeList;
+    for(size_t i{0}; i < 100; ++i)
+    {
+        auto node = std::make_shared<lix::Node>();
+        node->setTranslation(glm::vec3{(rand() % 10000) * 0.02f - 100.0f,
+            0.0f,
+            (rand() % 10000) * 0.02f - 100.0f
+        });
+        nodeList.emplace_back(node);
+    }
+    static lix::InstancedNodeRendering bushRendering{
+        std::shared_ptr<lix::Mesh>(bushMesh->clone()), nodeList
     };
 
     instShader->bind();
@@ -599,13 +594,13 @@ void App::renderTerrainInstances()
 
 void App::renderBoneInstances()
 {
-    static auto nodeList = mooseNode->find("Root")->listNodes();
-    static lix::InstancedRendering instancedRendering {
+    /*static auto nodeList = mooseNode->find("Root")->listNodes(); TODO: FIXME
+    static lix::InstancedNodeRendering instancedRendering {
         std::shared_ptr<lix::Mesh>(boneMesh->clone()), nodeList
     };
     instancedRendering.refresh();
     instShader->bind();
-    instancedRendering.render(*instShader);
+    instancedRendering.render(*instShader);*/
 }
 
 void App::renderSkinnedModels()

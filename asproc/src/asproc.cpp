@@ -113,7 +113,7 @@ int main(int argc, const char* argv[])
             shaderproc::procShaders(inputDir, outputDir, versionOverride);
             break;
         case Mode::IMAGES:
-            imageproc::procImage(inputDir, outputDir, flipOnLoad);
+            imageproc::procImage(inputDir, outputDir, flipOnLoad, convertToSrgb);
             break;
         case Mode::OBJECTS:
             objectproc::procObject(inputDir, outputDir, convertToSrgb);

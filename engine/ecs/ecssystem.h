@@ -22,16 +22,15 @@ namespace ecs
             }
 
             void update(std::vector<ecs::Entity>& entities,
-                std::function<void(ecs::Entity&, typename T::value_type&...)> callback)
+                std::function<void(ecs::Entity, typename T::value_type&...)> callback)
             {
                 auto mask = Slice<T...>::mask();
-                for(ecs::Entity& entity : entities)
+                for(ecs::Entity entity : entities)
                 {
-                    const uint32_t entityId = entity.id();
-                    if(entity.hasComponents(mask))
+                    if(EntityRegistry::instance().hasComponents(entity, mask))
                     {
                         //bool test = ((_versions[entityId][T::_number] != T::version(entityId)) && ...);
-                        bool test = (T::compare(entity, _versions[entityId][T::_number]) && ...);
+                        bool test = (T::compare(entity, _versions[entity][T::_number]) && ...);
 #ifdef ECS_TRACE
                         //std::cout << "ecs::System: Testing mask=" << mask << ", entity=" << entityId << ": " << (test ? "[ ]" : "[X]") << std::endl;
 #endif
@@ -41,18 +40,18 @@ namespace ecs
                             std::cout << "ecs::System: Updating mask=" << mask << ", entity=" << entityId << std::endl;
 #endif
                             (callback(entity,
-                                T::get(entityId)...
+                                T::get(entity)...
                             ));
                             (T::increment(entity, std::is_const_v<T> == false),...); // Increment version of NON-const components
-                            (setVersion(entity, T::_number, T::version(entityId)), ...); // Update own version to match latest-greatest.
+                            (setVersion(entity, T::_number, T::version(entity)), ...); // Update own version to match latest-greatest.
                         }
                     }
                 }
             }
 
-            void setVersion(Entity& entity, size_t componentNumber, uint8_t version)
+            void setVersion(Entity entity, size_t componentNumber, uint8_t version)
             {
-                _versions[entity.id()][componentNumber] = version;
+                _versions[entity][componentNumber] = version;
             }
 
             virtual ~System() noexcept

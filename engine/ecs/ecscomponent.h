@@ -23,7 +23,7 @@ namespace ecs
 
         }
 
-        static void attach(Entity& entity)
+        static void attach(Entity entity)
         {
             /*if(_bitSignature == 0)
             {
@@ -38,29 +38,29 @@ namespace ecs
 #ifdef ECS_TRACE
             std::cout << "attaching component#" << _number << " b" << bitSignature() << " " << typeid(T).name() << std::endl;
 #endif
-            entity.addComponent(bitSignature());
+            EntityRegistry::instance().addComponent(entity, bitSignature());
             //_ts.push_back(T{});
         }
 
         template <typename... Args>
-        static void attach(Entity& entity, Args... args)
+        static void attach(Entity entity, Args... args)
         {
             attach(entity);
             attach(args...);
         }
 
-        static void detach(Entity& entity)
+        static void detach(Entity entity)
         {
             //assert(_bitSignature != 0);
-            entity.removeComponent(bitSignature());
+            EntityRegistry::instance().removeComponent(entity, bitSignature());
             //_ts.push_back(T{}); REMOVE?!!
         }
 
-        static void increment(Entity& entity, bool dirty)
+        static void increment(Entity entity, bool dirty)
         {
             if(dirty)
             {
-                ++_versions[entity.id()];
+                ++_versions[entity];
 #ifdef ECS_TRACE
                 std::cout << "component#" << _number << " version=" << (int)_versions[entity.id()] <<  " " << typeid(T).name() << std::endl;
 #endif
@@ -91,9 +91,9 @@ namespace ecs
             return _versions[index];
         }
 
-        static bool compare(Entity& entity, const uint8_t& version)
+        static bool compare(Entity entity, const uint8_t& version)
         {
-            return _versions[entity.id()] == version;
+            return _versions[entity] == version;
         }
 
         static void refreshAll()
@@ -128,7 +128,7 @@ namespace ecs
     };
 
     template <typename... T>
-    void attach(Entity& entity)
+    void attach(Entity entity)
     {
         (T::attach(entity), ...); // fold expression
     }

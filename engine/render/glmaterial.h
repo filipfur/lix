@@ -13,7 +13,8 @@ namespace lix
     class Material
     {
     public:
-        Material(const Color& baseColor, float metallic=0.0f, float roughness=0.5f);
+        Material(const Color& baseColor, float metallic=0.0f, float roughness=0.5f,
+        TexturePtr normalMap=nullptr, TexturePtr diffuseMap=nullptr, TexturePtr armMap=nullptr);
 
         Material(const Material& other);
 

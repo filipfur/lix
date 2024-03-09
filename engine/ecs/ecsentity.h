@@ -2,55 +2,50 @@
 
 namespace ecs
 {
-    class Entity
+    using Entity = uint32_t;
+
+    class EntityRegistry
     {
     public:
-        Entity() : _id{nextId++}, _componentMask{0}
+        EntityRegistry() : _componentMasks{}, _nextId{0}
         {
         }
 
-        virtual ~Entity() noexcept
+        virtual ~EntityRegistry() noexcept
         {
         }
 
-        Entity(const Entity& other) : _id{other._id}, _componentMask{other._componentMask}
+        EntityRegistry(const EntityRegistry& other) = delete;
+
+        EntityRegistry(EntityRegistry&& other) = delete;
+
+        EntityRegistry& operator=(const EntityRegistry& other) = delete;
+
+        EntityRegistry& operator=(EntityRegistry&& other) = delete;
+
+        void addComponent(uint32_t id, uint32_t componentId)
         {
+            _componentMasks[id] |= componentId;
         }
 
-        Entity(Entity&& other) : _id{other._id}, _componentMask{other._componentMask}
+        void removeComponent(uint32_t id, uint32_t componentId)
         {
-        }
-
-        Entity& operator=(const Entity& other)
-        {
-            _id = other._id;
-            _componentMask = other._componentMask;
-            return *this;
-        }
-
-        Entity& operator=(Entity&& other)
-        {
-            _id = other._id;
-            _componentMask = other._componentMask;
-            return *this;
-        }
-
-        void addComponent(uint32_t componentId)
-        {
-            _componentMask |= componentId;
-        }
-
-        void removeComponent(uint32_t componentId)
-        {
-            _componentMask &= ~componentId;
+            _componentMasks[id] &= ~componentId;
         }
         
-        bool hasComponents(uint32_t component) const
+        bool hasComponents(uint32_t id, uint32_t component) const
         {
-            return (_componentMask & component) == component;
+            return (_componentMasks[id] & component) == component;
         }
 
-        template <typename T>
+        static Entity createEntity()
+        {
+            return instance().create();
+        }
+
+        static EntityRegistry& instance();
+
+        /*template <typename T>
         typename T::value_type* get() const
         {
             if(!hasComponents(T::bitSignature()))
@@ -64,16 +59,18 @@ namespace ecs
         void set(typename T::value_type& t)
         {
             T::set(t, _id);
-        }
-
-        uint32_t id() const
-        {
-            return _id;
-        }
+        }*/
 
     private:
-        uint32_t _id;
-        uint32_t _componentMask{0};
-        static uint32_t nextId;
+
+        Entity create()
+        {
+            Entity e = _nextId++;
+            _componentMasks.emplace_back(0);
+            return e;
+        }
+
+        std::vector<uint32_t> _componentMasks;
+        Entity _nextId;
     };
 }

@@ -26,8 +26,10 @@ namespace lix
         virtual ~Node() noexcept;
 
         Node(const TRS& other);
-        
-        Node(const Node& other) = delete;
+
+        std::shared_ptr<Node> clone() const;
+
+
         Node& operator=(const Node& other) = delete;
         
         Node(Node&& other) = delete;
@@ -68,6 +70,8 @@ namespace lix
         virtual void invalidate() override;
 
     private:
+        Node(const Node& other);
+
         void updateGlobalMatrix();
 
         std::string _name;

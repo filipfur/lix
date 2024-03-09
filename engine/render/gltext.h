@@ -58,6 +58,8 @@ namespace lix
 
         Properties& properties();
 
+        lix::Text* setText(const std::string& text);
+
     protected:
         void measureText();
         void initBuffers();

@@ -12,7 +12,6 @@ lix::Text::Text(std::shared_ptr<lix::Font> font,
         300.0f, 300.0f, 1.0f, 1.0f
     });
     _vao.createEbo(GL_DYNAMIC_DRAW, std::vector<GLuint>{0, 1, 2});
-    measureText();
     initBuffers();
 }
 
@@ -34,6 +33,14 @@ lix::VertexArray& lix::Text::vao()
 lix::Text::Properties& lix::Text::properties()
 {
     return _properties;
+}
+
+lix::Text* lix::Text::setText(const std::string& text)
+{
+    _text = text;
+    _vao.bind();
+    initBuffers();
+    return this;
 }
 
 void lix::Text::measureText()
