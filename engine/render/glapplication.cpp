@@ -4,6 +4,41 @@ lix::Application* context{nullptr};
 
 void lix::Application::loop()
 {
+    static SDL_Event event;
+    if (SDL_PollEvent(&event))
+    {
+        switch(event.type)
+        {
+            case SDL_QUIT:
+                context->_forever = false;
+                break;
+            case SDL_MOUSEMOTION:
+                context->handleMouseMotion(static_cast<float>(event.motion.x),
+                    static_cast<float>(event.motion.y));
+                break;
+            case SDL_MOUSEBUTTONDOWN:
+                context->handleMouseButtonDown(
+                    event.button.button,
+                    SDL_GetModState(),
+                    static_cast<float>(event.button.x),
+                    static_cast<float>(event.button.y));
+                break;
+            case SDL_MOUSEBUTTONUP:
+                context->handleMouseButtonUp(
+                    event.button.button,
+                    SDL_GetModState(),
+                    static_cast<float>(event.button.x),
+                    static_cast<float>(event.button.y));
+                break;
+            case SDL_KEYDOWN:
+                context->handleKeyDown(event.key.keysym.sym, event.key.keysym.mod);
+                break;
+            case SDL_KEYUP:
+                context->handleKeyUp(event.key.keysym.sym, event.key.keysym.mod);
+                break;
+        }
+    }
+
     static GLuint previousTicks{0};
     GLuint ticks = SDL_GetTicks();
     GLuint deltaTicks = ticks - previousTicks;
@@ -43,7 +78,6 @@ lix::Application::Application(int windowX, int windowY, const char* title)
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-    emscripten_trace_configure_for_google_wtf();
 #else
     //SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -154,74 +188,10 @@ void lix::Application::run(bool forever)
 #if __EMSCRIPTEN__
     emscripten_set_main_loop(loop, -1, 1);
 #else
-    SDL_Event event;
     bool doLoop{true};
     _forever = forever;
     while (doLoop)
     {
-        if (SDL_PollEvent(&event))
-        {
-            static KeySym key{0};
-            static KeySym button{0};
-            static KeyMod mod{0};
-            lix::Application::DragHandler* dh{nullptr};
-            switch(event.type)
-            {
-                case SDL_QUIT:
-                    _forever = false;
-                    break;
-                case SDL_MOUSEMOTION:
-                    _mousePosition.x = static_cast<float>(event.motion.x);
-                    _mousePosition.y = static_cast<float>(event.motion.y);
-                    dh = getDragHandler(button);
-                    if(dh && dh->dragState != lix::DragState::END_DRAG)
-                    {
-                        dh->callback(button, mod, lix::DragState::DRAGGING);
-                        dh->dragState = lix::DragState::DRAGGING;
-                    }
-                    break;
-                case SDL_MOUSEBUTTONDOWN:
-                    _mousePosition.x = static_cast<float>(event.button.x);
-                    _mousePosition.y = static_cast<float>(event.button.y);
-                    button = event.button.button;
-                    mod = static_cast<lix::KeyMod>(SDL_GetModState());
-                    if(_inputAdapter) { _inputAdapter->onMouseDown(key, mod); }
-                    handleCallback(MOUSE_DOWN, key, mod);
-                    dh = getDragHandler(button);
-                    if(dh && dh->dragState == lix::DragState::END_DRAG)
-                    {
-                        dh->callback(button, mod, lix::DragState::START_DRAG);
-                        dh->dragState = lix::DragState::START_DRAG;
-                    }
-                    break;
-                case SDL_MOUSEBUTTONUP:
-                    _mousePosition.x = static_cast<float>(event.button.x);
-                    _mousePosition.y = static_cast<float>(event.button.y);
-                    button = event.button.button;
-                    mod = static_cast<lix::KeyMod>(SDL_GetModState());
-                    if(_inputAdapter) { _inputAdapter->onMouseUp(key, mod); }
-                    handleCallback(MOUSE_UP, key, mod);
-                    dh = getDragHandler(button);
-                    if(dh)
-                    {
-                        dh->callback(button, mod, lix::DragState::END_DRAG);
-                        dh->dragState = lix::DragState::END_DRAG;
-                    }
-                    break;
-                case SDL_KEYDOWN:
-                    key = event.key.keysym.sym;
-                    mod = event.key.keysym.mod;
-                    if(_inputAdapter) { _inputAdapter->onKeyDown(key, mod); }
-                    handleCallback(KEY_DOWN, key, mod);
-                    break;
-                case SDL_KEYUP:
-                    key = event.key.keysym.sym;
-                    mod = event.key.keysym.mod;
-                    if(_inputAdapter) { _inputAdapter->onKeyUp(key, mod); }
-                    handleCallback(KEY_UP, key, mod);
-                    break;
-            }
-        }
         loop();
         doLoop = _forever;
     }
@@ -229,6 +199,60 @@ void lix::Application::run(bool forever)
 
     SDL_GL_DeleteContext(_glContext);
     SDL_Quit();
+}
+
+void lix::Application::handleMouseMotion(float x, float y)
+{
+    _mousePosition.x = x;
+    _mousePosition.y = y;
+    auto dh = getDragHandler(_stickyButton);
+    if(dh && dh->dragState != lix::DragState::END_DRAG)
+    {
+        dh->callback(_stickyButton, _stickyMod, lix::DragState::DRAGGING);
+        dh->dragState = lix::DragState::DRAGGING;
+    }
+}
+
+void lix::Application::handleMouseButtonDown(lix::KeySym button, lix::KeySym mod, float x, float y)
+{
+    _mousePosition.x = x;
+    _mousePosition.y = y;
+    if(_inputAdapter) { _inputAdapter->onMouseDown(button, mod); }
+    handleCallback(MOUSE_DOWN, button, mod);
+    auto dh = getDragHandler(button);
+    if(dh && dh->dragState == lix::DragState::END_DRAG)
+    {
+        dh->callback(button, mod, lix::DragState::START_DRAG);
+        dh->dragState = lix::DragState::START_DRAG;
+    }
+    _stickyButton = button;
+    _stickyMod = mod;
+}
+
+void lix::Application::handleMouseButtonUp(lix::KeySym button, lix::KeySym mod, float x, float y)
+{
+    _mousePosition.x = x;
+    _mousePosition.y = y;
+    if(_inputAdapter) { _inputAdapter->onMouseUp(button, mod); }
+    handleCallback(MOUSE_UP, button, mod);
+    auto dh = getDragHandler(button);
+    if(dh)
+    {
+        dh->callback(button, mod, lix::DragState::END_DRAG);
+        dh->dragState = lix::DragState::END_DRAG;
+    }
+}
+
+void lix::Application::handleKeyDown(lix::KeySym key, lix::KeyMod mod)
+{
+    if(_inputAdapter) { _inputAdapter->onKeyDown(key, mod); }
+    handleCallback(KEY_DOWN, key, mod);
+}
+
+void lix::Application::handleKeyUp(lix::KeySym key, lix::KeyMod mod)
+{
+    if(_inputAdapter) { _inputAdapter->onKeyUp(key, mod); }
+    handleCallback(KEY_UP, key, mod);
 }
 
 void lix::Application::quit()

@@ -2,7 +2,6 @@
 
 #if __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
-#include <emscripten/trace.h>
 #endif
 
 #define GLEW_STATIC
@@ -56,6 +55,12 @@ namespace lix
     private:
         static void loop();
 
+        void handleMouseMotion(float x, float y);
+        void handleMouseButtonDown(lix::KeySym button, lix::KeySym mod, float x, float y);
+        void handleMouseButtonUp(lix::KeySym button, lix::KeySym mod, float x, float y);
+        void handleKeyDown(lix::KeySym key, lix::KeyMod mod);
+        void handleKeyUp(lix::KeySym key, lix::KeyMod mod);
+
         enum KeyAction
         {
             KEY_DOWN,
@@ -82,5 +87,7 @@ namespace lix
         };
         std::unordered_map<KeySym, DragHandler> _mouseDragCallbacks;
         DragHandler* getDragHandler(KeySym);
+        lix::KeySym _stickyButton;
+        lix::KeyMod _stickyMod;
     };
 }
