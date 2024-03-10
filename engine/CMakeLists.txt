@@ -39,13 +39,17 @@ target_include_directories(${LIX_ENGINE} PUBLIC
   ${GLM_HOME}
   ${ASPROC_HOME}/public
 )
-link_directories(
+target_link_directories(${LIX_ENGINE} PUBLIC
     ${GLEW_HOME}/lib
     ${SDL2_HOME}/lib
 )
 
-find_package(GLEW REQUIRED HINTS $ENV{GLEW_HOME})
-find_package(SDL2 REQUIRED HINTS $ENV{SDL2_HOME})
+if(WIN32)
+  message(STATUS "not to worry")
+else()
+  find_package(GLEW REQUIRED HINTS $ENV{GLEW_HOME})
+  find_package(SDL2 REQUIRED HINTS $ENV{SDL2_HOME})
+endif()
 
 set_target_properties(${LIX_ENGINE} PROPERTIES PUBLIC_HEADER include/*.h)
 
@@ -53,7 +57,7 @@ include(GNUInstallDirs)
 
 if(MSVC)
   target_compile_options(${LIX_ENGINE} PRIVATE /W4 /WX)
-  target_link_libraries(${LIX_ENGINE} PUBLIC json GLEW::GLEW SDL2::SDL2 opengl32)
+  target_link_libraries(${LIX_ENGINE} PUBLIC json glew32s glew32 SDL2Main SDL2 opengl32)
 else()
   target_compile_options(${LIX_ENGINE} PRIVATE -Wall -Wextra -Wpedantic -Werror)
   target_link_libraries(${LIX_ENGINE} PUBLIC json GLEW::GLEW SDL2::SDL2

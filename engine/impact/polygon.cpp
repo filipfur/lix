@@ -1,5 +1,6 @@
 #include "polygon.h"
 
+#include <stdexcept>
 #include <algorithm>
 
 namespace
@@ -46,7 +47,7 @@ glm::vec3 impact::Polygon::supportPoint(const glm::vec3& D)
         if(val > maxVal)
         {
             maxVal = val;
-            maxIndex = i;
+            maxIndex = static_cast<int>(i);
         }
     }
     assert(maxIndex != -1);
@@ -99,19 +100,16 @@ impact::Polygon* impact::Polygon::move(const glm::vec3& delta)
 bool impact::Polygon::intersects(impact::Sphere& /*sphere*/)
 {
     throw std::runtime_error("polygon-sphere collision not implemented");
-    return false;
 }
 
 bool impact::Polygon::intersects(impact::Polygon& /*polygon*/)
 {
     throw std::runtime_error("polygon-polygon collision not implemented");
-    return false;
 }
 
 bool impact::Polygon::test(impact::Shape& /*shape*/)
 {
     throw std::runtime_error("Polygon does not support simple test");
-    return false;
 }
 
 bool impact::Polygon::updateTransformedPoints()

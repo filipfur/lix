@@ -3,6 +3,8 @@
 #include <string>
 #include <fstream>
 
+#include <SDL2/SDL.h>
+
 #include "glm/glm.hpp"
 
 #include "glshaderprogram.h"
@@ -48,7 +50,7 @@
 #include "gen/shaders/testtypes_frag.h"
 #include "gen/shaders/line_vert.h"
 #include "gen/shaders/line_frag.h"
-#include "gen/images/tex.h"
+#include "gen/images/tex_png.h"
 #include "gen/objects/cube.h"
 #include "gen/objects/bush.h"
 #include "gen/objects/moose.h"
@@ -204,7 +206,7 @@ private:
     std::shared_ptr<lix::UniformBuffer> cameraUBO;
 };
 
-int main()
+int main(int argc, char* argv[])
 {
     App app{SCREEN_WIDTH, SCREEN_HEIGHT, "Lithium X - Example"};
     const GLubyte *version;
@@ -337,9 +339,9 @@ void App::init()
     std::cout << "moose anim start=" << mooseAnim->start() << ", end=" << mooseAnim->end() << ", time=" << mooseAnim->time() << std::endl;
 
     texture.reset(new lix::Texture(
-        assets::images::tex_rgba::data,
-        assets::images::tex_rgba::width,
-        assets::images::tex_rgba::height,
+        assets::images::tex_png_rgba::data,
+        assets::images::tex_png_rgba::width,
+        assets::images::tex_png_rgba::height,
         GL_UNSIGNED_BYTE, GL_RGBA, GL_RGBA));
 
     texture->bind();

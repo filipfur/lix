@@ -1,5 +1,6 @@
 #include "shaderproc.h"
 
+#include <string>
 #include <cstring>
 
 void exportShaderDefinition(const fs::path& outputDir,
@@ -47,7 +48,7 @@ void exportShaderDeclaration(const fs::path& outputDir,
 void exportShader(const fs::path& outputDir, const fs::path& shaderPath, const std::string& versionOverride)
 {
     const auto shaderFileName = shaderPath.filename();
-    const std::string shaderName = common::variableName(shaderFileName);
+    const std::string shaderName = common::variableName(shaderFileName.string());
     exportShaderDefinition(outputDir, shaderPath, shaderName, versionOverride);
     exportShaderDeclaration(outputDir, shaderName);
 }

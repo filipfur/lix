@@ -16,11 +16,11 @@ namespace lix
 
         const ttf::Character& character(char c);
 
-        int maxCharacterHeight() const;
+        float maxCharacterHeight() const;
 
-        float width() const;
+        unsigned int width() const;
 
-        float height() const;
+        unsigned int height() const;
 
     private:
         std::shared_ptr<ttf::Font> _font;

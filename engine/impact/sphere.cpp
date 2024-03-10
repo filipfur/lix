@@ -1,5 +1,7 @@
 #include "sphere.h"
 
+#include <stdexcept>
+
 impact::Sphere::Sphere(const glm::vec3& position, float radii)
     : _position{position}, _radii{radii}
 {
@@ -53,7 +55,6 @@ bool impact::Sphere::intersects(Sphere& sphere)
 bool impact::Sphere::intersects(Polygon& /*polygon*/)
 {
     throw std::runtime_error("sphere-polygon collision not implemented");
-    return false;
 }
 
 bool impact::Sphere::test(Shape& shape)

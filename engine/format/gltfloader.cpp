@@ -1,5 +1,6 @@
 #include "gltfloader.h"
 
+#include <stdexcept>
 #include <unordered_map>
 #include "glm/gtc/type_ptr.hpp"
 
@@ -27,11 +28,11 @@ lix::MeshPtr gltf::loadMesh(const gltf::Mesh& gltfMesh)
             if(tex)
             {
                 static std::unordered_map<gltf::Texture*, std::shared_ptr<lix::Texture>> loadedTextures;
-                auto it = loadedTextures.find(tex);
-                if(it != loadedTextures.end())
+                auto loadedTexIt = loadedTextures.find(tex);
+                if(loadedTexIt != loadedTextures.end())
                 {
                     //std::cout << "Already loaded: " << tex->name << std::endl;
-                    material->setDiffuseMap(it->second);
+                    material->setDiffuseMap(loadedTexIt->second);
                 }
                 else
                 {
@@ -130,7 +131,7 @@ lix::MeshPtr gltf::loadMesh(const gltf::Mesh& gltfMesh)
                 break;
                 case GL_UNSIGNED_BYTE:
                 prim.vao->createVbo(GL_STATIC_DRAW, {attr},
-                    attrib->data.size(), componentSize, attrib->data.data(),
+                    static_cast<GLuint>(attrib->data.size()), componentSize, attrib->data.data(),
                     0,
                     attrib->componentType);
                 break;
@@ -202,7 +203,7 @@ std::shared_ptr<lix::SkinAnimation> gltf::loadAnimation(lix::Node* armatureNode,
     for(const auto& channel : gltfAnimation.channels)
     {
         GLfloat* fp_times = (GLfloat*)channel.sampler.input->data.data();
-        int numKeyFrames = channel.sampler.input->data.size() / 4;
+        int numKeyFrames{static_cast<int>(channel.sampler.input->data.size()) / 4};
         GLfloat* fp = (GLfloat*)channel.sampler.output->data.data();
         lix::SkinAnimation::Channel& ch = anim->channels().emplace_back();
 

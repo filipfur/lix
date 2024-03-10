@@ -92,7 +92,7 @@ glm::ivec2 lix::FrameBuffer::resolution() const
 
 std::shared_ptr<lix::RenderBuffer> lix::FrameBuffer::renderBuffer(size_t i) const
 {
-    return _renderBuffers.at(i);
+    return _renderBuffers.at(static_cast<GLuint>(i));
 }
 
 void lix::FrameBuffer::blit(std::shared_ptr<lix::FrameBuffer> toFrameBuffer,
@@ -160,7 +160,7 @@ void lix::FrameBuffer::bindColorsAsDrawBuffers()
             attachments.push_back(it->first);
         }
     }
-    glDrawBuffers(attachments.size(), attachments.data());
+    glDrawBuffers(static_cast<GLsizei>(attachments.size()), attachments.data());
     checkStatus();
 }
 

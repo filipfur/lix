@@ -187,38 +187,38 @@ lix::Text::PropBuilder::PropBuilder() : lix::Text::Properties{1.0f, Alignment::L
     
 }
 
-lix::Text::PropBuilder& lix::Text::PropBuilder::setTextScale(float textScale)
+lix::Text::PropBuilder& lix::Text::PropBuilder::setTextScale(float textScale_)
 {
-    this->textScale = textScale;
+    this->textScale = textScale_;
     return *this;
 }
 
-lix::Text::PropBuilder& lix::Text::PropBuilder::setAlignment(Alignment alignment)
+lix::Text::PropBuilder& lix::Text::PropBuilder::setAlignment(Alignment alignment_)
 {
-    this->alignment = alignment;
+    this->alignment = alignment_;
     return *this;
 }
 
-lix::Text::PropBuilder& lix::Text::PropBuilder::setLineSpacing(float lineSpacing)
+lix::Text::PropBuilder& lix::Text::PropBuilder::setLineSpacing(float lineSpacing_)
 {
-    this->lineSpacing = lineSpacing;
+    this->lineSpacing = lineSpacing_;
     return *this;
 }
 
-lix::Text::PropBuilder& lix::Text::PropBuilder::setLetterSpacing(float letterSpacing)
+lix::Text::PropBuilder& lix::Text::PropBuilder::setLetterSpacing(float letterSpacing_)
 {
-    this->letterSpacing = letterSpacing;
+    this->letterSpacing = letterSpacing_;
     return *this;
 }
 
-lix::Text::PropBuilder& lix::Text::PropBuilder::setTextColor(const Color& textColor)
+lix::Text::PropBuilder& lix::Text::PropBuilder::setTextColor(const Color& textColor_)
 {
-    this->textColor = textColor;
+    this->textColor = textColor_;
     return *this;
 }
 
-lix::Text::PropBuilder& lix::Text::PropBuilder::setBorderColor(const Color& borderColor)
+lix::Text::PropBuilder& lix::Text::PropBuilder::setBorderColor(const Color& borderColor_)
 {
-    this->borderColor = borderColor;
+    this->borderColor = borderColor_;
     return *this;
 }

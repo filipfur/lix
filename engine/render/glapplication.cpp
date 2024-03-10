@@ -184,7 +184,7 @@ void lix::Application::run(bool forever)
                     _mousePosition.x = static_cast<float>(event.button.x);
                     _mousePosition.y = static_cast<float>(event.button.y);
                     button = event.button.button;
-                    mod = SDL_GetModState();
+                    mod = static_cast<lix::KeyMod>(SDL_GetModState());
                     if(_inputAdapter) { _inputAdapter->onMouseDown(key, mod); }
                     handleCallback(MOUSE_DOWN, key, mod);
                     dh = getDragHandler(button);
@@ -198,7 +198,7 @@ void lix::Application::run(bool forever)
                     _mousePosition.x = static_cast<float>(event.button.x);
                     _mousePosition.y = static_cast<float>(event.button.y);
                     button = event.button.button;
-                    mod = SDL_GetModState();
+                    mod = static_cast<lix::KeyMod>(SDL_GetModState());
                     if(_inputAdapter) { _inputAdapter->onMouseUp(key, mod); }
                     handleCallback(MOUSE_UP, key, mod);
                     dh = getDragHandler(button);

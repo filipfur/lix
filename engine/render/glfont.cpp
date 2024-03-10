@@ -28,17 +28,17 @@ const ttf::Character& lix::Font::character(char c)
     return _font->characters.at(c);
 }
 
-int lix::Font::maxCharacterHeight() const
+float lix::Font::maxCharacterHeight() const
 {
     return _maxCharacterHeight;
 }
 
-float lix::Font::width() const
+unsigned int lix::Font::width() const
 {
     return _font->width;
 }
 
-float lix::Font::height() const
+unsigned int lix::Font::height() const
 {
     return _font->height;
 }

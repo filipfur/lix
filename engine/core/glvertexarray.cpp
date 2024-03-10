@@ -148,5 +148,5 @@ void lix::VertexArray::draw() const
 
 void lix::VertexArray::drawInstanced(size_t instanceCount) const
 {
-    glDrawElementsInstanced(_mode, static_cast<GLuint>(_ebo->count()), _ebo->type(), 0, instanceCount);
+    glDrawElementsInstanced(_mode, static_cast<GLuint>(_ebo->count()), _ebo->type(), 0, static_cast<GLsizei>(instanceCount));
 }

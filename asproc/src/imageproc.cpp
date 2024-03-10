@@ -1,17 +1,22 @@
 #include "imageproc.h"
 
 #define STB_IMAGE_IMPLEMENTATION
+#ifdef _WIN32
+#include "stb_image.h"
+#else
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Weverything"
 #include "stb_image.h"
 #pragma clang diagnostic pop
+#endif
 
 #include "glm/glm.hpp"
 
 unsigned char* imageproc::loadImage(const fs::path& imageFile, bool flipY, int& width, int& height, int& channels)
 {
     stbi_set_flip_vertically_on_load(flipY);
-    return stbi_load(imageFile.c_str(), &width, &height, &channels, 0);
+    std::string fileStr = imageFile.string();
+    return stbi_load(fileStr.c_str(), &width, &height, &channels, 0);
 }
 
 void imageproc::freeImage(unsigned char* data)

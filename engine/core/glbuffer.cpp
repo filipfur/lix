@@ -43,7 +43,7 @@ void lix::Buffer::bufferData(GLuint byteLength, GLuint componentSize, void* data
 void lix::Buffer::bufferData(const std::vector<GLuint>& data)
 {
     static size_t uintSz = sizeof(GLuint);
-    _count = data.size();
+    _count = static_cast<GLuint>(data.size());
     _byteLength = static_cast<GLuint>(data.size() * uintSz);
     glBufferData(_target, _byteLength, data.data(), _usage);
     _type = GL_UNSIGNED_INT;
@@ -52,7 +52,7 @@ void lix::Buffer::bufferData(const std::vector<GLuint>& data)
 void lix::Buffer::bufferData(const std::vector<GLushort>& data)
 {
     static size_t ushortSz = sizeof(GLushort);
-    _count = data.size();
+    _count = static_cast<GLuint>(data.size());
     _byteLength = static_cast<GLuint>(data.size() * ushortSz);
     glBufferData(_target, _byteLength, data.data(), _usage);
     _type = GL_UNSIGNED_SHORT;
@@ -61,7 +61,7 @@ void lix::Buffer::bufferData(const std::vector<GLushort>& data)
 void lix::Buffer::bufferData(const std::vector<GLfloat>& data)
 {
     static size_t floatSz = sizeof(GLfloat);
-    _count = data.size();
+    _count = static_cast<GLuint>(data.size());
     _byteLength = static_cast<GLuint>(data.size() * floatSz);
     glBufferData(_target, _byteLength, data.data(), _usage);
     _type = GL_FLOAT;

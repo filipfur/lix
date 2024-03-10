@@ -44,7 +44,7 @@ public:
     } cameraBlock;
 };
 
-int main(int argc, const char* argv[])
+int main(int argc, char* argv[])
 {
     static App app{SCREEN_WIDTH, SCREEN_HEIGHT, "Basic"};
     app.run();

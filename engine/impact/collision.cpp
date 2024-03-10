@@ -120,7 +120,7 @@ bool findClosestEdge(std::vector<glm::vec3>& simplex, Edge& closest)
     closest.distance = FLT_MAX;
     for(size_t i{0}; i < simplex.size(); ++i)
     {
-        int j = (i + 1 == simplex.size()) ? 0 : i + 1;
+        size_t j = (i + 1 == simplex.size()) ? 0 : i + 1;
         glm::vec3 A = simplex.at(i);
         glm::vec3 B = simplex.at(j);
         glm::vec3 AB = B - A;   
@@ -136,8 +136,8 @@ bool findClosestEdge(std::vector<glm::vec3>& simplex, Edge& closest)
         {
             closest.distance = f;
             closest.normal = N;
-            closest.a = i;
-            closest.b = j;
+            closest.a = static_cast<int>(i);
+            closest.b = static_cast<int>(j);
             rval = true;
         }
     }
