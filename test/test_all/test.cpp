@@ -283,10 +283,10 @@ void App::init()
     {
         ecs::Entity entity = entities.emplace_back(ecs::EntityRegistry::createEntity());
         ecs::attach<Component::Time, Component::Actor>(entity);
-        Actor* actor = &Component::Actor::get(entity);
-        actor->moveable = poly != rectangle;
-        actor->shape = poly.get();
-        actor->velocity = glm::vec3{0.0f, -1.0f, 0.0f};
+        Actor& actor = Component::Actor::get(entity);
+        actor.moveable = poly != rectangle;
+        actor.shape = poly.get();
+        actor.velocity = glm::vec3{0.0f, -1.0f, 0.0f};
     }
     
     monkeyStageNode = gltf::loadNode(assets::objects::monkey_stage::Cube_node);
@@ -575,14 +575,17 @@ void App::renderTest()
 void App::renderTerrainInstances()
 {
     static std::list<std::shared_ptr<lix::Node>> nodeList;
-    for(size_t i{0}; i < 100; ++i)
+    if(nodeList.empty())
     {
-        auto node = std::make_shared<lix::Node>();
-        node->setTranslation(glm::vec3{(rand() % 10000) * 0.02f - 100.0f,
-            0.0f,
-            (rand() % 10000) * 0.02f - 100.0f
-        });
-        nodeList.emplace_back(node);
+        for(size_t i{0}; i < 100; ++i)
+        {
+            auto node = std::make_shared<lix::Node>();
+            node->setTranslation(glm::vec3{(rand() % 10000) * 0.02f - 100.0f,
+                0.0f,
+                (rand() % 10000) * 0.02f - 100.0f
+            });
+            nodeList.emplace_back(node);
+        }
     }
     static lix::InstancedNodeRendering bushRendering{
         std::shared_ptr<lix::Mesh>(bushMesh->clone()), nodeList

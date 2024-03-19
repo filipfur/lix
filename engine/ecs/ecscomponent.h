@@ -49,6 +49,11 @@ namespace ecs
             attach(args...);
         }
 
+        static bool has(Entity entity)
+        {
+            return EntityRegistry::instance().hasComponents(entity, bitSignature());
+        }
+
         static void detach(Entity entity)
         {
             //assert(_bitSignature != 0);

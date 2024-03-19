@@ -45,21 +45,22 @@ namespace ecs
 
         static EntityRegistry& instance();
 
-        /*template <typename T>
-        typename T::value_type* get() const
+        template <typename T>
+        static typename T::value_type* get(uint32_t id)
         {
-            if(!hasComponents(T::bitSignature()))
+            auto& instance = ecs::EntityRegistry::instance();
+            if(!instance.hasComponents(id, T::bitSignature()))
             {
                 return nullptr;
             }
-            return &T::get(_id);
+            return &T::get(id);
         }
 
         template <typename T>
-        void set(typename T::value_type& t)
+        static void set(uint32_t id, typename T::value_type& t)
         {
-            T::set(t, _id);
-        }*/
+            T::set(t, id);
+        }
 
     private:
 

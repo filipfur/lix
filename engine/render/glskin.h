@@ -19,6 +19,8 @@ namespace lix
         void addAnimation(const std::string& key,
             std::shared_ptr<lix::SkinAnimation> animation);
 
+        std::map<std::string, std::shared_ptr<lix::SkinAnimation>>& animations();
+
     private:
         std::vector<glm::mat4> _inverseBindMatrices;
         std::vector<lix::Node*> _joints;

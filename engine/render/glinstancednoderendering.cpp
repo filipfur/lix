@@ -1,7 +1,7 @@
 #include "glinstancednoderendering.h"
 
 lix::InstancedNodeRendering::InstancedNodeRendering(lix::MeshPtr mesh,
-    const std::list<std::shared_ptr<Node>>& nodes)
+    const std::list<lix::NodePtr>& nodes)
     : _mesh{mesh}, _nodes{nodes}
 {
     auto vao = mesh->vertexArray();

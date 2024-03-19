@@ -1,6 +1,6 @@
 #include "glinstancedrendering.h"
 
-lix::InstancedRendering::InstancedRendering(lix::MeshPtr mesh, const std::vector<TRS>& instances) : _mesh{mesh}, _instances{instances}
+lix::InstancedRendering::InstancedRendering(lix::MeshPtr mesh, std::vector<TRS>& instances) : _mesh{mesh}, _instances{instances}
 {
     auto vao = mesh->vertexArray();
     vao->bind();

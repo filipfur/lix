@@ -8,7 +8,7 @@ namespace lix
     class InstancedRendering
     {
     public:
-        InstancedRendering(MeshPtr mesh, const std::vector<lix::TRS>& instances);
+        InstancedRendering(MeshPtr mesh, std::vector<lix::TRS>& instances);
 
         void render(ShaderProgram& shaderProgram, size_t maxCount=SIZE_MAX);
 
@@ -18,7 +18,7 @@ namespace lix
         void allocateInstanceData(size_t maxCount);
 
         MeshPtr _mesh;
-        std::vector<lix::TRS> _instances;
+        std::vector<lix::TRS>& _instances;
         std::shared_ptr<lix::VertexArrayBuffer> _instancesVBO;
         std::vector<GLfloat> _instancesData;
     };

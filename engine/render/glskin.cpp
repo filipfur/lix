@@ -20,3 +20,8 @@ void lix::Skin::addAnimation(const std::string& key,
 {
     _animations.emplace(key, animation);
 }
+
+std::map<std::string, std::shared_ptr<lix::SkinAnimation>>& lix::Skin::animations()
+{
+    return _animations;
+}
