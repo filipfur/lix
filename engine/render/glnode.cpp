@@ -155,11 +155,11 @@ void lix::Node::invalidate()
     _fresch = false;
 }
 
-void lix::Node::updateGlobalMatrix()
+bool lix::Node::updateGlobalMatrix()
 {
     if(_fresch)
     {
-        return;
+        return false;
     }
     if(_parent)
     {
@@ -171,4 +171,5 @@ void lix::Node::updateGlobalMatrix()
         _globalMatrix = model();
     }
     _fresch = true;
+    return true;
 }

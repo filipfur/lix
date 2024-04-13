@@ -217,6 +217,11 @@ namespace json
             return _type;
         }
 
+        void setValue(const std::string& value)
+        {
+            _value = value;
+        }
+
         std::string value() const
         {
             return _value;

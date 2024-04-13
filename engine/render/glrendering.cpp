@@ -70,6 +70,12 @@ void lix::renderNode(lix::ShaderProgram& shaderProgram, lix::Node& node, bool re
 {
     if(node.mesh())
     {
+        auto parent = node.parent();
+        while(parent)
+        {
+            parent->model();
+            parent = parent->parent();
+        }
         renderMesh(shaderProgram, *node.mesh(), globalMatrices ? node.globalMatrix() : node.model());
     }
     if(!recursive)

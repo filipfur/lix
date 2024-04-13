@@ -28,6 +28,8 @@ namespace lix
             float letterSpacing;
             Color textColor;
             Color borderColor;
+            float borderWidth;
+            float borderSmoothness;
         };
 
         struct PropBuilder : public Properties
@@ -39,6 +41,8 @@ namespace lix
             PropBuilder& setLetterSpacing(float letterSpacing);
             PropBuilder& setTextColor(const Color& textColor);
             PropBuilder& setBorderColor(const Color& borderColor);
+            PropBuilder& setBorderWidth(float borderWidth);
+            PropBuilder& setBorderSmoothness(float borderSmoothness);
         };
         
         static const Properties defaultProperties;
@@ -59,6 +63,7 @@ namespace lix
         Properties& properties();
 
         lix::Text* setText(const std::string& text);
+        const std::string& text() const;
 
     protected:
         void measureText();
@@ -79,4 +84,6 @@ namespace lix
         std::vector<std::string> _lines;
         std::vector<float> _lineWidths;
     };
+
+    using TextPtr = std::shared_ptr<lix::Text>;
 }

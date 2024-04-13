@@ -18,7 +18,7 @@
 #include "glframebuffer.h"
 
 #include "glrendering.h"
-#include "glinstancednoderendering.h"
+#include "glinstancedrendering.h"
 #include "glanimation.h"
 #include "glskinanimation.h"
 #include "glfont.h"
@@ -587,7 +587,7 @@ void App::renderTerrainInstances()
             nodeList.emplace_back(node);
         }
     }
-    static lix::InstancedNodeRendering bushRendering{
+    static lix::InstancedRendering<std::list<lix::NodePtr>> bushRendering{
         std::shared_ptr<lix::Mesh>(bushMesh->clone()), nodeList
     };
 
@@ -632,31 +632,35 @@ void App::renderText()
             .setBorderColor(lix::Color::red)
     };
 
-    static lix::TextRendering textRendering {
-        glm::vec2{SCREEN_WIDTH, SCREEN_HEIGHT}
+    static std::vector<std::shared_ptr<lix::Text>> texts = {
+            std::shared_ptr<lix::Text>{new lix::Text(
+                arialFont,
+                lix::Text::PropBuilder()
+                    .setTextColor(lix::Color::green)
+                    .setTextScale(2.0f)
+                    .setAlignment(lix::Text::Alignment::CENTER),
+                "Selling full addy (g) 300M"
+            )}
     };
-    if(textRendering.count() == 0)
-    {
-        auto tx = textRendering.createText(arialFont,
-            lix::Text::PropBuilder()
-                .setTextColor(lix::Color::green)
-                .setTextScale(2.0f)
-                .setAlignment(lix::Text::Alignment::CENTER),
-            "Selling full addy (g) 300M");
-        tx->setTranslation(glm::vec3{-300.0f, -200.0f, 0.0f})
-            ->setScale(glm::vec3{0.5f});
-    }
+    static lix::TextRendering textRendering {
+        glm::vec2{SCREEN_WIDTH, SCREEN_HEIGHT},
+        texts
+    };
+    texts.front()
+        ->setTranslation(glm::vec3{-300.0f, -200.0f, 0.0f})
+        ->setScale(glm::vec3{0.5f});
     textRendering.render();
 
     static auto borderTextShader = std::make_shared<lix::ShaderProgram>(
         assets::shaders::text_vert,
         assets::shaders::text_border_frag
     );
+    static std::vector<lix::TextPtr> borderTexts = {std::make_shared<lix::Text>(arialFont,
+        props,
+        "- Main menu -\n- Options -\n- Ex*t -")};
     static lix::TextRendering borderTextRendering {
         glm::vec2{SCREEN_WIDTH, SCREEN_HEIGHT},
-        {std::make_shared<lix::Text>(arialFont,
-            props,
-            "- Main menu -\n- Options -\n- Ex*t -")},
+        borderTexts,
         borderTextShader
     };
     borderTextRendering.text(0)
@@ -673,14 +677,15 @@ void App::renderText()
         assets::shaders::text_wavy_vert,
         assets::shaders::text_frag
     );
+    static std::vector<lix::TextPtr> wavyTexts = {std::make_shared<lix::Text>(arialFont,
+        lix::Text::PropBuilder()
+            .setTextColor(lix::Color::magenta)
+            .setTextScale(2.0f)
+            .setAlignment(lix::Text::Alignment::CENTER),
+        "Drop party~~~ Rune 2h + more.")};
     static lix::TextRendering wavyTextRendering {
         glm::vec2{SCREEN_WIDTH, SCREEN_HEIGHT},
-        {std::make_shared<lix::Text>(arialFont,
-            lix::Text::PropBuilder()
-                .setTextColor(lix::Color::magenta)
-                .setTextScale(2.0f)
-                .setAlignment(lix::Text::Alignment::CENTER),
-            "Drop party~~~ Rune 2h + more.")},
+        wavyTexts,
         wavyTextShader
     };
     wavyTextRendering.text(0)

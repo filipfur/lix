@@ -29,7 +29,6 @@ namespace lix
 
         std::shared_ptr<Node> clone() const;
 
-
         Node& operator=(const Node& other) = delete;
         
         Node(Node&& other) = delete;
@@ -69,10 +68,10 @@ namespace lix
 
         virtual void invalidate() override;
 
+        bool updateGlobalMatrix();
+
     private:
         Node(const Node& other);
-
-        void updateGlobalMatrix();
 
         std::string _name;
         std::vector<NodePtr> _children;

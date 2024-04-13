@@ -7,6 +7,7 @@ namespace lix
     class Color
     {
     public:
+        Color(uint32_t hex, float alpha=1.0f);
         Color(float r, float g, float b);
         Color(float r, float g, float b, float a);
         Color(const Color& color);

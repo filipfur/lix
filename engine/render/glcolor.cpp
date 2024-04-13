@@ -2,6 +2,18 @@
 
 #include "glcolor.h"
 
+float byteToDecimal(uint32_t hex, unsigned int pos)
+{
+    static constexpr float factor{1.0f / 255.0f};
+    return static_cast<float>((hex >> pos) & 0xFF) * factor;
+}
+
+lix::Color::Color(uint32_t hex, float alpha)
+    : _rgba{byteToDecimal(hex, 16), byteToDecimal(hex, 8), byteToDecimal(hex, 0), alpha}
+{
+
+}
+
 lix::Color::Color(float r, float g, float b) : _rgba{r, g, b, 1.0f}
 {
 

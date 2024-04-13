@@ -46,14 +46,7 @@ namespace
 }
 
 lix::TextRendering::TextRendering(const glm::vec2& resolution,
-    std::shared_ptr<lix::ShaderProgram> shaderProgram)
-    : TextRendering{resolution, {}, shaderProgram}
-{
-
-}
-
-lix::TextRendering::TextRendering(const glm::vec2& resolution,
-    const std::list<std::shared_ptr<lix::Text>>& texts,
+    const std::vector<std::shared_ptr<lix::Text>>& texts,
     std::shared_ptr<lix::ShaderProgram> shaderProgram)
     : _resolution{resolution}, _shaderProgram{shaderProgram}, _texts{texts}
 {
@@ -79,15 +72,6 @@ void lix::TextRendering::render()
     glEnable(GL_DEPTH_TEST);
 }
 
-std::shared_ptr<lix::Text> lix::TextRendering::createText(std::shared_ptr<Font> font,
-    const lix::Text::Properties& properties,
-    const std::string& str)
-{
-    std::shared_ptr<lix::Text> text = std::make_shared<lix::Text>(font, properties, str);
-    _texts.push_back(text);
-    return text;
-}
-
 std::shared_ptr<lix::Text> lix::TextRendering::text(size_t index)
 {
     auto it = _texts.begin();
@@ -102,8 +86,15 @@ size_t lix::TextRendering::count() const
 
 void lix::TextRendering::_renderText(lix::Text& text)
 {
-    _shaderProgram->setUniform("u_color", text.properties().textColor.vec4());
-    _shaderProgram->setUniform("u_model", text.model());
+    auto& props = text.properties();
+    _shaderProgram->setUniform("u_color", props.textColor.vec4());
+    if(text.properties().borderColor.vec4().w > 0)
+    {
+        _shaderProgram->setUniform("u_border_color", props.borderColor.vec4());
+        _shaderProgram->setUniform("u_border_width", props.borderWidth);
+        _shaderProgram->setUniform("u_edge_smoothness", props.borderSmoothness);
+    }
+    _shaderProgram->setUniform("u_model", text.globalMatrix());
     text.font()->texture().bind(GL_TEXTURE0);
     text.vao().bind();
     text.vao().draw();

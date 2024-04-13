@@ -43,6 +43,11 @@ lix::Text* lix::Text::setText(const std::string& text)
     return this;
 }
 
+const std::string& lix::Text::text() const
+{
+    return _text;
+}
+
 void lix::Text::measureText()
 {
     _width = 0.0f;
@@ -180,9 +185,9 @@ void lix::Text::initBuffers()
     invalidate();
 }
 
-const lix::Text::Properties lix::Text::defaultProperties{1.0f, Alignment::LEFT, 1.0f, 1.0f, lix::Color::white, lix::Color::black};
+const lix::Text::Properties lix::Text::defaultProperties{1.0f, Alignment::LEFT, 1.0f, 1.0f, lix::Color::white, lix::Color::black, 0.2f, 0.04f};
 
-lix::Text::PropBuilder::PropBuilder() : lix::Text::Properties{1.0f, Alignment::LEFT, 1.0f, 1.0f, lix::Color::white, lix::Color::black}
+lix::Text::PropBuilder::PropBuilder() : lix::Text::Properties{defaultProperties}
 {
     
 }

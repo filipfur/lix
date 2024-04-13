@@ -17,7 +17,11 @@ endef
 
 gen/shaders/%_frag.cpp : assets/shaders/%.frag
 	@$(ASPROC_HOME)/bin/asproc --version-override "" -s $^ gen/shaders
+
 gen/shaders/%_vert.cpp : assets/shaders/%.vert
+	@$(ASPROC_HOME)/bin/asproc --version-override "" -s $^ gen/shaders
+
+gen/shaders/%_glsl.cpp : assets/shaders/%.glsl
 	@$(ASPROC_HOME)/bin/asproc --version-override "" -s $^ gen/shaders
 
 gen/images/%_png.cpp : assets/images/%.png
