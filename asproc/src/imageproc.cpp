@@ -46,16 +46,17 @@ const std::string channelSuffix(const std::string& name, int channels)
 
 void exportImageDeclaration(const fs::path& outputDir,
     const std::string& imageName,
-    const std::string& suffixedName)
+    const std::string& suffixedName,
+    const imageproc::ImageData& imageData)
 {
     const auto headerFile = (imageName + ".h");
     std::ofstream ofs{outputDir / headerFile};
     ofs << "#pragma once\n\nnamespace assets {\n    namespace images {\n";
     ofs << "        struct " << suffixedName << " {";
     ofs << "\n            static unsigned char data[];";
-    ofs << "\n            static unsigned int width;";
-    ofs << "\n            static unsigned int height;";
-    ofs << "\n            static unsigned int channels;";
+    ofs << "\n            inline static constexpr unsigned int width{" << imageData.width << "};";
+    ofs << "\n            inline static constexpr unsigned int height{" << imageData.height << "};";
+    ofs << "\n            inline static constexpr unsigned int channels{" << imageData.channels << "};";
     ofs << "\n        };\n";
     ofs << "\n    }\n}";
     common::log("Write: " + headerFile);
@@ -68,16 +69,14 @@ void exportImageDefinition(const fs::path& outputDir,
     const std::string& imageName,
     std::string& suffixedName,
     bool flipOnLoad,
-    bool convertToSrgb)
+    bool convertToSrgb,
+    imageproc::ImageData& imageData)
 {
-    int width;
-    int height;
-    int channels;
-    unsigned char* data = imageproc::loadImage(imagePath, flipOnLoad, width, height, channels);
+    unsigned char* data = imageproc::loadImage(imagePath, flipOnLoad, imageData.width, imageData.height, imageData.channels);
     /*common::log("Read: fileName=" + fileName + ", " + std::to_string(width)
         + "x" + std::to_string(height) + ", channels=" + std::to_string(channels));*/
 
-    int byteSize{width * height * channels};
+    int byteSize{imageData.width * imageData.height * imageData.channels};
 
     if(convertToSrgb)
     {
@@ -94,7 +93,7 @@ void exportImageDefinition(const fs::path& outputDir,
         std::cout << "Converted to SRGB: " << imageName << std::endl;
     }
 
-    suffixedName = channelSuffix(imageName, channels);
+    suffixedName = channelSuffix(imageName, imageData.channels);
     const auto imageCpp = imageName + ".cpp";
 
     if(!data)
@@ -107,9 +106,9 @@ void exportImageDefinition(const fs::path& outputDir,
     ofs << "#include \"" << imageName << ".h\"\n"
         << "unsigned char assets::images::" << suffixedName << "::data[] = {";
     
-    int numBytes = width * height * channels;
+    int numBytes = imageData.width * imageData.height * imageData.channels;
 
-    int pixelWidth = width * channels;
+    int pixelWidth = imageData.width * imageData.channels;
     std::ios_base::fmtflags f( ofs.flags() );
     for(int b{0}; b < numBytes - 1; ++b)
     {
@@ -120,9 +119,9 @@ void exportImageDefinition(const fs::path& outputDir,
     ofs.flags( f );
     ofs << "\n};\n";
 
-    ofs << "unsigned int assets::images::" << suffixedName << "::width{" << width << "};\n";
-    ofs << "unsigned int assets::images::" << suffixedName << "::height{" << height << "};\n";
-    ofs << "unsigned int assets::images::" << suffixedName << "::channels{" << channels << "};\n"; 
+    /*ofs << "unsigned int assets::images::" << suffixedName << "::width{" << imageData.width << "};\n";
+    ofs << "unsigned int assets::images::" << suffixedName << "::height{" << imageData.height << "};\n";
+    ofs << "unsigned int assets::images::" << suffixedName << "::channels{" << imageData.channels << "};\n";*/
 
     common::log("Write: " + imageCpp);
     ofs.flush();
@@ -135,8 +134,9 @@ void exportImage(const fs::path& outputDir, const fs::path& imagePath, bool flip
     const std::string fileName = imagePath.filename().string();
     const std::string imageName = common::variableName(fileName/*fileName.substr(0, fileName.rfind('.'))*/);
     std::string suffixedName;
-    exportImageDefinition(outputDir, imagePath, imageName, suffixedName, flipOnLoad, convertToSrgb);
-    exportImageDeclaration(outputDir, imageName, suffixedName);
+    imageproc::ImageData imageData;
+    exportImageDefinition(outputDir, imagePath, imageName, suffixedName, flipOnLoad, convertToSrgb, imageData);
+    exportImageDeclaration(outputDir, imageName, suffixedName, imageData);
 }
 
 void imageproc::procImage(fs::path imageDir, fs::path outputDir, bool flipOnLoad, bool convertToSrgb)

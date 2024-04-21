@@ -15,6 +15,12 @@ namespace lix
 
         static void allocate(const T& t, std::vector<GLfloat>& buffer, size_t index)
         {
+            glm::mat4 m = glm::translate(glm::mat4{1.0f}, t);
+            std::copy(glm::value_ptr(m), glm::value_ptr(m) + 16, buffer.begin() + index * 16);
+        }
+
+        static void allocate(T& t, std::vector<GLfloat>& buffer, size_t index)
+        {
             const glm::mat4& m = t->model();
             std::copy(glm::value_ptr(m), glm::value_ptr(m) + 16, buffer.begin() + index * 16);
         }
@@ -72,4 +78,11 @@ namespace lix
         std::shared_ptr<lix::VertexArrayBuffer> _instancesVBO;
         std::vector<GLfloat> _buffer;
     };
+}
+
+template<>
+inline void lix::ModelAllocator<lix::TRS>::allocate(lix::TRS& trs, std::vector<GLfloat>& buffer, size_t index)
+{
+    const glm::mat4& m = trs.model();
+    std::copy(glm::value_ptr(m), glm::value_ptr(m) + 16, buffer.begin() + index * 16);
 }
