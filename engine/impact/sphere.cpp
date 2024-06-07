@@ -2,28 +2,28 @@
 
 #include <stdexcept>
 
-impact::Sphere::Sphere(const glm::vec3& position, float radii)
+lix::Sphere::Sphere(const glm::vec3& position, float radii)
     : _position{position}, _radii{radii}
 {
 
 }
 
-impact::Sphere::~Sphere() noexcept
+lix::Sphere::~Sphere() noexcept
 {
 
 }
 
-glm::vec3 impact::Sphere::supportPoint(const glm::vec3& dir)
+glm::vec3 lix::Sphere::supportPoint(const glm::vec3& dir)
 {
     return _position + glm::normalize(dir) * _radii;
 }
 
-const glm::vec3& impact::Sphere::position()
+const glm::vec3& lix::Sphere::position()
 {
     return _position;
 }
 
-impact::Sphere* impact::Sphere::setPosition(const glm::vec3& position)
+lix::Sphere* lix::Sphere::setPosition(const glm::vec3& position)
 {
     _position = position;
     if(_simplified)
@@ -33,7 +33,7 @@ impact::Sphere* impact::Sphere::setPosition(const glm::vec3& position)
     return this;
 }
 
-impact::Sphere* impact::Sphere::move(const glm::vec3& delta)
+lix::Sphere* lix::Sphere::move(const glm::vec3& delta)
 {
     _position += delta;
     if(_simplified)
@@ -43,7 +43,7 @@ impact::Sphere* impact::Sphere::move(const glm::vec3& delta)
     return this;
 }
 
-bool impact::Sphere::intersects(Sphere& sphere)
+bool lix::Sphere::intersects(Sphere& sphere)
 {
     glm::vec3 delta = _position - sphere._position;
     float d2 = delta.x * delta.x + delta.y * delta.y + delta.z * delta.z;
@@ -52,12 +52,12 @@ bool impact::Sphere::intersects(Sphere& sphere)
     return d2 <= r2;
 }
 
-bool impact::Sphere::intersects(Polygon& /*polygon*/)
+bool lix::Sphere::intersects(Polygon& /*polygon*/)
 {
     throw std::runtime_error("sphere-polygon collision not implemented");
 }
 
-bool impact::Sphere::test(Shape& shape)
+bool lix::Sphere::test(Shape& shape)
 {
     return shape.intersects(*this);
 }

@@ -12,6 +12,8 @@ file(GLOB SOURCES
     src/objectproc.cpp
     src/fontproc.cpp
     src/shaderproc.cpp
+    src/plyproc.cpp
+    src/gltfexport.cpp
 )
 
 add_executable(asproc ${SOURCES})

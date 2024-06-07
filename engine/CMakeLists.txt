@@ -24,7 +24,7 @@ if(NOT DEFINED GLM_HOME)
 endif()
 
 project(${LIX_ENGINE} VERSION 1.0.0 DESCRIPTION "Lightweight C++/OpenGL game engine.")
-file(GLOB PROJ_SOURCES core/*.cpp render/*.cpp ecs/*.cpp format/*.cpp impact/*.cpp)
+file(GLOB PROJ_SOURCES core/*.cpp render/*.cpp ecs/*.cpp format/*.cpp impact/*.cpp feature/*.cpp)
 add_library(${LIX_ENGINE} STATIC ${PROJ_SOURCES})
 set_target_properties(${LIX_ENGINE} PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(${LIX_ENGINE} PROPERTIES SOVERSION 1)
@@ -36,6 +36,7 @@ target_include_directories(${LIX_ENGINE} PUBLIC
   ecs
   format
   impact
+  feature
   ${GLM_HOME}
   ${ASPROC_HOME}/public
 )

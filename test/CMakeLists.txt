@@ -18,3 +18,6 @@ endif()
 
 add_subdirectory(test_all)
 add_subdirectory(test_basic)
+add_subdirectory(test_collision)
+
+add_subdirectory(unit_test)

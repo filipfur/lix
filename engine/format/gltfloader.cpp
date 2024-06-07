@@ -4,6 +4,13 @@
 #include <unordered_map>
 #include "glm/gtc/type_ptr.hpp"
 
+template <typename T>
+std::vector<T> toVector(const gltf::Buffer& buffer)
+{
+    size_t numBytes = buffer.data.size();
+    T* buf = (T*)buffer.data.data();
+    return std::vector<T>(buf, buf + (numBytes / sizeof(T)));
+}
 
 lix::MeshPtr gltf::loadMesh(const gltf::Mesh& gltfMesh)
 {
@@ -78,8 +85,6 @@ lix::MeshPtr gltf::loadMesh(const gltf::Mesh& gltfMesh)
         prim.vao->bind();
         for(gltf::Buffer* attrib : primitive.attributes)
         {
-            size_t numBytes = attrib->data.size();
-            GLfloat* fp = (GLfloat*)attrib->data.data();
             lix::Attribute attr;
             assert(attrib->target == GL_ARRAY_BUFFER);
             GLuint componentSize{1};
@@ -127,7 +132,7 @@ lix::MeshPtr gltf::loadMesh(const gltf::Mesh& gltfMesh)
             {
                 case GL_FLOAT:
                 prim.vao->createVbo(GL_STATIC_DRAW, {attr},
-                    std::vector<GLfloat>(fp, fp + (numBytes / sizeof(GLfloat))));
+                    toVector<GLfloat>(*attrib));
                 break;
                 case GL_UNSIGNED_BYTE:
                 prim.vao->createVbo(GL_STATIC_DRAW, {attr},
@@ -260,4 +265,27 @@ std::shared_ptr<lix::SkinAnimation> gltf::loadAnimation(lix::Node* armatureNode,
         armatureNode->skin()->addAnimation(anim->name(), anim);
     }
     return anim;
+}
+
+std::vector<glm::vec3> gltf::loadVertexPositions(const gltf::Mesh& mesh)
+{
+    std::vector<glm::vec3> vertexPositions;
+
+    for(const auto& primitive : mesh.primitives)
+    {
+        assert(primitive.indices->componentType == GL_UNSIGNED_SHORT);
+        std::vector<GLushort> indices = toVector<GLushort>(*primitive.indices);
+        vertexPositions.resize(indices.size());
+        std::vector<GLfloat> positions = toVector<GLfloat>(*primitive.attributes.at(0));
+
+        for(size_t i{0}; i < indices.size(); ++i)
+        {
+            auto idx = indices[i];
+            vertexPositions[i].x = positions[idx * 3 + 0];
+            vertexPositions[i].y = positions[idx * 3 + 1];
+            vertexPositions[i].z = positions[idx * 3 + 2];
+        }
+        break; // first primitive only!
+    }
+    return vertexPositions;
 }

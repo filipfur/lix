@@ -2,7 +2,7 @@
 
 #include "shape.h"
 
-namespace impact
+namespace lix
 {
 class Sphere : public Shape
 {

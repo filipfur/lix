@@ -4,6 +4,8 @@
 
 #include "primer.h"
 
+#include "glm/gtc/random.hpp"
+
 float distanceFromLine(const glm::vec3& a, const glm::vec3& b, const glm::vec3& p)
 {
     // TODO: Optimize (not needing actual distance)
@@ -50,7 +52,7 @@ void findHull(const std::vector<glm::vec3>& s, glm::vec3 p,
     std::vector<glm::vec3> s2;
     for(const auto& x : s)
     {
-        if(impact::pointInTriangle(x, p, *ret, q))
+        if(lix::pointInTriangle(x, p, *ret, q))
         {
             //s0.insert(...);
         }
@@ -67,7 +69,7 @@ void findHull(const std::vector<glm::vec3>& s, glm::vec3 p,
     findHull(s2, q, *ret, CH);
 }
 
-void impact::quickHull(const std::vector<glm::vec3>& s, std::vector<glm::vec3>& ch)
+void lix::quickHull(const std::vector<glm::vec3>& s, std::vector<glm::vec3>& ch)
 {
     std::vector<glm::vec3> s1;
     std::vector<glm::vec3> s2;
@@ -109,4 +111,119 @@ void impact::quickHull(const std::vector<glm::vec3>& s, std::vector<glm::vec3>& 
     std::sort(ch.begin(), ch.end(), [&center](const glm::vec3& a, const glm::vec3& b) -> bool {
         return atan2(a.y - center.y, a.x - center.x) < atan2(b.y - center.y, b.x - center.x);
     });
+}
+
+glm::vec3 popAlongDirection(std::vector<glm::vec3>& s, const glm::vec3& D)
+{
+    auto i = lix::indexAlongDirection(s, D);
+    glm::vec3 rval = s[i];
+    s.erase(s.begin() + i);
+    return rval;
+}
+
+//assumes s is centered around the origin
+void lix::quick_hull(const std::vector<glm::vec3>& points, std::vector<glm::vec3>& vertices, std::vector<unsigned int>& faces)
+{
+    std::vector<glm::vec3> P{points.begin(), points.end()};
+
+    //float BIG = 1.0e32f;
+    glm::vec3 dir = glm::ballRand(1.0f);
+    glm::vec3 A = popAlongDirection(P, dir);
+    glm::vec3 B = popAlongDirection(P, -A);
+
+    glm::vec3 AB = B - A;
+    float t = -(glm::dot(AB, A) / glm::dot(AB, AB));
+    glm::vec3 r = A + AB * t;
+
+    assert(glm::dot(r, r) > 0);
+
+    glm::vec3 C = popAlongDirection(P, -r);
+
+    glm::vec3 AC = C - A;
+    glm::vec3 ABC = glm::cross(AB, AC);
+
+    if(glm::dot(ABC, -A) > 0)
+    {
+        std::swap(B, C);
+        std::swap(AC, AB);
+        ABC = -ABC;
+    }
+
+    glm::vec3 D = popAlongDirection(P, -ABC);
+
+    //const glm::vec3 AD = D - A;
+    //const glm::vec3 ABD = glm::cross(AB, AD);
+
+    vertices.insert(vertices.end(), {A, B, C, D});
+
+    faces.insert(faces.end(), {
+        0, 1, 2, // ABC
+        0, 2, 3, // ACD
+        0, 3, 1, // ADB
+        1, 3, 2  // BDC
+    });
+
+    std::vector<glm::vec3> normals;
+
+    for(size_t f{0UL}; f < faces.size(); f += 3UL)
+    {
+        const glm::vec3& A = vertices.at(faces.at(f));
+        const glm::vec3& B = vertices.at(faces.at(f + 1));
+        const glm::vec3& C = vertices.at(faces.at(f + 2));
+        normals.push_back(glm::cross(B - A, C - A));
+    }
+
+    std::vector<unsigned int> Q = {0, 1, 2, 3};
+
+    while(!Q.empty())
+    {
+        auto face = Q.front();
+        Q.erase(Q.begin());
+
+        size_t pIdx = -1;
+        float pVal = 0.0f;
+        for(size_t i{0UL}; i < P.size(); ++i)
+        {
+            float val = glm::dot(normals[face], P[i]);
+            if(val > pVal)
+            {
+                pVal = val;
+                pIdx = i;
+            }
+        }
+        if(pIdx < 0)
+        {
+            continue;
+        }
+        std::vector<unsigned int> visibleFaces;
+        std::vector<unsigned int> invisibleFaces;
+        const auto numFaces = (faces.size() / 3UL);
+        for(size_t i{0UL}; i < numFaces; ++i)
+        {
+            if(glm::dot(normals[i], P[pIdx]) > 0)
+            {
+                visibleFaces.push_back(i);
+            }
+            else
+            {
+                invisibleFaces.push_back(i);
+            }
+        }
+        for(unsigned int visible : visibleFaces)
+        {
+            for(unsigned int invisible : invisibleFaces)
+            {
+                Edge e;
+                if(lix::isAdjacent(&faces[visible * 3], &faces[invisible * 3], e))
+                {
+
+                }
+            }
+        }
+    }
+}
+
+void lix::extreme_points(const std::vector<glm::vec3>& /*s*/, std::vector<glm::vec3>& /*e*/)
+{
+    
 }

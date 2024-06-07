@@ -17,26 +17,26 @@ inline glm::vec3 centerOfPolygon(const std::vector<glm::vec3>& points)
 }
 }
 
-impact::Polygon::Polygon(const std::vector<glm::vec3>& points)
+lix::Polygon::Polygon(const std::vector<glm::vec3>& points)
     : _points{points}, _transformedPoints{}, _center{centerOfPolygon(points)},
     _transformedPointsInvalid{true}
 {
 }
 
-impact::Polygon::~Polygon() noexcept
+lix::Polygon::~Polygon() noexcept
 {
     _points.clear();
     _transformedPoints.clear();
 }
 
-void impact::Polygon::setPoints(const std::vector<glm::vec3>& points)
+void lix::Polygon::setPoints(const std::vector<glm::vec3>& points)
 {
     _points = points;
     _transformedPointsInvalid = true;
     _center = centerOfPolygon(points);
 }
 
-glm::vec3 impact::Polygon::supportPoint(const glm::vec3& D)
+glm::vec3 lix::Polygon::supportPoint(const glm::vec3& D)
 {
     float maxVal = std::numeric_limits<float>::lowest();
     int maxIndex{-1};
@@ -51,31 +51,32 @@ glm::vec3 impact::Polygon::supportPoint(const glm::vec3& D)
         }
     }
     assert(maxIndex != -1);
+    _storedIndices.push_back(maxIndex);
     return _transformedPoints.at(maxIndex);
 }
 
-const std::vector<glm::vec3>& impact::Polygon::points()
+const std::vector<glm::vec3>& lix::Polygon::points()
 {
     return _points;
 }
 
-const std::vector<glm::vec3>& impact::Polygon::transformedPoints()
+const std::vector<glm::vec3>& lix::Polygon::transformedPoints()
 {
     updateTransformedPoints();
     return _transformedPoints;
 }
 
-glm::vec3 impact::Polygon::center()
+glm::vec3 lix::Polygon::center()
 {
     return glm::vec3(model() * glm::vec4(_center, 1.0f));
 }
 
-const glm::vec3& impact::Polygon::position()
+const glm::vec3& lix::Polygon::position()
 {
     return lix::TRS::translation();
 }
 
-impact::Polygon* impact::Polygon::setPosition(const glm::vec3& position)
+lix::Polygon* lix::Polygon::setPosition(const glm::vec3& position)
 {
     lix::TRS::setTranslation(position);
     _transformedPointsInvalid = true;
@@ -86,7 +87,7 @@ impact::Polygon* impact::Polygon::setPosition(const glm::vec3& position)
     return this;
 }
 
-impact::Polygon* impact::Polygon::move(const glm::vec3& delta)
+lix::Polygon* lix::Polygon::move(const glm::vec3& delta)
 {
     lix::TRS::applyTranslation(delta);
     _transformedPointsInvalid = true;
@@ -97,22 +98,22 @@ impact::Polygon* impact::Polygon::move(const glm::vec3& delta)
     return this;
 }
 
-bool impact::Polygon::intersects(impact::Sphere& /*sphere*/)
+bool lix::Polygon::intersects(lix::Sphere& /*sphere*/)
 {
     throw std::runtime_error("polygon-sphere collision not implemented");
 }
 
-bool impact::Polygon::intersects(impact::Polygon& /*polygon*/)
+bool lix::Polygon::intersects(lix::Polygon& /*polygon*/)
 {
     throw std::runtime_error("polygon-polygon collision not implemented");
 }
 
-bool impact::Polygon::test(impact::Shape& /*shape*/)
+bool lix::Polygon::test(lix::Shape& /*shape*/)
 {
     throw std::runtime_error("Polygon does not support simple test");
 }
 
-bool impact::Polygon::updateTransformedPoints()
+bool lix::Polygon::updateTransformedPoints()
 {
     if(_transformedPointsInvalid)
     {
@@ -129,7 +130,7 @@ bool impact::Polygon::updateTransformedPoints()
     return false;
 }
 
-bool impact::Polygon::updateModelMatrix()
+bool lix::Polygon::updateModelMatrix()
 {
     if(lix::TRS::updateModelMatrix())
     {
@@ -137,4 +138,29 @@ bool impact::Polygon::updateModelMatrix()
         return true;
     }
     return false;
+}
+
+std::vector<glm::vec3> lix::Polygon::storedSimplex()
+{
+    updateTransformedPoints();
+    glm::vec3 a, b, c;
+    if(_storedIndices.size() > 2)
+    {
+        a = _transformedPoints.at(*(_storedIndices.end() - 1));
+        b = _transformedPoints.at(*(_storedIndices.end() - 2));
+        c = _transformedPoints.at(*(_storedIndices.end() - 3));
+        return {a, b, c};
+    }
+    else if(_storedIndices.size() > 1)
+    {
+        a = _transformedPoints.at(*(_storedIndices.end() - 1));
+        b = _transformedPoints.at(*(_storedIndices.end() - 2));
+        return {a, b};
+    }
+    else if(_storedIndices.size() > 0)
+    {
+        a = _transformedPoints.at(*(_storedIndices.end() - 1));
+        return {a};
+    }
+    return {};
 }

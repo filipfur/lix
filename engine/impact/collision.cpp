@@ -8,11 +8,13 @@
 
 #include "primer.h"
 
-const float EPSILON{0.00001f};
+inline static constexpr float EPSILON{0.00001f};
 
-glm::vec3 minkowskiSupportPoint(impact::Shape& a, impact::Shape& b, const glm::vec3& D)
+glm::vec3 minkowskiSupportPoint(lix::Shape& a, lix::Shape& b, const glm::vec3& D)
 {
     glm::vec3 sp = a.supportPoint(D) - b.supportPoint(-D);
+    //sp.x = std::max(sp.x, EPSILON);
+    //sp.y = std::max(sp.y, EPSILON);
     if(sp.x == 0)
     {
         sp.x = EPSILON;
@@ -38,9 +40,10 @@ bool isLine(const std::vector<glm::vec3>& s)
     return isNearby(A, B) || isNearby(B, C) || isNearby(C, A);
 }
 
-bool impact::gjk(Shape& shapeA, Shape& shapeB, std::vector<glm::vec3>& simplex,
+bool lix::gjk2d(Shape& shapeA, Shape& shapeB, std::vector<glm::vec3>& simplex,
     const glm::vec3& initialDirection)
-{    
+{
+    const glm::vec3 O{0.0f, 0.0f, 0.0f};
     glm::vec3 C = minkowskiSupportPoint(shapeA, shapeB, initialDirection);
 
     glm::vec3 D = -C; // CO
@@ -94,7 +97,7 @@ bool impact::gjk(Shape& shapeA, Shape& shapeB, std::vector<glm::vec3>& simplex,
             }
         }
         else {
-            if(impact::pointInTriangle(glm::vec3{0.0f, 0.0f, 0.0f}, A, B, C))
+            if(lix::pointInTriangle(O, A, B, C))
             {
                 simplex.insert(simplex.end(), {A, B, C});
                 rval = true;
@@ -102,11 +105,196 @@ bool impact::gjk(Shape& shapeA, Shape& shapeB, std::vector<glm::vec3>& simplex,
             }
         }
     }
-
     return rval;
 }
 
-struct Edge
+int edgeCase(lix::Shape& shapeA, lix::Shape& shapeB, std::vector<glm::vec3>& simplex, lix::Collision* collision)
+{
+    const glm::vec3& A = simplex[0];
+    const glm::vec3& B = simplex[1];
+
+    glm::vec3 AB = B - A;
+
+    float t = -(glm::dot(AB, A) / glm::dot(AB, AB));
+    glm::vec3 C = A + AB * t;
+
+    glm::vec3 D = minkowskiSupportPoint(shapeA, shapeB, -C);
+
+    float C_dist = glm::dot(C, C);
+
+    if(C_dist < 1.0e-10f)
+    {
+        return -1;
+    }
+    if(C_dist < 1.0e-5f)
+    {
+        collision->collisionNormal = glm::normalize(-C);
+        collision->penetrationDepth = glm::sqrt(C_dist);
+        return 1;
+    }
+
+    if(glm::dot(D, D) < C_dist)
+    {
+        //printf("D not closer than C\n");
+        return -1;
+    }
+
+    simplex.push_back(D);
+    return 0;
+}
+
+int triangleCase(lix::Shape& shapeA, lix::Shape& shapeB, std::vector<glm::vec3>& simplex)
+{
+    const glm::vec3& C = simplex[0];
+    const glm::vec3& B = simplex[1];
+    const glm::vec3& A = simplex[2];
+
+    const glm::vec3 AB = B - A;
+    const glm::vec3 AC = B - C;
+    const glm::vec3 ABC = glm::cross(AB, AC);
+
+    if(glm::dot(ABC, -A) > 0) // Triangle above the origin
+    {
+        simplex.push_back(minkowskiSupportPoint(shapeA, shapeB, ABC));
+        std::swap(simplex[0], simplex[1]); // B <-> C
+        shapeA.swapIndices(0, 1);
+        shapeB.swapIndices(0, 1);
+        //return -1;
+    }
+    else
+    {
+        simplex.push_back(minkowskiSupportPoint(shapeA, shapeB, -ABC));
+        //std::swap(simplex[0], simplex[1]); // B <-> C
+        //return -1;
+    }
+
+    return 0;
+}
+
+int tetrahedronCase(lix::Shape& /*shapeA*/, lix::Shape& /*shapeB*/, std::vector<glm::vec3>& simplex, lix::Collision* collision)
+{
+    const glm::vec3& D = simplex[0];
+    const glm::vec3& C = simplex[1];
+    const glm::vec3& B = simplex[2];
+    const glm::vec3& A = simplex[3];
+
+    const glm::vec3 AB = B - A;
+    const glm::vec3 AC = C - A;
+    const glm::vec3 AD = D - A;
+    const glm::vec3 BC = C - B;
+    const glm::vec3 BD = D - B;
+
+    const glm::vec3 ABC = glm::cross(AB, AC);
+    const glm::vec3 ACD = glm::cross(AC, AD);
+    const glm::vec3 ADB = glm::cross(AD, AB);
+    const glm::vec3 BDC = glm::cross(BD, BC);
+
+    float l0 = glm::dot(ABC, -A);
+    if(l0 >= 0)
+    {
+        return -1;
+    }
+    float l1 = glm::dot(ACD, -A);
+    if(l1 >= 0)
+    {
+        return -1;
+    }
+    float l2 = glm::dot(ADB, -A);
+    if(l2 >= 0)
+    {
+        return -1;
+    }
+    float l3 = glm::dot(BDC, -B);
+    if(l3 >= 0)
+    {
+        return -1;
+    }
+
+    glm::vec3 R = ABC + ACD + ADB + BDC;
+    float len = R.x * R.x + R.y * R.y + R.z * R.z;
+    if(len >= EPSILON)
+    {
+        std::cerr << "total length of tetrahedron normals where too big, len=" << len << std::endl;
+        exit(1);
+    }
+
+    //std::cout << "len=" << len << std::endl;
+    if(collision)
+    {
+        float minDistance = l0; // min distance is negative
+        glm::vec3 minNormal = -ABC;
+
+        if(l1 > minDistance)
+        {
+            minNormal = -ACD;
+            minDistance = l1;
+        }
+        if(l2 > minDistance)
+        {
+            minNormal = -ADB;
+            minDistance = l2;
+        }
+        if(l3 > minDistance)
+        {
+            minNormal = -BDC;
+            minDistance = l3;
+        }
+
+        float d = minDistance / glm::length(ABC); //glm::sqrt(glm::dot(ABC, ABC));
+
+        collision->penetrationDepth = -d;
+        collision->collisionNormal = glm::normalize(minNormal);
+    }
+
+    return 1;
+}
+
+bool lix::gjk(Shape& shapeA, Shape& shapeB, std::vector<glm::vec3>& simplex,
+    const glm::vec3& initialDirection, lix::Collision* collision)
+{
+    shapeA.clearIndices();
+    shapeB.clearIndices();
+    //const glm::vec3 O{0.0f, 0.0f, 0.0f};
+    glm::vec3 B = minkowskiSupportPoint(shapeA, shapeB, initialDirection);
+
+    glm::vec3 A = minkowskiSupportPoint(shapeA, shapeB, -B); // D=C0
+
+    glm::vec3 AO = -A;
+    glm::vec3 AB = B - A;
+
+    // Check if the CO and OB are pointing in the same "general" direction. Otherwise the origin was not crossed.
+    if (glm::dot(AB, AO) < 0 || glm::dot(AB, AB) < EPSILON) // CO dot OB. From the perspective of C is point B further away than the origin.
+    {
+        //std::cout << "did not pass origin." << std::endl;
+        return false; // TODO: Should try more start directions of D.
+    }
+
+    simplex.insert(simplex.end(), {B, A});
+    
+    int rval{0};
+    for(size_t i{0UL}; (i < 64UL) && (rval == 0); ++i)
+    {
+        switch(simplex.size())
+        {
+        case 2UL:
+            rval = edgeCase(shapeA, shapeB, simplex, collision);
+            break;
+        case 3UL:
+            rval = triangleCase(shapeA, shapeB, simplex);
+            break;
+        case 4UL:
+            rval = tetrahedronCase(shapeA, shapeB, simplex, collision);
+            break;
+        default:
+            exit(1);
+            rval = -1;
+            break;
+        }
+    }
+    return rval > 0;
+}
+
+struct EdgeNormal
 {
     float distance;
     glm::vec3 normal;
@@ -114,7 +302,7 @@ struct Edge
     int b;
 };
 
-bool findClosestEdge(std::vector<glm::vec3>& simplex, Edge& closest)
+bool findClosestEdge(std::vector<glm::vec3>& simplex, EdgeNormal& closest)
 {
     bool rval = false;
     closest.distance = FLT_MAX;
@@ -144,7 +332,7 @@ bool findClosestEdge(std::vector<glm::vec3>& simplex, Edge& closest)
     return rval;
 }
 
-bool impact::epa(Shape& shapeA, Shape& shapeB, std::vector<glm::vec3>& simplex,
+bool lix::epa(Shape& shapeA, Shape& shapeB, std::vector<glm::vec3>& simplex,
     glm::vec3& collisionVector, float& penetration)
 {
     bool rval{false};
@@ -155,7 +343,7 @@ bool impact::epa(Shape& shapeA, Shape& shapeB, std::vector<glm::vec3>& simplex,
         {
             return false;
         }
-        Edge e;
+        EdgeNormal e;
         e.a = 0;
         e.b = 1;
         e.distance = FLT_MAX;

@@ -2,7 +2,7 @@ LIX_ENGINE=../engine
 ASPROC_HOME=../asproc
 LIX_SOURCES=$(wildcard $(LIX_ENGINE)/*/*.cpp)
 LIX_OBJECTS=$(LIX_SOURCES:.cpp=.o)
-LIX_INCLUDE=-I. -I../glm -I../json -I$(ASPROC_HOME)/public -I$(LIX_ENGINE)/core -I$(LIX_ENGINE)/render -I$(LIX_ENGINE)/format -I$(LIX_ENGINE)/impact -I$(LIX_ENGINE)/ecs
+LIX_INCLUDE=-I. -I../glm -I../json -I$(ASPROC_HOME)/public -I$(LIX_ENGINE)/core -I$(LIX_ENGINE)/render -I$(LIX_ENGINE)/format -I$(LIX_ENGINE)/impact -I$(LIX_ENGINE)/feature -I$(LIX_ENGINE)/ecs
 LIX_EXT_LIBS=-L$(GLEW_HOME)/lib -lglew -L$(SDL2_HOME)/lib -lsdl2 -framework OpenGL
 
 TEST_GEN_SOURCES=$(wildcard gen/fonts/*.cpp gen/images/*.cpp gen/objects/*.cpp gen/shaders/*.cpp)
@@ -58,7 +58,7 @@ coverage:
 	$(MAKE) $(TARGET_TEST_ALL) EXTRAS=$(COVFLAGS)
 	./$(TARGET_TEST_ALL)
 	@mkdir -p $(COVDIR)/html
-	@lcov --ignore-errors inconsistent,inconsistent --capture --directory . --directory $(LIX_ENGINE)/core --directory $(LIX_ENGINE)/render --directory $(LIX_ENGINE)/impact --directory $(LIX_ENGINE)/format --rc branch_coverage=1 --no-external --output-file $(COVDIR)/coverage.info
+	@lcov --ignore-errors inconsistent,inconsistent --capture --directory . --directory $(LIX_ENGINE)/core --directory $(LIX_ENGINE)/render --directory $(LIX_ENGINE)/impact $(LIX_ENGINE)/feature --directory $(LIX_ENGINE)/format --rc branch_coverage=1 --no-external --output-file $(COVDIR)/coverage.info
 	@genhtml --ignore-errors inconsistent,inconsistent -o $(COVDIR)/html $(COVDIR)/coverage.info --ignore-errors inconsistent
 
 %.o: %.cpp

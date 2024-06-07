@@ -7,9 +7,9 @@
 #include "gltrs.h"
 
 
-namespace impact
+namespace lix
 {
-class Polygon : public impact::Shape, public lix::TRS
+class Polygon : public lix::Shape, public lix::TRS
 {
 public:
     Polygon(const std::vector<glm::vec3>& points);
@@ -28,6 +28,7 @@ public:
     virtual bool intersects(Sphere& sphere) override;
     virtual bool intersects(Polygon& polygon) override;
     virtual bool test(Shape& shape) override;
+    std::vector<glm::vec3> storedSimplex();
 
 protected:
     bool updateTransformedPoints();

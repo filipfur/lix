@@ -3,8 +3,9 @@
 #include <memory>
 #include <functional>
 #include "glm/glm.hpp"
+#include <vector>
 
-namespace impact
+namespace lix
 {
     class Shape
     {
@@ -22,7 +23,12 @@ namespace impact
         Shape* simplified();
         // starts from simplest and keeps testing more detailed version until return false
         bool doRecursive(const std::function<bool(Shape*)>& callback);
+
+        void swapIndices(unsigned int a, unsigned int b);
+        void clearIndices();
+
     protected:
+        std::vector<unsigned int> _storedIndices;
         std::shared_ptr<Shape> _simplified{nullptr};
     };
 }

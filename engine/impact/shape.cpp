@@ -1,21 +1,21 @@
 #include "shape.h"
 
-impact::Shape::~Shape() noexcept
+lix::Shape::~Shape() noexcept
 {
     _simplified.reset();
 }
 
-void impact::Shape::setSimplified(std::shared_ptr<impact::Shape> simplified)
+void lix::Shape::setSimplified(std::shared_ptr<lix::Shape> simplified)
 {
     _simplified = simplified;
 }
 
-impact::Shape* impact::Shape::simplified()
+lix::Shape* lix::Shape::simplified()
 {
     return _simplified.get();
 }
 
-bool impact::Shape::doRecursive(const std::function<bool(Shape*)>& callback)
+bool lix::Shape::doRecursive(const std::function<bool(Shape*)>& callback)
 {
     static bool doTest;
     if(_simplified)
@@ -28,4 +28,14 @@ bool impact::Shape::doRecursive(const std::function<bool(Shape*)>& callback)
     }
     doTest = doTest && callback(this);
     return doTest;
+}
+
+void lix::Shape::swapIndices(unsigned int a, unsigned int b)
+{
+    std::swap(_storedIndices[a], _storedIndices[b]);
+}
+
+void lix::Shape::clearIndices()
+{
+    _storedIndices.clear();
 }

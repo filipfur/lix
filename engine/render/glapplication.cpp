@@ -205,6 +205,7 @@ void lix::Application::handleMouseMotion(float x, float y)
 {
     _mousePosition.x = x;
     _mousePosition.y = y;
+    if(_inputAdapter) { _inputAdapter->onMouseMove(x, y); }
     auto dh = getDragHandler(_stickyButton);
     if(dh && dh->dragState != lix::DragState::END_DRAG)
     {

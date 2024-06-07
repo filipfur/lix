@@ -122,7 +122,7 @@ struct Time {
 };
 
 struct Actor {
-    impact::Shape* shape;
+    lix::Shape* shape;
     bool moveable;
     glm::vec3 velocity;
 };
@@ -148,6 +148,7 @@ public:
     virtual void onKeyUp(lix::KeySym key, lix::KeyMod mod) override;
     virtual void onMouseDown(lix::KeySym key, lix::KeyMod mod) override;
     virtual void onMouseUp(lix::KeySym key, lix::KeyMod mod) override;
+    virtual void onMouseMove(float x, float y) override;
 
 private:
     void renderModels();
@@ -177,9 +178,9 @@ private:
     lix::MeshPtr boneMesh;
     lix::MeshPtr quadMesh;
     std::vector<ecs::Entity> entities;
-    std::shared_ptr<impact::Polygon> rectangle;
-    std::shared_ptr<impact::Polygon> circle;
-    std::shared_ptr<impact::Polygon> circle2;
+    std::shared_ptr<lix::Polygon> rectangle;
+    std::shared_ptr<lix::Polygon> circle;
+    std::shared_ptr<lix::Polygon> circle2;
     std::shared_ptr<lix::FrameBuffer> postFBO;
     std::shared_ptr<lix::FrameBuffer> blitFBO;
     std::shared_ptr<lix::Texture> texture;
@@ -254,7 +255,7 @@ void App::init()
         glm::vec3{1.0f, 3.0f, 0.0f}
     };
     rectangle.reset(
-        new impact::Polygon(vert_0)
+        new lix::Polygon(vert_0)
     );
     rectangle->setPosition(glm::vec3{2.0f, 0.0f, 0.0f})
         ->setRotation(glm::angleAxis(glm::pi<float>() * 0.05f, glm::vec3{0.0f, 0.0f, 1.0f}))
@@ -268,13 +269,13 @@ void App::init()
         vert_1.push_back(glm::vec3{glm::cos(rad) * 1.0f, glm::sin(rad) * 1.0f, 0.0f});
     }
     circle.reset(
-        new impact::Polygon(vert_1)
+        new lix::Polygon(vert_1)
     );
     circle->setPosition(glm::vec3{12.0f, 20.0f, 0.0f})
         ->setScale(glm::vec3{2.0f});
 
     circle2.reset(
-        new impact::Polygon(vert_1)
+        new lix::Polygon(vert_1)
     );
     circle2->setPosition(glm::vec3{13.0f, 26.0f, 0.0f})
         ->setScale(glm::vec3{1.4f});
@@ -416,16 +417,16 @@ void App::tick(float dt)
             {
                 return;
             }
-            impact::Shape& shapeA = *actorA.shape;
-            impact::Shape& shapeB = *actorB.shape;
+            lix::Shape& shapeA = *actorA.shape;
+            lix::Shape& shapeB = *actorB.shape;
 
             std::vector<glm::vec3> simplex;
             const glm::vec3 D{shapeB.position() - shapeA.position()};
-            if(impact::gjk(shapeA, shapeB, simplex, D))
+            if(lix::gjk(shapeA, shapeB, simplex, D, nullptr))
             {
                 glm::vec3 collisionVector;
                 float penetration;
-                if(impact::epa(shapeA, shapeB, simplex, collisionVector, penetration))
+                if(lix::epa(shapeA, shapeB, simplex, collisionVector, penetration))
                 {
                     if(actorA.moveable)
                     {
@@ -768,6 +769,11 @@ void App::onMouseDown(lix::KeySym /*key*/, lix::KeyMod /*mod*/)
 }
 
 void App::onMouseUp(lix::KeySym /*key*/, lix::KeyMod /*mod*/)
+{
+    
+}
+
+void App::onMouseMove(float /*x*/, float /*y*/)
 {
     
 }

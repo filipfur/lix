@@ -5,13 +5,14 @@
 #include "imageproc.h"
 #include "objectproc.h"
 #include "fontproc.h"
+#include "plyproc.h"
 
 void usage()
 {
     std::cout << "usage: asproc [--version-override <version>] [-s shader_dir output_dir]" << std::endl;
 }
 
-enum class Mode { NONE, SHADERS, IMAGES, OBJECTS, FONTS };
+enum class Mode { NONE, SHADERS, IMAGES, OBJECTS, FONTS, PLY };
 
 int main(int argc, const char* argv[])
 {
@@ -57,6 +58,17 @@ int main(int argc, const char* argv[])
                 return 1;
             }
             mode = Mode::OBJECTS;
+            inputDir = argv[i + 1];
+            outputDir = argv[i + 2];
+            i += 2;
+        }
+        else if(strcmp(argv[i], "-p") == 0) {
+            if(i + 2 >= argc) {
+                std::cerr << "Failed to parse arguments for option -p" << std::endl;
+                usage();
+                return 1;
+            }
+            mode = Mode::PLY;
             inputDir = argv[i + 1];
             outputDir = argv[i + 2];
             i += 2;
@@ -117,6 +129,9 @@ int main(int argc, const char* argv[])
             break;
         case Mode::OBJECTS:
             objectproc::procObject(inputDir, outputDir, convertToSrgb);
+            break;
+        case Mode::PLY:
+            plyproc::procPLY(inputDir, outputDir);
             break;
         case Mode::FONTS:
             fontproc::procFont(inputDir, outputDir, flipOnLoad);
