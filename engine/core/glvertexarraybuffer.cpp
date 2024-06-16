@@ -3,48 +3,44 @@
 #include <cassert>
 #include <algorithm>
 
-lix::VertexArrayBuffer::VertexArrayBuffer(GLenum usage,
-            const lix::Attributes& attributes,
-            GLuint byteLength,
-            GLuint componentSize,
-            void* data,
-            GLuint layoutOffset,
-            GLuint attribDivisor,
-            GLuint componentType)
-    : lix::Buffer{GL_ARRAY_BUFFER, usage},
-    _attributes{attributes},
-    _layoutOffset{layoutOffset},
-    _attribDivisor{attribDivisor},
-    _componentType{componentType}
+static const lix::AttributePointer& getAttributePointer(lix::Attribute attribute)
 {
-    this->bind(); // call to virtual in ctor
-    if(byteLength > 0)
-    {
-        this->bufferData(byteLength, componentSize, data);
-    }
-    linkAttributes();
-    glEnableVertexAttribArray(0);
+    // enum Attribute { FLOAT, VEC2, VEC3, VEC4, UVEC4, MAT3, MAT4 };
+    static const lix::AttributePointer attributePointers[] = {
+        lix::AttributePointer{GL_FLOAT, 1, 1, 4, false},
+        lix::AttributePointer{GL_FLOAT, 2, 1, 8, false},
+        lix::AttributePointer{GL_FLOAT, 3, 1, 12, false},
+        lix::AttributePointer{GL_FLOAT, 4, 1, 16, false},
+        lix::AttributePointer{GL_UNSIGNED_BYTE, 4, 1, 4, false},
+        lix::AttributePointer{GL_FLOAT, 3, 3, 12, false},
+        lix::AttributePointer{GL_FLOAT, 4, 4, 16, false}
+    };
+    return attributePointers[attribute];
+}
+
+static GLuint countStride(const lix::Attributes& attributes)
+{
+    GLuint stride = 0;
+    std::for_each(attributes.begin(), attributes.end(), [&stride](const lix::Attribute& attr){
+        const auto& aPtr = getAttributePointer(attr);
+        stride += aPtr.size * aPtr.elements;
+    });
+    return stride;
 }
 
 lix::VertexArrayBuffer::VertexArrayBuffer(GLenum usage,
             const lix::Attributes& attributes,
+            void* data,
             GLuint byteLength,
-            GLuint componentSize,
-            const void* data,
             GLuint layoutOffset,
-            GLuint attribDivisor,
-            GLuint componentType)
+            GLuint attribDivisor)
     : lix::Buffer{GL_ARRAY_BUFFER, usage},
     _attributes{attributes},
     _layoutOffset{layoutOffset},
-    _attribDivisor{attribDivisor},
-    _componentType{componentType}
+    _attribDivisor{attribDivisor}
 {
     this->bind(); // call to virtual in ctor
-    if(byteLength > 0)
-    {
-        this->bufferData(byteLength, componentSize, data);
-    }
+    this->bufferData(byteLength, countStride(attributes), data);
     linkAttributes();
     glEnableVertexAttribArray(0);
 }
@@ -56,14 +52,10 @@ lix::VertexArrayBuffer::VertexArrayBuffer(GLenum usage,
     GLuint attribDivisor) : lix::Buffer{GL_ARRAY_BUFFER, usage},
     _attributes{attributes},
     _layoutOffset{layoutOffset},
-    _attribDivisor{attribDivisor},
-    _componentType{GL_FLOAT}
+    _attribDivisor{attribDivisor}
 {
     this->bind();
-    if(vertices.size() > 0)
-    {
-        this->bufferData(vertices);
-    }
+    this->bufferData(vertices);
     linkAttributes();
     glEnableVertexAttribArray(0);
 }
@@ -71,8 +63,7 @@ lix::VertexArrayBuffer::VertexArrayBuffer(GLenum usage,
 lix::VertexArrayBuffer::VertexArrayBuffer(const VertexArrayBuffer& other) : Buffer{other},
     _attributes{other._attributes},
     _layoutOffset{other._layoutOffset},
-    _attribDivisor{other._attribDivisor},
-    _componentType{other._componentType}
+    _attribDivisor{other._attribDivisor}
 {
     this->bind();
     linkAttributes();
@@ -86,38 +77,25 @@ lix::VertexArrayBuffer::~VertexArrayBuffer() noexcept
 
 void lix::VertexArrayBuffer::linkAttributes()
 {
-    // enum Attribute { FLOAT, VEC2, VEC3, VEC4, UVEC4, MAT3, MAT4 };
-    static lix::AttributePointer attributePointers[] = {
-        lix::AttributePointer{GL_FLOAT, 1, 1, 4},
-        lix::AttributePointer{GL_FLOAT, 2, 1, 8},
-        lix::AttributePointer{GL_FLOAT, 3, 1, 12},
-        lix::AttributePointer{GL_FLOAT, 4, 1, 16},
-        lix::AttributePointer{GL_UNSIGNED_BYTE, 4, 1, 4},
-        lix::AttributePointer{GL_FLOAT, 3, 3, 12},
-        lix::AttributePointer{GL_FLOAT, 4, 4, 16}
-    };
-    GLuint stride = 0;
     GLsizei offset = 0;
-    std::for_each(_attributes.begin(), _attributes.end(), [&stride](const Attribute& attrib){
-        stride += attributePointers[attrib].size * attributePointers[attrib].elements;
-    });
     int i{0};
+    GLuint stride = countStride(_attributes);
     for(const Attribute& attrib : _attributes)
     {
-        const AttributePointer& attribPtr = attributePointers[attrib];
+        const AttributePointer& attribPtr = getAttributePointer(attrib);
 
         for(int j{0}; j < static_cast<int>(attribPtr.elements); ++j)
         {
             glEnableVertexAttribArray(i + _layoutOffset);
-            if(_componentType == GL_FLOAT)
-            {
-                glVertexAttribPointer(i + _layoutOffset, attribPtr.components,
-                    attribPtr.componentType, GL_FALSE, stride, (void*)(intptr_t) offset);
-            }
-            else
+            if(attribPtr.isIntegral)
             {
                 glVertexAttribIPointer(i + _layoutOffset, attribPtr.components,
                     attribPtr.componentType, stride, (void*)(intptr_t) offset);
+            }
+            else
+            {
+                glVertexAttribPointer(i + _layoutOffset, attribPtr.components,
+                    attribPtr.componentType, GL_FALSE, stride, (void*)(intptr_t) offset);
             }
             if(_attribDivisor > 0)
             {
@@ -134,6 +112,5 @@ void lix::VertexArrayBuffer::linkAttributes()
 
 GLuint lix::VertexArrayBuffer::layoutOffset() const { return _layoutOffset; }
 GLuint lix::VertexArrayBuffer::attribDivisor() const { return _attribDivisor; }
-GLuint lix::VertexArrayBuffer::componentType() const { return _componentType; }
 GLuint lix::VertexArrayBuffer::layouts() const { return _layouts; }
 GLuint lix::VertexArrayBuffer::components() const { return _components; }

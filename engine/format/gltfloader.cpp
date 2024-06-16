@@ -89,63 +89,32 @@ lix::MeshPtr gltf::loadMesh(const gltf::Mesh& gltfMesh)
             const gltf::Buffer* attrib = primitive.attributes[j];
             lix::Attribute attr;
             assert(attrib->target == GL_ARRAY_BUFFER);
-            GLuint componentSize{1};
             switch(attrib->type)
             {
                 case gltf::Buffer::VEC2:
                 attr = lix::Attribute::VEC2;
-                componentSize = sizeof(glm::vec2);
                 break;
                 case gltf::Buffer::VEC3:
                 attr = lix::Attribute::VEC3;
-                componentSize = sizeof(glm::vec3);
                 break;
                 case gltf::Buffer::VEC4:
                 if(attrib->componentType == GL_UNSIGNED_BYTE)
                 {
-                    //attr = lix::Attribute::UVEC4; // TODO: Oversight
-                    attr = lix::Attribute::VEC4;
-                    //attrib->componentType = GL_FLOAT;
-
-                    std::vector<GLfloat> floatVec; // TODO: Quickfix, problem with glVertexAttribIPointer ?
-                    floatVec.reserve(attrib->data_size);
-                    for(size_t k{0}; k < attrib->data_size; ++k)
-                    {
-                        floatVec.push_back(static_cast<float>(attrib->data[k]));
-                    }
-                    prim.vao->createVbo(GL_STATIC_DRAW, {attr}, floatVec);
-                    continue;
+                    attr = lix::Attribute::UVEC4;
                 }
                 else
                 {
                     attr = lix::Attribute::VEC4;
                 }
-                componentSize = sizeof(glm::vec4);
                 break;
                 case gltf::Buffer::MAT4:
                 attr = lix::Attribute::MAT4;
-                componentSize = sizeof(glm::mat4);
                 break;
                 default:
                 throw std::runtime_error("failed during gltf attribute conversion");
                 break;
             }
-            switch(attrib->componentType)
-            {
-                case GL_FLOAT:
-                prim.vao->createVbo(GL_STATIC_DRAW, {attr},
-                    toVector<GLfloat>(*attrib));
-                break;
-                case GL_UNSIGNED_BYTE:
-                prim.vao->createVbo(GL_STATIC_DRAW, {attr},
-                    static_cast<GLuint>(attrib->data_size), componentSize, attrib->data,
-                    0,
-                    attrib->componentType);
-                break;
-                default:
-                throw std::runtime_error("unkwown component type during gltf mesh loading (attributes)");
-                break;
-            }
+            prim.vao->createVbo(GL_STATIC_DRAW, {attr}, attrib->data, static_cast<GLuint>(attrib->data_size));
         }
         const gltf::Buffer* attrib = primitive.indices;
         size_t numBytes = attrib->data_size;

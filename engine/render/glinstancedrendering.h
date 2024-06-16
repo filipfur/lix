@@ -40,7 +40,7 @@ namespace lix
                 assert(vbo->attribDivisor() == 0); // Assert that we arent already inst
             }
 
-            _instancesVBO = vao->createVbo(usage, Allocator::attributes(), {}, 1);
+            _instancesVBO = vao->createVbo(usage, Allocator::attributes(), std::vector<GLfloat>{}, 1);
 
             allocateInstanceData();
         }

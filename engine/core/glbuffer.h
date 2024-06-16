@@ -16,8 +16,7 @@ namespace lix
         virtual Buffer* bind() override;
         virtual Buffer* unbind() override;
     
-        void bufferData(GLuint byteLength, GLuint componentSize, void* data=0);
-        void bufferData(GLuint byteLength, GLuint componentSize, const void* data);
+        void bufferData(GLuint byteLength, GLuint stride, void* data=0);
         void bufferData(const std::vector<GLuint>& data);
         void bufferData(const std::vector<GLushort>& data);
         void bufferData(const std::vector<GLfloat>& data);
@@ -27,13 +26,16 @@ namespace lix
         GLenum target() const;
         GLenum usage() const;
         GLuint byteLength() const;
+        GLuint stride() const;
         GLenum type() const;
         GLuint count() const;
     private:
+        void bufferDataInternal(GLuint byteLength, GLuint stride, void* data=0);
         const GLenum _target{GL_ARRAY_BUFFER};
         const GLenum _usage{GL_STATIC_DRAW};
-        GLenum _type{GL_FLOAT};
-        GLuint _count{0};
         GLuint _byteLength{0};
+        GLuint _stride{0};
+        GLuint _count{0};
+        GLenum _type{GL_FLOAT};
     };
 }

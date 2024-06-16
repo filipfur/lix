@@ -11,7 +11,8 @@ namespace lix
         GLuint componentType;
         GLuint components;
         GLuint elements;
-        GLuint size;        
+        GLuint size;
+        bool isIntegral;
     };
 
     enum Attribute { FLOAT, VEC2, VEC3, VEC4, UVEC4, MAT3, MAT4 };
@@ -23,21 +24,10 @@ namespace lix
     public:
         VertexArrayBuffer(GLenum usage,
             const lix::Attributes& attributes,
-            GLuint byteLength,
-            GLuint componentSize,
             void* data,
-            GLuint layoutOffset=0,
-            GLuint attribDivisor=0,
-            GLuint componentType=GL_UNSIGNED_BYTE);
-
-        VertexArrayBuffer(GLenum usage,
-            const lix::Attributes& attributes,
             GLuint byteLength,
-            GLuint componentSize,
-            const void* data,
             GLuint layoutOffset=0,
-            GLuint attribDivisor=0,
-            GLuint componentType=GL_UNSIGNED_BYTE);
+            GLuint attribDivisor=0);
 
         VertexArrayBuffer(GLenum usage,
             const lix::Attributes& attributes,
@@ -51,7 +41,6 @@ namespace lix
 
         GLuint layoutOffset() const;
         GLuint attribDivisor() const;
-        GLuint componentType() const;
         GLuint layouts() const;
         GLuint components() const;
 
@@ -59,7 +48,6 @@ namespace lix
         Attributes _attributes;
 		GLuint _layoutOffset;
 		GLuint _attribDivisor;
-		GLuint _componentType;
         GLuint _layouts{0};
 		GLuint _components{0};
     };

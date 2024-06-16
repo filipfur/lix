@@ -42,18 +42,9 @@ namespace lix
 
         std::shared_ptr<VBO> createVbo(GLenum usage,
             const lix::Attributes& attributes,
-            GLuint byteLength,
-            GLuint componentSize,
             void* data,
-            int attribDivisor=0,
-            GLuint componentType=GL_UNSIGNED_BYTE);
-        std::shared_ptr<VBO> createVbo(GLenum usage,
-            const lix::Attributes& attributes,
             GLuint byteLength,
-            GLuint componentSize,
-            const void* data,
-            int attribDivisor=0,
-            GLuint componentType=GL_UNSIGNED_BYTE);
+            int attribDivisor=0);
         std::shared_ptr<VBO> createVbo(GLenum usage,
             const lix::Attributes& attributes,
             const std::vector<GLfloat>& vertices,
