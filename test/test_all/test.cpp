@@ -751,7 +751,7 @@ void App::draw()
     float fp[4];
     postFBO->readPixel(32, 32, GL_RGBA, GL_FLOAT, fp);
     glm::vec4 v = postFBO->readPixel(32, 32);
-    //assert(v.x >= 0);
+    assert(v.x >= 0);
     postFBO->unbind();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

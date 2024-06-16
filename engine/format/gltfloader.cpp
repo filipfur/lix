@@ -192,7 +192,7 @@ std::shared_ptr<lix::Skin> gltf::loadSkin(lix::Node* armatureNode, const gltf::S
         const gltf::Node& joint = *gltfSkin.joints[i];
         skin->joints().push_back(armatureNode->find(joint.name));
     }
-    const GLfloat* fp = (const GLfloat*)gltfSkin.inverseBindMatrices;
+    const GLfloat* fp = (const GLfloat*)gltfSkin.inverseBindMatrices->data;
     for(size_t j{0}; j < gltfSkin.joints_size; ++j)
     {
         skin->inverseBindMatrices().push_back(glm::make_mat4(fp + j * 16));
