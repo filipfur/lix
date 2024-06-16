@@ -50,21 +50,18 @@ target_link_directories(${LIX_ENGINE} PUBLIC
     ${SDL2_HOME}/lib
 )
 
-if(WIN32 OR UNIX)
-    message(STATUS "not to worry")
-else()
-    find_package(GLEW REQUIRED HINTS $ENV{GLEW_HOME})
-    find_package(SDL2 REQUIRED HINTS $ENV{SDL2_HOME})
-endif()
-
 set_target_properties(${LIX_ENGINE} PROPERTIES
     PUBLIC_HEADER include/*.h
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 include(GNUInstallDirs)
 
-if(UNIX)
-    target_link_libraries(${LIX_ENGINE} PUBLIC json glew32s glew32 SDL2Main SDL2 opengl32)
+if(APPLE)
+    find_package(GLEW REQUIRED HINTS $ENV{GLEW_HOME})
+    find_package(SDL2 REQUIRED HINTS $ENV{SDL2_HOME})
+    target_compile_options(${LIX_ENGINE} PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    target_link_libraries(${LIX_ENGINE} PUBLIC json GLEW::GLEW SDL2::SDL2
+        "-framework OpenGL")
 elseif(MSVC)
     SET(GLEW_DLL "${GLEW_HOME}/bin/glew32.dll" CACHE INTERNAL "GLEW_DLL")
     SET(SDL2_DLL "${SDL2_HOME}/bin/SDL2.dll" CACHE INTERNAL "SDL2_DLL")
@@ -80,10 +77,8 @@ elseif(MSVC)
     endfunction()
     target_compile_options(${LIX_ENGINE} PRIVATE /W4 /WX)
     target_link_libraries(${LIX_ENGINE} PUBLIC json glew32s SDL2Main SDL2 opengl32)
-else()
-    target_compile_options(${LIX_ENGINE} PRIVATE -Wall -Wextra -Wpedantic -Werror)
-    target_link_libraries(${LIX_ENGINE} PUBLIC json GLEW::GLEW SDL2::SDL2
-        "-framework OpenGL")
+else() # linux
+    target_link_libraries(${LIX_ENGINE} PUBLIC json glew32 SDL2Main SDL2 opengl32)
 endif()
 
 # install(TARGETS ${LIX_ENGINE}

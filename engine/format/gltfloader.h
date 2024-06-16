@@ -30,11 +30,11 @@ namespace gltf
     {
         //assert(primitive.indices->componentType == GL_UNSIGNED_SHORT);
 
-        const auto& primitive = mesh.primitives.at(primitiveIdx);
+        const auto& primitive = mesh.primitives[primitiveIdx];
 
         {
-            size_t numBytes = primitive.indices->data.size();
-            U* buf = (U*)primitive.indices->data.data();
+            size_t numBytes = primitive.indices->data_size;
+            U* buf = (U*)primitive.indices->data;
             indices = std::vector<U>(buf, buf + (numBytes / sizeof(U)));
         }
 
@@ -44,9 +44,9 @@ namespace gltf
         {
             if((i & attribs) != 0)
             {
-                auto attrib = primitive.attributes.at(j);
-                size_t numBytes = attrib->data.size();
-                T* buf = (T*)attrib->data.data();
+                auto attrib = primitive.attributes[j];
+                size_t numBytes = attrib->data_size;
+                T* buf = (T*)attrib->data;
                 printf("numbytes=%zu sizeof(T)=%zu\n", numBytes, sizeof(T));
                 vertices = std::vector<T>(buf, buf + (numBytes / sizeof(T)));
                 ++n;
