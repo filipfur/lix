@@ -7,8 +7,8 @@
 template <typename T>
 std::vector<T> toVector(const gltf::Buffer& buffer)
 {
-    size_t numBytes = buffer.data.size();
-    T* buf = (T*)buffer.data.data();
+    size_t numBytes = buffer.data_size;
+    const T* buf = (const T*)buffer.data;
     return std::vector<T>(buf, buf + (numBytes / sizeof(T)));
 }
 
@@ -24,17 +24,18 @@ lix::MeshPtr gltf::loadMesh(const gltf::Mesh& gltfMesh)
     lix::MeshPtr mesh = std::make_shared<lix::Mesh>();
     loadedMeshes.emplace(&gltfMesh, mesh);
     
-    for(const auto& primitive : gltfMesh.primitives)
+    for(size_t i{0}; i < gltfMesh.primitives_size; ++i)//const auto& primitive : gltfMesh.primitives)
     {
+        const gltf::Primitive& primitive = gltfMesh.primitives[i];
         std::shared_ptr<lix::Material> material = nullptr;
-        gltf::Material* mat = primitive.material;
+        const gltf::Material* mat = primitive.material;
         if(mat)
         {
             material = std::make_shared<lix::Material>(mat->baseColor, mat->metallic, mat->roughness);
-            gltf::Texture* tex = mat->baseColorTexture;
+            const gltf::Texture* tex = mat->baseColorTexture;
             if(tex)
             {
-                static std::unordered_map<gltf::Texture*, std::shared_ptr<lix::Texture>> loadedTextures;
+                static std::unordered_map<const gltf::Texture*, std::shared_ptr<lix::Texture>> loadedTextures;
                 auto loadedTexIt = loadedTextures.find(tex);
                 if(loadedTexIt != loadedTextures.end())
                 {
@@ -66,7 +67,7 @@ lix::MeshPtr gltf::loadMesh(const gltf::Mesh& gltfMesh)
                             break;
                     }
                     auto diffuseMap = std::make_shared<lix::Texture>(
-                        tex->data.data(), tex->width, tex->height,
+                        tex->data, tex->width, tex->height,
                         GL_UNSIGNED_BYTE, internalFormat, format
                     );
                     diffuseMap->bind();
@@ -83,8 +84,9 @@ lix::MeshPtr gltf::loadMesh(const gltf::Mesh& gltfMesh)
         }
         const auto& prim = mesh->createPrimitive(GL_TRIANGLES, material);
         prim.vao->bind();
-        for(gltf::Buffer* attrib : primitive.attributes)
+        for(size_t j{0}; j < primitive.attributes_size; ++j)// const gltf::Buffer* attrib : primitive.attributes)
         {
+            const gltf::Buffer* attrib = primitive.attributes[j];
             lix::Attribute attr;
             assert(attrib->target == GL_ARRAY_BUFFER);
             GLuint componentSize{1};
@@ -101,15 +103,15 @@ lix::MeshPtr gltf::loadMesh(const gltf::Mesh& gltfMesh)
                 case gltf::Buffer::VEC4:
                 if(attrib->componentType == GL_UNSIGNED_BYTE)
                 {
-                    attr = lix::Attribute::UVEC4; // TODO: Oversight
+                    //attr = lix::Attribute::UVEC4; // TODO: Oversight
                     attr = lix::Attribute::VEC4;
-                    attrib->componentType = GL_FLOAT;
+                    //attrib->componentType = GL_FLOAT;
 
                     std::vector<GLfloat> floatVec; // TODO: Quickfix, problem with glVertexAttribIPointer ?
-                    floatVec.reserve(attrib->data.size());
-                    for(unsigned char b : attrib->data)
+                    floatVec.reserve(attrib->data_size);
+                    for(size_t k{0}; k < attrib->data_size; ++k)
                     {
-                        floatVec.push_back(static_cast<float>(b));
+                        floatVec.push_back(static_cast<float>(attrib->data[k]));
                     }
                     prim.vao->createVbo(GL_STATIC_DRAW, {attr}, floatVec);
                     continue;
@@ -136,7 +138,7 @@ lix::MeshPtr gltf::loadMesh(const gltf::Mesh& gltfMesh)
                 break;
                 case GL_UNSIGNED_BYTE:
                 prim.vao->createVbo(GL_STATIC_DRAW, {attr},
-                    static_cast<GLuint>(attrib->data.size()), componentSize, attrib->data.data(),
+                    static_cast<GLuint>(attrib->data_size), componentSize, attrib->data,
                     0,
                     attrib->componentType);
                 break;
@@ -145,9 +147,9 @@ lix::MeshPtr gltf::loadMesh(const gltf::Mesh& gltfMesh)
                 break;
             }
         }
-        const auto& attrib = primitive.indices;
-        size_t numBytes = attrib->data.size();
-        GLushort* usp = (GLushort*)attrib->data.data();
+        const gltf::Buffer* attrib = primitive.indices;
+        size_t numBytes = attrib->data_size;
+        GLushort* usp = (GLushort*)attrib->data;
         assert(attrib->target == GL_ELEMENT_ARRAY_BUFFER);
         switch(attrib->componentType)
         {
@@ -174,9 +176,9 @@ lix::NodePtr gltf::loadNode(const gltf::Node& gltfNode)
         node->setMesh(loadMesh(*gltfNode.mesh));
     }
 
-    for(gltf::Node* child : gltfNode.children)
+    for(size_t i{0}; i < gltfNode.children_size; ++i)//const gltf::Node* child : gltfNode.children)
     {
-        node->appendChild(loadNode(*child));
+        node->appendChild(loadNode(*gltfNode.children[i]));
     }
 
     return node;
@@ -185,12 +187,13 @@ lix::NodePtr gltf::loadNode(const gltf::Node& gltfNode)
 std::shared_ptr<lix::Skin> gltf::loadSkin(lix::Node* armatureNode, const gltf::Skin& gltfSkin)
 {
     auto skin = std::make_shared<lix::Skin>();
-    for(const auto& joint : gltfSkin.joints)
+    for(size_t i{0}; i < gltfSkin.joints_size; ++i)//const auto& joint : gltfSkin.joints)
     {
-        skin->joints().push_back(armatureNode->find(joint->name));
+        const gltf::Node& joint = *gltfSkin.joints[i];
+        skin->joints().push_back(armatureNode->find(joint.name));
     }
-    GLfloat* fp = (GLfloat*)gltfSkin.inverseBindMatrices->data.data();
-    for(size_t j{0}; j < gltfSkin.joints.size(); ++j)
+    const GLfloat* fp = (const GLfloat*)gltfSkin.inverseBindMatrices;
+    for(size_t j{0}; j < gltfSkin.joints_size; ++j)
     {
         skin->inverseBindMatrices().push_back(glm::make_mat4(fp + j * 16));
     }
@@ -205,11 +208,12 @@ std::shared_ptr<lix::SkinAnimation> gltf::loadAnimation(lix::Node* armatureNode,
     float maxTime{0.0f};
     float minTime{FLT_MAX};
 
-    for(const auto& channel : gltfAnimation.channels)
+    for(size_t i{0}; i < gltfAnimation.channels_size; ++i) //const auto& channel : gltfAnimation.channels)
     {
-        GLfloat* fp_times = (GLfloat*)channel.sampler.input->data.data();
-        int numKeyFrames{static_cast<int>(channel.sampler.input->data.size()) / 4};
-        GLfloat* fp = (GLfloat*)channel.sampler.output->data.data();
+        const gltf::Channel& channel = gltfAnimation.channels[i];
+        GLfloat* fp_times = (GLfloat*)channel.sampler.input->data;
+        int numKeyFrames{static_cast<int>(channel.sampler.input->data_size) / 4};
+        GLfloat* fp = (GLfloat*)channel.sampler.output->data;
         lix::SkinAnimation::Channel& ch = anim->channels().emplace_back();
 
         minTime = std::min(minTime, fp_times[0]);
@@ -228,28 +232,28 @@ std::shared_ptr<lix::SkinAnimation> gltf::loadAnimation(lix::Node* armatureNode,
         }
 
         ch.setNode(armatureNode->find(channel.targetNode->name));
-        for(int i{0}; i < numKeyFrames; ++i)
+        for(int j{0}; j < numKeyFrames; ++j)
         {
-            float t = fp_times[i];
+            float t = fp_times[j];
             int n;
             glm::vec3 v;
             glm::quat q;
             switch(ch.type())
             {
                 case lix::SkinAnimation::Channel::TRANSLATION:
-                    n = 3 * i;
+                    n = 3 * j;
                     v = glm::vec3{fp[0 + n], fp[1 + n], fp[2 + n]};
                     //ch.node()->setTranslation(v);
                     ch.translations().emplace(t, v);
                     break;
                 case lix::SkinAnimation::Channel::ROTATION:
-                    n = 4 * i;
+                    n = 4 * j;
                     q = glm::quat{fp[3 + n], fp[0 + n], fp[1 + n], fp[2 + n]};
                     //ch.node()->setRotation(q);
                     ch.rotations().emplace(t, q);
                     break;
                 case lix::SkinAnimation::Channel::SCALE:
-                    n = 3 * i;
+                    n = 3 * j;
                     v = glm::vec3{fp[0 + n], fp[1 + n], fp[2 + n]};
                     //ch.node()->setScale(v);
                     ch.scales().emplace(t, v);
@@ -271,21 +275,22 @@ std::vector<glm::vec3> gltf::loadVertexPositions(const gltf::Mesh& mesh)
 {
     std::vector<glm::vec3> vertexPositions;
 
-    for(const auto& primitive : mesh.primitives)
+    for(size_t i{0}; i < mesh.primitives_size; ++i)//(const auto& primitive : mesh.primitives)
     {
+        const Primitive& primitive = mesh.primitives[i];
         assert(primitive.indices->componentType == GL_UNSIGNED_SHORT);
         std::vector<GLushort> indices = toVector<GLushort>(*primitive.indices);
         vertexPositions.resize(indices.size());
-        std::vector<GLfloat> positions = toVector<GLfloat>(*primitive.attributes.at(0));
+        std::vector<GLfloat> positions = toVector<GLfloat>(*primitive.attributes[0]);
 
-        for(size_t i{0}; i < indices.size(); ++i)
+        for(size_t j{0}; j < indices.size(); ++j)
         {
-            auto idx = indices[i];
-            vertexPositions[i].x = positions[idx * 3 + 0];
-            vertexPositions[i].y = positions[idx * 3 + 1];
-            vertexPositions[i].z = positions[idx * 3 + 2];
+            auto idx = indices[j];
+            vertexPositions[j].x = positions[idx * 3 + 0];
+            vertexPositions[j].y = positions[idx * 3 + 1];
+            vertexPositions[j].z = positions[idx * 3 + 2];
         }
-        break; // first primitive only!
+        //break; // first primitive only!
     }
     return vertexPositions;
 }

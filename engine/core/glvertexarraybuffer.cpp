@@ -27,6 +27,29 @@ lix::VertexArrayBuffer::VertexArrayBuffer(GLenum usage,
 }
 
 lix::VertexArrayBuffer::VertexArrayBuffer(GLenum usage,
+            const lix::Attributes& attributes,
+            GLuint byteLength,
+            GLuint componentSize,
+            const void* data,
+            GLuint layoutOffset,
+            GLuint attribDivisor,
+            GLuint componentType)
+    : lix::Buffer{GL_ARRAY_BUFFER, usage},
+    _attributes{attributes},
+    _layoutOffset{layoutOffset},
+    _attribDivisor{attribDivisor},
+    _componentType{componentType}
+{
+    this->bind(); // call to virtual in ctor
+    if(byteLength > 0)
+    {
+        this->bufferData(byteLength, componentSize, data);
+    }
+    linkAttributes();
+    glEnableVertexAttribArray(0);
+}
+
+lix::VertexArrayBuffer::VertexArrayBuffer(GLenum usage,
     const lix::Attributes& attributes,
     const std::vector<GLfloat>& vertices,
     GLuint layoutOffset,

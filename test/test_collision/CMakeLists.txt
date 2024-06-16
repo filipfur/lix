@@ -3,12 +3,18 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-project(test_collision)
+set(target_name test_collision)
+
+project(${target_name})
 
 file(GLOB GEN_SOURCES ../gen/*/*.cpp)
 
-add_executable(test_collision test_collision.cpp ${GEN_SOURCES})
-target_include_directories(test_collision PRIVATE ..)
-target_link_libraries(test_collision PRIVATE engine)
+add_executable(${target_name} test_collision.cpp ${GEN_SOURCES})
+target_include_directories(${target_name} PRIVATE ..)
+target_link_libraries(${target_name} PRIVATE engine)
 
-install(TARGETS test_collision DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/deploy)
+if(MSVC)
+    copy_ext_dll(${target_name})
+endif()
+
+install(TARGETS ${target_name} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/deploy)

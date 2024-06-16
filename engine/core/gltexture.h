@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdexcept>
 #include <memory>
 #include <string>
 #include "glelement.h"
@@ -11,7 +12,11 @@ namespace lix
 	class Texture : public Element
 	{
 	public:
+		Texture(unsigned int width, unsigned int height, GLenum type=GL_UNSIGNED_BYTE,
+			GLenum internalFormat=GL_RGBA, GLenum colorFormat=GL_RGBA);
 		Texture(unsigned char* bytes, unsigned int width, unsigned int height, GLenum type=GL_UNSIGNED_BYTE,
+			GLenum internalFormat=GL_RGBA, GLenum colorFormat=GL_RGBA);
+		Texture(const unsigned char* bytes, unsigned int width, unsigned int height, GLenum type=GL_UNSIGNED_BYTE,
 			GLenum internalFormat=GL_RGBA, GLenum colorFormat=GL_RGBA);
 		virtual ~Texture() noexcept;
 
@@ -29,6 +34,7 @@ namespace lix
 		virtual Texture* unbind() override;
 
 		void texImage2D(unsigned char* bytes);
+		void texImage2D(const unsigned char* bytes);
 
 		int width() const;
 		int height() const;

@@ -4,12 +4,37 @@
 
 #include "glerror.h"
 
-lix::Texture::Texture(unsigned char* bytes, unsigned int width, unsigned int height, GLenum type,
+lix::Texture::Texture(unsigned int width, unsigned int height, GLenum type,
     GLenum internalFormat, GLenum colorFormat)
     : _width{width}, _height{height}, _type{type}, _internalFormat{internalFormat},
         _colorFormat{colorFormat}
 {
     glGenTextures(1, &_id);
+    static unsigned char* nuller = nullptr;
+    bind(_active);
+    texImage2D(nuller);
+    errorCheck();
+    setUnpackAlignment();
+    setFilter()->setWrap();
+    unbind();
+}
+
+lix::Texture::Texture(unsigned char* bytes, unsigned int width, unsigned int height, GLenum type,
+    GLenum internalFormat, GLenum colorFormat)
+    : Texture{width, height, type, internalFormat, colorFormat}
+{
+    bind(_active);
+    texImage2D(bytes);
+    errorCheck();
+    setUnpackAlignment();
+    setFilter()->setWrap();
+    unbind();
+}
+
+lix::Texture::Texture(const unsigned char* bytes, unsigned int width, unsigned int height, GLenum type,
+    GLenum internalFormat, GLenum colorFormat)
+    : Texture{width, height, type, internalFormat, colorFormat}
+{
     bind(_active);
     texImage2D(bytes);
     errorCheck();
@@ -100,6 +125,12 @@ lix::Texture* lix::Texture::unbind()
 }
 
 void lix::Texture::texImage2D(unsigned char* bytes)
+{
+    assert(_bound[_active - GL_TEXTURE0] == this);
+    glTexImage2D(GL_TEXTURE_2D, 0, _internalFormat, _width, _height, 0, _colorFormat, _type, bytes);
+}
+
+void lix::Texture::texImage2D(const unsigned char* bytes)
 {
     assert(_bound[_active - GL_TEXTURE0] == this);
     glTexImage2D(GL_TEXTURE_2D, 0, _internalFormat, _width, _height, 0, _colorFormat, _type, bytes);

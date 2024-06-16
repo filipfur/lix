@@ -128,8 +128,11 @@ int edgeCase(lix::Shape& shapeA, lix::Shape& shapeB, std::vector<glm::vec3>& sim
     }
     if(C_dist < 1.0e-5f)
     {
-        collision->collisionNormal = glm::normalize(-C);
-        collision->penetrationDepth = glm::sqrt(C_dist);
+        if(collision)
+        {
+            collision->collisionNormal = glm::normalize(-C);
+            collision->penetrationDepth = glm::sqrt(C_dist);
+        }
         return 1;
     }
 
@@ -286,8 +289,8 @@ bool lix::gjk(Shape& shapeA, Shape& shapeB, std::vector<glm::vec3>& simplex,
             rval = tetrahedronCase(shapeA, shapeB, simplex, collision);
             break;
         default:
-            exit(1);
             rval = -1;
+            exit(1);
             break;
         }
     }

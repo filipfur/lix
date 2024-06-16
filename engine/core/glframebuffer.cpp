@@ -135,8 +135,7 @@ void lix::FrameBuffer::bindTexture(GLuint colorAttachment, GLuint textureUnit)
 
 std::shared_ptr<lix::Texture> lix::FrameBuffer::createTexture(GLuint colorAttachment, GLuint internalFormat, GLuint format, GLuint type)
 {
-    std::shared_ptr<lix::Texture> tex = std::make_shared<Texture>(nullptr, _resolution.x, _resolution.y,
-        type, internalFormat, format);
+    std::shared_ptr<lix::Texture> tex = std::make_shared<Texture>(_resolution.x, _resolution.y, type, internalFormat, format);
     glFramebufferTexture2D(GL_FRAMEBUFFER, colorAttachment, GL_TEXTURE_2D, tex->id(), 0);
     checkStatus();
     _textures[colorAttachment] = tex;

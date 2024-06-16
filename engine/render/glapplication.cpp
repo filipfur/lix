@@ -1,5 +1,7 @@
 #include "glapplication.h"
 
+#include <cassert>
+
 lix::Application* context{nullptr};
 
 void lix::Application::loop()
@@ -19,14 +21,14 @@ void lix::Application::loop()
             case SDL_MOUSEBUTTONDOWN:
                 context->handleMouseButtonDown(
                     event.button.button,
-                    SDL_GetModState(),
+                    static_cast<lix::KeyMod>(SDL_GetModState()),
                     static_cast<float>(event.button.x),
                     static_cast<float>(event.button.y));
                 break;
             case SDL_MOUSEBUTTONUP:
                 context->handleMouseButtonUp(
                     event.button.button,
-                    SDL_GetModState(),
+                    static_cast<lix::KeyMod>(SDL_GetModState()),
                     static_cast<float>(event.button.x),
                     static_cast<float>(event.button.y));
                 break;
@@ -71,25 +73,9 @@ void lix::Application::loop()
 }
 
 lix::Application::Application(int windowX, int windowY, const char* title)
-    : _windowSize{static_cast<float>(windowX), static_cast<float>(windowY)}, _mousePosition{}
+    : _title{title}, _windowSize{static_cast<float>(windowX), static_cast<float>(windowY)}, _mousePosition{}
 {
-    SDL_Init(SDL_INIT_EVERYTHING);
-#if __EMSCRIPTEN__
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-#else
-    //SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-#endif
 
-    _window = SDL_CreateWindow(title, 0, 0, windowX, windowY, SDL_WINDOW_OPENGL);
-    _glContext = SDL_GL_CreateContext(_window);
-
-    glewExperimental = GL_TRUE;
-    glewInit();
 }
 
 SDL_Window* lix::Application::window() const { return _window; }
@@ -183,6 +169,25 @@ lix::Application::DragHandler* lix::Application::getDragHandler(KeySym key)
 
 void lix::Application::run(bool forever)
 {
+    SDL_Init(SDL_INIT_EVERYTHING);
+#if __EMSCRIPTEN__
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+#else
+    //SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+#endif
+
+    _window = SDL_CreateWindow(_title, 0, 0, static_cast<int>(_windowSize.x), static_cast<int>(_windowSize.y), SDL_WINDOW_OPENGL);
+    _glContext = SDL_GL_CreateContext(_window);
+    assert(SDL_GL_MakeCurrent(_window, _glContext) == 0);
+
+    glewExperimental = GL_TRUE;
+    glewInit();
+
     context = this;
     this->init();
 #if __EMSCRIPTEN__
@@ -214,7 +219,7 @@ void lix::Application::handleMouseMotion(float x, float y)
     }
 }
 
-void lix::Application::handleMouseButtonDown(lix::KeySym button, lix::KeySym mod, float x, float y)
+void lix::Application::handleMouseButtonDown(lix::KeySym button, lix::KeyMod mod, float x, float y)
 {
     _mousePosition.x = x;
     _mousePosition.y = y;
@@ -230,7 +235,7 @@ void lix::Application::handleMouseButtonDown(lix::KeySym button, lix::KeySym mod
     _stickyMod = mod;
 }
 
-void lix::Application::handleMouseButtonUp(lix::KeySym button, lix::KeySym mod, float x, float y)
+void lix::Application::handleMouseButtonUp(lix::KeySym button, lix::KeyMod mod, float x, float y)
 {
     _mousePosition.x = x;
     _mousePosition.y = y;

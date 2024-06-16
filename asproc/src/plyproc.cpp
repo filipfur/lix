@@ -1,5 +1,6 @@
 #include "plyproc.h"
 
+#include <cstring>
 #include <sstream>
 #include "glm/glm.hpp"
 #include "gltftypes.h"
@@ -78,30 +79,41 @@ void procPlyFile(fs::path filePath, fs::path outputDir)
         }
     }
 
+
     std::list<gltf::Buffer> buffers;
     gltf::Buffer& vertexBuffer = buffers.emplace_back();
     vertexBuffer.componentType = 5126;
     vertexBuffer.index = 0;
     vertexBuffer.target = 34962;
     vertexBuffer.type = gltf::Buffer::VEC3;
-    vertexBuffer.data = toVector<unsigned char>(vertices);
+    vertexBuffer.data = (unsigned char*)vertices.data();
+    vertexBuffer.data_size = vertices.size() * sizeof(glm::vec3);
 
     gltf::Buffer& indexBuffer = buffers.emplace_back();
     indexBuffer.componentType = 5123;
     indexBuffer.index = 1;
     indexBuffer.target = 34963;
     indexBuffer.type = gltf::Buffer::SCALAR;
-    indexBuffer.data = toVector<unsigned char>(indices);
+    indexBuffer.data = (unsigned char*)indices.data();
+    indexBuffer.data_size = indices.size();
 
     std::string sceneName = filePath.filename().string();
     sceneName = sceneName.substr(0, sceneName.find('.'));
 
     gltf::Mesh mesh;
     mesh.name = sceneName;
-    gltf::Primitive& primitive = mesh.primitives.emplace_back();
-    primitive.attributes.push_back(&vertexBuffer);
+
+    std::vector<gltf::Primitive> primitives;
+    gltf::Primitive& primitive = primitives.emplace_back();
+
+    const gltf::Buffer* attr_bufs[] = { &vertexBuffer };
+
+    primitive.attributes = attr_bufs;
+    primitive.attributes_size = 1;
     primitive.indices = &indexBuffer;
 
+    mesh.primitives = primitives.data();
+    mesh.primitives_size = primitives.size();
 
     { // export .cpp
         const std::string cppFile = (sceneName + ".cpp");
@@ -115,7 +127,7 @@ void procPlyFile(fs::path filePath, fs::path outputDir)
         {
             ofs << delim;
             delim = ",\n";
-            exportBuffer(buffer, ofs, "    ");
+            //exportBuffer(buffer, ofs, "    "); TODO: Fixme
         }
         ofs << "\n};\n";
 

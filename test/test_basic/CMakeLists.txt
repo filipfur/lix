@@ -3,12 +3,18 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-project(test_basic)
+set(target_name test_basic)
 
-file(GLOB GEN_SOURCES ../gen/*/*.cpp)
+project(${target_name})
 
-add_executable(test_basic test.cpp ${GEN_SOURCES})
-target_include_directories(test_basic PRIVATE ..)
-target_link_libraries(test_basic PRIVATE engine)
+file(GLOB GEN_SOURCES ../gen/shaders/object_vert.cpp ../gen/objects/cube.cpp)
 
-install(TARGETS test_basic DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/deploy)
+add_executable(${target_name} test.cpp ${GEN_SOURCES})
+target_include_directories(${target_name} PRIVATE ..)
+target_link_libraries(${target_name} PRIVATE engine)
+
+if(MSVC)
+    copy_ext_dll(${target_name})
+endif()
+
+install(TARGETS ${target_name} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/deploy)

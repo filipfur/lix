@@ -2,6 +2,7 @@
 
 #include <set>
 #include <list>
+#include <algorithm>
 
 #include "glm/gtc/random.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
@@ -212,28 +213,28 @@ lix::Convex_Hull::Convex_Hull(const std::vector<glm::vec3>& points)
             //assert(he->opposite == nullptr);
             if(prev)
             {
-                const glm::vec3& A = he->vertex;
-                const glm::vec3& B = prev->vertex;
-                const glm::vec3& C = p;
+                const glm::vec3& U = he->vertex;
+                const glm::vec3& V = prev->vertex;
+                const glm::vec3& W = p;
                 
-                const glm::vec3 AB = B - A;
-                const glm::vec3 AC = C - A;
-                const glm::vec3 ABC = glm::normalize(glm::cross(AB, AC));
+                const glm::vec3 UV = V - U;
+                const glm::vec3 UW = W - U;
+                const glm::vec3 UVW = glm::normalize(glm::cross(UV, UW));
 
-                auto& abc = _faces.emplace_back(glm::normalize(ABC));
+                auto& uvw = _faces.emplace_back(glm::normalize(UVW));
 
-                auto ab = new Half_Edge(A, &abc);
-                auto bc = new Half_Edge(B, &abc);
-                auto ca = new Half_Edge(C, &abc);
+                auto uv = new Half_Edge(A, &uvw);
+                auto vw = new Half_Edge(B, &uvw);
+                auto wu = new Half_Edge(C, &uvw);
 
                 //printf("prev link: <%d> : f%d\n", prev->id, prev->face->id);
-                connect(ab, bc, prev, &abc);
-                prev->opposite = ab;
-                connect(bc, ca, nullptr, &abc);
-                connect(ca, ab, nullptr, &abc);
+                connect(uv, vw, prev, &uvw);
+                prev->opposite = uv;
+                connect(vw, wu, nullptr, &uvw);
+                connect(wu, uv, nullptr, &uvw);
 
-                newFaces.push_back(&abc);
-                Q.push_back(&abc);
+                newFaces.push_back(&uvw);
+                Q.push_back(&uvw);
             }
             prev = he;
             he = he->next;
@@ -306,7 +307,7 @@ void lix::Convex_Hull::mesh_data(std::vector<float>& points, std::vector<unsigne
             face.half_edge->next->next->vertex.z,
         });
 
-        unsigned int i = indices.size();
+        unsigned int i = static_cast<unsigned int>(indices.size());
         indices.insert(indices.end(), {
             i,
             i + 1,

@@ -88,6 +88,31 @@ std::shared_ptr<lix::VertexArrayBuffer> lix::VertexArray::createVbo(GLenum usage
 }
 
 std::shared_ptr<lix::VertexArrayBuffer> lix::VertexArray::createVbo(GLenum usage,
+            const lix::Attributes& attributes,
+            GLuint byteLength,
+            GLuint componentSize,
+            const void* data,
+            int attribDivisor,
+            GLuint componentType)
+{
+    int layoutOffset{0};
+    for(auto vao : _vbos)
+    {
+        layoutOffset += vao->layouts();
+    }
+    auto vbo = std::make_shared<lix::VertexArrayBuffer>(usage,
+        attributes,
+        byteLength,
+        componentSize,
+        data,
+        layoutOffset,
+        attribDivisor,
+        componentType);
+    _vbos.push_back(vbo);
+    return vbo;
+}
+
+std::shared_ptr<lix::VertexArrayBuffer> lix::VertexArray::createVbo(GLenum usage,
     const lix::Attributes& attributes,
     const std::vector<GLfloat>& vertices,
     int attribDivisor)

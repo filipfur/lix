@@ -55,7 +55,9 @@ App::App(int windowX, int windowY, const char* title) : Application{windowX, win
 
 void App::init()
 {
-
+    printf("OpenGL %s, GLSL %s\n", 
+                 glGetString(GL_VERSION),
+                 glGetString(GL_SHADING_LANGUAGE_VERSION));
 }
 
 void App::tick(float dt)
@@ -65,14 +67,20 @@ void App::tick(float dt)
 
 void App::draw()
 {
-    static lix::VAO vao{
-        lix::Attributes{lix::VEC3, lix::VEC3},
-        {
-            0.0f, 1.0f, 0.0f,   1.0f, 0.0f, 0.0f,
-            -1.0f, -1.0f, 0.0f,   0.0f, 1.0f, 0.0f,
-            1.0f, -1.0f, 0.0f,   0.0f, 0.0f, 1.0f,
-        }
-    };
+    static std::shared_ptr<lix::VAO> vao;
+    static bool timeToInit{true};
+    if(timeToInit)
+    {
+        vao.reset(new lix::VAO {
+            lix::Attributes{lix::VEC3, lix::VEC3},
+            {
+                0.0f, 1.0f, 0.0f,   1.0f, 0.0f, 0.0f,
+                -1.0f, -1.0f, 0.0f,   0.0f, 1.0f, 0.0f,
+                1.0f, -1.0f, 0.0f,   0.0f, 0.0f, 1.0f,
+            }
+        });
+        timeToInit = false;
+    }
 
     static lix::ShaderProgram shaderProgram{
         LIX_SHADER_VERSION R"(
@@ -131,14 +139,14 @@ void main()
     static std::shared_ptr<lix::Texture> texture = lix::Texture::Basic(lix::Color::red);
 
     shaderProgram.bind();
-    vao.bind();
-    vao.draw();
+    vao->bind();
+    vao->draw();
 
     texture->bind();
     //texture->setLodBias(0.5f);
     textureShader.bind();
-    vao.bind();
-    vao.draw();
+    vao->bind();
+    vao->draw();
 
     static lix::ShaderProgram objectShader{
         assets::shaders::object_vert,

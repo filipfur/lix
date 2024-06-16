@@ -14,5 +14,5 @@ namespace common
     void log(const std::string& msg);
     std::string variableName(std::string name);
     std::string floatToString(float f);
-    void exportBytes(const std::vector<unsigned char>& bytes, std::ofstream& ofs);
+    void exportBytes(const unsigned char* bytes, size_t length, std::ofstream& ofs);
 }

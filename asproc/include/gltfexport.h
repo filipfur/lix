@@ -38,13 +38,16 @@ inline std::string skinName(const gltf::Skin& skin)
     return common::variableName(skin.name) + "_skin";
 }
 
-void exportBuffer(const gltf::Buffer& buffer, std::ofstream& ofs, const std::string& tab);
+void exportBuffer(const gltf::Buffer& buffer, size_t bufferIndex, size_t offset, std::ofstream& ofs, const std::string& tab);
 
 void exportVec3(std::ofstream& ofs, const glm::vec3& v);
 
 void exportQuat(std::ofstream& ofs, const glm::quat& q);
 
 void exportNode(std::ofstream& ofs, const std::string& scope,
+    const gltf::Node& node);
+
+void exportNodeChildren(std::ofstream& ofs, const std::string& scope,
     const gltf::Node& node);
 
 void exportTexture(std::ofstream& ofs, const std::string& scope, const gltf::Texture& texture);

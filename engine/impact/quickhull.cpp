@@ -167,10 +167,10 @@ void lix::quick_hull(const std::vector<glm::vec3>& points, std::vector<glm::vec3
 
     for(size_t f{0UL}; f < faces.size(); f += 3UL)
     {
-        const glm::vec3& A = vertices.at(faces.at(f));
-        const glm::vec3& B = vertices.at(faces.at(f + 1));
-        const glm::vec3& C = vertices.at(faces.at(f + 2));
-        normals.push_back(glm::cross(B - A, C - A));
+        const glm::vec3& U = vertices.at(faces.at(f));
+        const glm::vec3& V = vertices.at(faces.at(f + 1));
+        const glm::vec3& W = vertices.at(faces.at(f + 2));
+        normals.push_back(glm::cross(V - U, W - U));
     }
 
     std::vector<unsigned int> Q = {0, 1, 2, 3};
@@ -180,7 +180,7 @@ void lix::quick_hull(const std::vector<glm::vec3>& points, std::vector<glm::vec3
         auto face = Q.front();
         Q.erase(Q.begin());
 
-        size_t pIdx = -1;
+        int pIdx = -1;
         float pVal = 0.0f;
         for(size_t i{0UL}; i < P.size(); ++i)
         {
@@ -188,7 +188,7 @@ void lix::quick_hull(const std::vector<glm::vec3>& points, std::vector<glm::vec3
             if(val > pVal)
             {
                 pVal = val;
-                pIdx = i;
+                pIdx = static_cast<int>(i);
             }
         }
         if(pIdx < 0)
@@ -202,11 +202,11 @@ void lix::quick_hull(const std::vector<glm::vec3>& points, std::vector<glm::vec3
         {
             if(glm::dot(normals[i], P[pIdx]) > 0)
             {
-                visibleFaces.push_back(i);
+                visibleFaces.push_back(static_cast<unsigned int>(i));
             }
             else
             {
-                invisibleFaces.push_back(i);
+                invisibleFaces.push_back(static_cast<unsigned int>(i));
             }
         }
         for(unsigned int visible : visibleFaces)

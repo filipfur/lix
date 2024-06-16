@@ -1,6 +1,7 @@
 #include "objectproc.h"
 
 #include <list>
+#include <vector>
 #include <unordered_set>
 #include <algorithm>
 
@@ -24,7 +25,9 @@ namespace
 void exportSceneDefinition(const gltf::Scene& scene, const std::string& sceneName,
     const fs::path& outputDir,
     std::list<gltf::Texture>& textures, std::list<gltf::Material>& materials,
-    std::list<gltf::Buffer>& buffers, std::list<gltf::Mesh>& meshes,
+    std::list<std::vector<char>>& buffers,
+     std::list<std::pair<gltf::Buffer,std::pair<size_t, size_t>>>& bufferViews,
+    std::list<gltf::Mesh>& meshes,
     std::list<gltf::Node>& nodes, std::list<gltf::Animation>& animations,
     std::list<gltf::Skin>& skins)
 {
@@ -33,13 +36,23 @@ void exportSceneDefinition(const gltf::Scene& scene, const std::string& sceneNam
     const std::string scope = "assets::objects::" + sceneName + "::";
     ofs << "#include \"" << sceneName << ".h\"\n";
 
-    ofs << "gltf::Buffer " << scope << "buffers[" << buffers.size() << "] = {\n";
-    std::string delim{""};
-    for(const auto& buffer : buffers)
+    
+    int idx{0};
+    for(const auto& buf : buffers)
     {
+        ofs << "static unsigned char binaryData" << idx << "[] = {\n";
+        common::exportBytes((const unsigned char*)buf.data(), buf.size(), ofs);
+        ofs << "\n};\n";
+    }
+
+    ofs << "const gltf::Buffer " << scope << "buffers[] = {\n";
+    std::string delim{""};
+    for(const auto& pair : bufferViews)
+    {
+        const gltf::Buffer& buffer = pair.first;        
         ofs << delim;
         delim = ",\n";
-        exportBuffer(buffer, ofs, "    ");
+        exportBuffer(buffer, pair.second.first, pair.second.second, ofs, "    ");
     }
     ofs << "\n};\n";
     for(const auto& tex : textures)
@@ -58,6 +71,10 @@ void exportSceneDefinition(const gltf::Scene& scene, const std::string& sceneNam
     {
         exportNode(ofs, scope, node);
     }
+    /*for(const auto& node : nodes)
+    {
+        exportNodeChildren(ofs, scope, node);
+    }*/
     for(const auto& animation : animations)
     {
         exportAnimation(ofs, scope, animation);
@@ -67,18 +84,21 @@ void exportSceneDefinition(const gltf::Scene& scene, const std::string& sceneNam
         exportSkin(ofs, scope, skin);
     }
 
-    ofs << "gltf::Scene " << scope << common::variableName(scene.name) << "_scene {\n"
-        << "    \"" << scene.name << "\",\n"
-        << "    {\n";
+    ofs << "static const gltf::Node* " << common::variableName(scene.name) << "_nodes[] = {\n";
     std::string nodeDelim{""};
-    for(gltf::Node* node : scene.nodes)
+    for(size_t i{0}; i < scene.nodes_size; ++i)
     {
         ofs << nodeDelim;
         nodeDelim = ",\n";
-        ofs << "        &" << scope << nodeName(*node);
+        ofs << "        &" << scope << nodeName(*scene.nodes[i]);
         //moveme exportNode(ofs, *node, nullptr, scope, "        ");
     };
-    ofs << "\n    }\n";
+    ofs << "\n};\n";
+
+    ofs << "const gltf::Scene " << scope << common::variableName(scene.name) << "_scene {\n"
+        << "    \"" << scene.name << "\",\n"
+        << "    " << common::variableName(scene.name) << "_nodes,\n"
+        << "    " << scene.nodes_size << "\n";
     ofs << "};\n";
 
     ofs.flush();
@@ -89,8 +109,8 @@ void exportSceneDefinition(const gltf::Scene& scene, const std::string& sceneNam
 void exportSceneHeader(const gltf::Scene& scene, const std::string& sceneName,
     const fs::path& outputDir,
     std::list<gltf::Texture>& textures, std::list<gltf::Material>& materials,
-    std::list<gltf::Buffer>& buffers, std::list<gltf::Mesh>& meshes,
-    std::list<gltf::Node>& nodes, std::list<gltf::Animation>& animations,
+    std::list<gltf::Mesh>& meshes, std::list<gltf::Node>& nodes,
+    std::list<gltf::Animation>& animations,
     std::list<gltf::Skin>& skins)
 {
     const std::string headerFile = (sceneName + ".h");
@@ -100,37 +120,37 @@ void exportSceneHeader(const gltf::Scene& scene, const std::string& sceneName,
         << "#include \"gltftypes.h\"\n"
         << "namespace assets {\n"
         << "    namespace objects {\n"
-        << "    struct "
+        << "    namespace "
         << sceneName << " {\n";
 
-    ofs << "    static gltf::Buffer buffers[" << buffers.size() << "];\n";
+    ofs << "    extern const gltf::Buffer buffers[];\n";
 
     for(const auto& tex : textures)
     {
-        ofs << "    static gltf::Texture " << textureName(tex) << ";\n";
+        ofs << "    extern const gltf::Texture " << textureName(tex) << ";\n";
     }
     for(const auto& mat : materials)
     {
-        ofs << "    static gltf::Material " << materialName(mat) << ";\n";
+        ofs << "    extern const gltf::Material " << materialName(mat) << ";\n";
     }
     for(const auto& mesh : meshes)
     {
-        ofs << "    static gltf::Mesh " << meshName(mesh) << ";\n";
+        ofs << "    extern const gltf::Mesh " << meshName(mesh) << ";\n";
     }
     for(const auto& node : nodes)
     {
-        ofs << "    static gltf::Node " << nodeName(node) << ";\n";
+        ofs << "    extern const gltf::Node " << nodeName(node) << ";\n";
     }
     for(const auto& animation : animations)
     {
-        ofs << "    static gltf::Animation " << animationName(animation) << ";\n";
+        ofs << "    extern const gltf::Animation " << animationName(animation) << ";\n";
     }
     for(const auto& skin : skins)
     {
-        ofs << "    static gltf::Skin " << skinName(skin) << ";\n";
+        ofs << "    extern const gltf::Skin " << skinName(skin) << ";\n";
     }
-    ofs << "    static gltf::Scene " << common::variableName(scene.name) << "_scene" << ";\n";
-    ofs << "    };\n    }}\n";
+    ofs << "    extern const gltf::Scene " << common::variableName(scene.name) << "_scene" << ";\n";
+    ofs << "    }\n    }\n}\n";
 
     ofs.flush();
     ofs.close();
@@ -142,6 +162,7 @@ void loadTextures(const json::Json& obj,
     std::list<gltf::Texture>& textures,
     bool convertToSrgb)
 {
+    static std::list<std::vector<unsigned char>> textureData;
     if(obj.contains("textures"))
     {
         for(const auto& texObj : obj["textures"])
@@ -178,6 +199,8 @@ void loadTextures(const json::Json& obj,
                 }
             }
 
+            std::vector<unsigned char>& texData = textureData.emplace_back(data, data + byteSize);
+
             textures.push_back({
                 imgObj["name"].value(),
                 samplerObj["magFilter"].toInt(),
@@ -185,7 +208,8 @@ void loadTextures(const json::Json& obj,
                 width,
                 height,
                 channels,
-                std::vector<unsigned char>(data, data + byteSize)
+                texData.data(),
+                texData.size()
             });
             imageproc::freeImage(data);
         }
@@ -246,14 +270,13 @@ void loadMaterials(const json::Json& obj, std::list<gltf::Texture>& textures,
     }
 }
 
-void loadBuffers(const json::Json& obj, const fs::path& filePath, std::list<gltf::Buffer>& buffers)
+void loadBuffers(const json::Json& obj, const fs::path& filePath, std::list<std::vector<char>>& buffers, std::list<std::pair<gltf::Buffer,std::pair<size_t, size_t>>>& bufferViews)
 {
-    std::list<std::vector<char>> bufs;
     for(const auto& bufObj : obj["buffers"])
     {
         std::ifstream binIfs{filePath.parent_path() / bufObj["uri"].value(), std::ios::binary};
         const int byteLength = bufObj["byteLength"].toInt();
-        std::vector<char>& buf = bufs.emplace_back(byteLength);
+        std::vector<char>& buf = buffers.emplace_back(byteLength);
         binIfs.read(buf.data(), byteLength);
         assert(static_cast<size_t>(byteLength) == buf.size());
     }
@@ -261,7 +284,8 @@ void loadBuffers(const json::Json& obj, const fs::path& filePath, std::list<gltf
     size_t i{0};
     for(const auto& acObj : obj["accessors"])
     {
-        gltf::Buffer& buffer = buffers.emplace_back();
+        std::pair<gltf::Buffer, std::pair<size_t, size_t>>& pair = bufferViews.emplace_back();
+        gltf::Buffer& buffer = pair.first;
         buffer.index = i;
         const auto& bvObj = obj["bufferViews"][i];
         assert(acObj["bufferView"].toUint() == i);
@@ -273,8 +297,9 @@ void loadBuffers(const json::Json& obj, const fs::path& filePath, std::list<gltf
         {
             buffer.target = 0;
         }
-        std::list<std::vector<char>>::iterator bufIt = bufs.begin();
-        std::advance(bufIt, bvObj["buffer"].toInt());
+        std::list<std::vector<char>>::iterator bufIt = buffers.begin();
+        size_t bufferIndex = static_cast<size_t>(bvObj["buffer"].toInt());
+        std::advance(bufIt, bufferIndex);
 
         buffer.componentType = acObj["componentType"].toInt();
 
@@ -307,23 +332,19 @@ void loadBuffers(const json::Json& obj, const fs::path& filePath, std::list<gltf
         int a = bvObj["byteOffset"].toInt();
         int numBytes = bvObj["byteLength"].toInt();
         int b = a + numBytes;
-        buffer.data.insert(buffer.data.end(), bufIt->begin() + a, bufIt->begin() + b);
+        //buffer.data.insert(buffer.data.end(), bufIt->begin() + a, bufIt->begin() + b);
+        pair.second.first = bufferIndex;
+        pair.second.second = static_cast<size_t>(a);
+        buffer.data_size = static_cast<size_t>(numBytes);
         ++i;
     }
 }
 
-void copyBuffer(gltf::Buffer& a, const gltf::Buffer& b)
-{
-    a.componentType = b.componentType;
-    a.data.reserve(b.data.size());
-    a.data.insert(a.data.end(), b.data.begin(), b.data.end());
-    a.target = b.target;
-    a.type = b.type;
-}
-
-void loadMeshes(const json::Json& obj, std::list<gltf::Buffer>& buffers,
+void loadMeshes(const json::Json& obj, std::list<std::pair<gltf::Buffer,std::pair<size_t, size_t>>>& bufferViews,
     std::list<gltf::Material>& materials, std::list<gltf::Mesh>& meshes)
 {
+    static std::list<std::vector<gltf::Primitive>> primitiveData;
+    static std::list<std::vector<const gltf::Buffer*>> attributesData;
     if(obj.contains("meshes"))
     {
         for(const auto& meshObj : obj["meshes"])
@@ -331,25 +352,31 @@ void loadMeshes(const json::Json& obj, std::list<gltf::Buffer>& buffers,
             gltf::Mesh& mesh = meshes.emplace_back();
             mesh.name = meshObj["name"];
 
+            std::vector<gltf::Primitive>& primD = primitiveData.emplace_back();
+
             for(const auto& primitiveObj : meshObj["primitives"])
             {
-                gltf::Primitive& primitive = mesh.primitives.emplace_back();
+                gltf::Primitive& primitive = primD.emplace_back();
                 const auto& attribObj = primitiveObj["attributes"];
                 static const std::string labels[] = {
                     "POSITION", "NORMAL", "TEXCOORD_0", "JOINTS_0", "WEIGHTS_0"
                 };
+                std::vector<const gltf::Buffer*>& aData = attributesData.emplace_back();
                 for(const std::string& label : labels)
                 {
                     if(attribObj.contains(label))
                     {
-                        primitive.attributes.push_back(&elementAt(buffers,
-                            attribObj[label].toUint()));
+                        aData.push_back(&elementAt(bufferViews,
+                            attribObj[label].toUint()).first);
                     }
                 }
+
+                primitive.attributes = aData.data();
+                primitive.attributes_size = aData.size();
                 
                 if(primitiveObj.contains("indices")) {
-                    primitive.indices = &elementAt(buffers, static_cast<size_t>(
-                        primitiveObj["indices"].toInt()));
+                    primitive.indices = &elementAt(bufferViews, static_cast<size_t>(
+                        primitiveObj["indices"].toInt())).first;
                 }
                 if(primitiveObj.contains("material")) {
                     primitive.material = &elementAt(materials, static_cast<size_t>(
@@ -359,17 +386,23 @@ void loadMeshes(const json::Json& obj, std::list<gltf::Buffer>& buffers,
                     primitive.material = nullptr;
                 }
             }
+
+            mesh.primitives = primD.data();
+            mesh.primitives_size = primD.size();
         }
     }
 }
 
-void loadAnimations(const json::Json& obj, std::list<gltf::Buffer>& buffers,
+void loadAnimations(const json::Json& obj, std::list<std::pair<gltf::Buffer,std::pair<size_t, size_t>>>& bufferViews,
    std::list<gltf::Node>& nodes, std::list<gltf::Animation>& animations)
 {
     if(!obj.contains("animations"))
     {
         return;
     }
+
+    static std::list<std::vector<gltf::Channel>> channelData;
+
     for(const auto& animObj : obj["animations"])
     {
         gltf::Animation& animation = animations.emplace_back();
@@ -392,14 +425,15 @@ void loadAnimations(const json::Json& obj, std::list<gltf::Buffer>& buffers,
             }
             gltf::Sampler& sampler = samplers.emplace_back();
             sampler.interpolation = interp;
-            sampler.input = &elementAt(buffers, static_cast<size_t>(
-                        sampObj["input"].toInt()));
-            sampler.output = &elementAt(buffers, static_cast<size_t>(
-                        sampObj["output"].toInt()));
+            sampler.input = &elementAt(bufferViews, static_cast<size_t>(
+                        sampObj["input"].toInt())).first;
+            sampler.output = &elementAt(bufferViews, static_cast<size_t>(
+                        sampObj["output"].toInt())).first;
         }
+        std::vector<gltf::Channel>& cData = channelData.emplace_back();
         for(const auto& chanObj : animObj["channels"])
         {
-            gltf::Channel& channel = animation.channels.emplace_back();
+            gltf::Channel& channel = cData.emplace_back();
             gltf::Sampler& sampler = elementAt(samplers,
                 static_cast<size_t>(chanObj["sampler"].toInt()));
             channel.sampler.interpolation = sampler.interpolation;
@@ -410,6 +444,8 @@ void loadAnimations(const json::Json& obj, std::list<gltf::Buffer>& buffers,
             );
             channel.targetPath = chanObj["target"]["path"].value();
         }
+        animation.channels = cData.data();
+        animation.channels_size = cData.size();
     }
 }
 
@@ -467,43 +503,52 @@ void loadNodes(const json::Json& obj, std::list<gltf::Mesh>& meshes, std::list<g
         node.parent = nullptr;
     }
     auto nodeIt = nodes.begin();
+    static std::list<std::vector<const gltf::Node*>> childData;
     for(const auto& node : obj["nodes"])
     {
         if(node.contains("children"))
         {
+            std::vector<const gltf::Node*>& cData = childData.emplace_back();
             for(const auto& childObj : node["children"])
             {
-                gltf::Node* child = &elementAt(nodes, childObj.toUint());
-                nodeIt->children.push_back(
-                    child
+                cData.push_back(
+                    &elementAt(nodes, childObj.toUint())
                 );
-                assert(child->parent == nullptr);
-                gltf::Node& parent = (*nodeIt);
-                child->parent = &parent;
+                //assert(child->parent == nullptr);
+                //gltf::Node& parent = (*nodeIt);
+                //child->parent = &parent;
             }
+            nodeIt->children = cData.data();
+            nodeIt->children_size = cData.size();
         }
         ++nodeIt;
     }
 }
 
-void loadSkins(const json::Json& obj, std::list<gltf::Buffer>& buffers,
+void loadSkins(const json::Json& obj, std::list<std::pair<gltf::Buffer,std::pair<size_t, size_t>>>& bufferViews,
     std::list<gltf::Node>& nodes, std::list<gltf::Skin>& skins)
 {
     if(!obj.contains("skins"))
     {
         return;
     }
+
+    static std::list<std::vector<const gltf::Node*>> jointsData;
+
     for(const auto& skinObj : obj["skins"])
     {
         gltf::Skin& skin = skins.emplace_back();
 
         skin.name = skinObj["name"].value();
-        skin.inverseBindMatrices = &elementAt(buffers,
-            skinObj["inverseBindMatrices"].toUint());
+        skin.inverseBindMatrices = &elementAt(bufferViews,
+            skinObj["inverseBindMatrices"].toUint()).first;
+        std::vector<const gltf::Node*>& jData = jointsData.emplace_back();
         for(const auto& jointObj : skinObj["joints"])
         {
-            skin.joints.push_back(&elementAt(nodes, jointObj.toUint()));
+            jData.push_back(&elementAt(nodes, jointObj.toUint()));
         }
+        skin.joints = jData.data();
+        skin.joints_size = jData.size();
     }
 }
 
@@ -516,7 +561,8 @@ void procGltf(fs::path filePath, fs::path outputDir, bool convertToSrgb)
 
     std::list<gltf::Texture> textures;
     std::list<gltf::Material> materials;
-    std::list<gltf::Buffer> buffers;
+    std::list<std::vector<char>> buffers;
+    std::list<std::pair<gltf::Buffer,std::pair<size_t, size_t>>> bufferViews;
     std::list<gltf::Mesh> meshes;
     std::list<gltf::Node> nodes;
     std::list<gltf::Animation> animations;
@@ -527,36 +573,42 @@ void procGltf(fs::path filePath, fs::path outputDir, bool convertToSrgb)
     //std::cout << "loading materials" << std::endl;
     loadMaterials(obj, textures, materials);
     //std::cout << "loading buffers" << std::endl;
-    loadBuffers(obj, filePath, buffers);
+    loadBuffers(obj, filePath, buffers, bufferViews);
     //std::cout << "loading meshes" << std::endl;
-    loadMeshes(obj, buffers, materials, meshes);
+    loadMeshes(obj, bufferViews, materials, meshes);
     //std::cout << "loading animations" << std::endl;
     loadNodes(obj, meshes, nodes);
     //std::cout << "loading animations" << std::endl;
-    loadAnimations(obj, buffers, nodes, animations);
+    loadAnimations(obj, bufferViews, nodes, animations);
     //std::cout << "loading skins" << std::endl;
-    loadSkins(obj, buffers, nodes, skins);
+    loadSkins(obj, bufferViews, nodes, skins);
+
+    std::list<std::vector<const gltf::Node*>> sceneNodes;
 
     std::list<gltf::Scene> scenes;
     for(const auto& sceneObj : obj["scenes"])
     {
         gltf::Scene& scene = scenes.emplace_back();
         scene.name = sceneObj["name"].value();
+        auto& scNs = sceneNodes.emplace_back();
         for(const auto& nodeId : sceneObj["nodes"])
         {
-            scene.nodes.push_back(
+            /*scene.nodes.push_back(
                 &elementAt(nodes, nodeId.toUint())
-            );
+            );*/
+            scNs.push_back(&elementAt(nodes, nodeId.toUint()));
         }
+        scene.nodes = scNs.data();
+        scene.nodes_size = scNs.size();
     }
 
     std::string sceneName = filePath.filename().string();
     sceneName = sceneName.substr(0, sceneName.find('.'));
 
     exportSceneDefinition(scenes.front(), sceneName, outputDir,
-        textures, materials, buffers, meshes, nodes, animations, skins);
+        textures, materials, buffers, bufferViews, meshes, nodes, animations, skins);
     exportSceneHeader(scenes.front(), sceneName, outputDir,
-        textures, materials, buffers, meshes, nodes, animations, skins);
+        textures, materials, meshes, nodes, animations, skins);
 }
 
 void objectproc::procObject(fs::path inputDir, fs::path outputDir, bool convertToSrgb)

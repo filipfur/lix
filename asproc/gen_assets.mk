@@ -17,7 +17,7 @@ ASPROC_BIN=$(ASPROC_HOME)/bin/asproc
 
 define create_rule
 gen/objects/$(1).cpp: assets/objects/$(1)/$(1).gltf
-	@ --convert-to-srgb -o assets/objects/$(1) gen/objects
+	@$(ASPROC_BIN) --convert-to-srgb -o assets/objects/$(1) gen/objects
 endef
 
 gen/shaders/%_frag.cpp : assets/shaders/%.frag
@@ -41,7 +41,7 @@ gen/ply/%.cpp : assets/ply/%.ply
 $(foreach subdir,$(AS_OBJECTS),$(eval $(call create_rule,$(subdir))))
 
 .PHONY: gen_assets
-gen_assets: $(AS_OBJECTS_CPP) $(AS_SHADERS_CPP) $(AS_IMAGES_CPP) $(AS_FONTS_CPP) $(AS_PLY_CPP)
+gen_assets: $(AS_OBJECTS_CPP) $(AS_SHADERS_CPP) $(AS_IMAGES_CPP) $(AS_FONTS_CPP)
 	$(info "GENERATED SOURCES!")
 
 .PHONY: gen

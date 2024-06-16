@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.22) 
 
-project(lix_unit_test)
+set(target_name lix_unit_test)
+
+project(${target_name})
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -8,12 +10,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 enable_testing()
 include(CTest)
 
-add_executable(lix_unit_test unit_test_impact.cpp)
-target_include_directories(lix_unit_test PRIVATE ..)
-target_link_libraries(lix_unit_test engine)
+add_executable(${target_name} unit_test_impact.cpp)
+target_include_directories(${target_name} PRIVATE ..)
+target_link_libraries(${target_name} engine)
+
+if(MSVC)
+    copy_ext_dll(${target_name})
+endif()
 
 # define tests
 add_test(
-  NAME lix_unit_test
-  COMMAND $<TARGET_FILE:lix_unit_test>
+  NAME ${target_name}
+  COMMAND $<TARGET_FILE:${target_name}>
   )

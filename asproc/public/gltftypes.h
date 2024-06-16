@@ -17,7 +17,8 @@ namespace gltf
         int width;
         int height;
         int channels;
-        std::vector<unsigned char> data;
+        const unsigned char* data;
+        size_t data_size;
     };
 
     struct Material
@@ -26,7 +27,7 @@ namespace gltf
         glm::vec4 baseColor;
         float metallic;
         float roughness;
-        Texture* baseColorTexture;
+        const Texture* baseColorTexture;
     };
 
     struct Buffer
@@ -35,63 +36,70 @@ namespace gltf
         enum Type { SCALAR, VEC2, VEC3, VEC4, MAT4 } type;
         int target;
         int componentType;
-        std::vector<unsigned char> data;
+        unsigned char* data;
+        size_t data_size;
     };
 
     struct Primitive
     {
-        Material* material;
-        std::vector<Buffer*> attributes;
-        Buffer* indices;
+        const Material* material;
+        const Buffer** attributes;
+        size_t attributes_size;
+        const Buffer* indices;
     };
 
     struct Mesh
     {
         std::string name;
-        std::vector<Primitive> primitives;
+        const Primitive* primitives;
+        size_t primitives_size;
     };
 
     struct Node
     {
         std::string name;
-        Mesh* mesh;
+        const Mesh* mesh;
         glm::vec3 translation;
         glm::quat rotation;
         glm::vec3 scale;
         gltf::Node* parent;
-        std::list<gltf::Node*> children;
+        const gltf::Node** children;
+        size_t children_size;
     };
 
     struct Scene
     {
         std::string name;
-        std::list<Node*> nodes;
+        const Node** nodes;
+        size_t nodes_size;
     };
 
     struct Sampler
     {
         enum Interpolation{STEP, LINEAR} interpolation;
-        Buffer* input;
-        Buffer* output;
+        const Buffer* input;
+        const Buffer* output;
     };
 
     struct Channel
     {
         Sampler sampler;
-        Node* targetNode;
+        const Node* targetNode;
         std::string targetPath;
     };
 
     struct Animation
     {
         std::string name;
-        std::vector<Channel> channels;
+        const Channel* channels;
+        size_t channels_size;
     };
 
     struct Skin
     {
         std::string name;
-        gltf::Buffer* inverseBindMatrices;
-        std::vector<gltf::Node*> joints;
+        const gltf::Buffer* inverseBindMatrices;
+        const gltf::Node** joints;
+        size_t joints_size;
     };
 }

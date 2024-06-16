@@ -40,12 +40,13 @@ std::string common::floatToString(float f)
     return out.str();
 }
 
-void common::exportBytes(const std::vector<unsigned char>& bytes, std::ofstream& ofs)
+void common::exportBytes(const unsigned char* bytes, size_t length, std::ofstream& ofs)
 {
     std::string delim{""};
     std::ios_base::fmtflags f( ofs.flags() );
-    for(unsigned char c : bytes) {
-        ofs << delim << "0x" << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(c);
+    //for(unsigned char c : bytes) {
+    for(size_t i{0}; i < length; ++i) {
+        ofs << delim << "0x" << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(bytes[i]);
         delim = ",";
     }
     ofs.flags( f );

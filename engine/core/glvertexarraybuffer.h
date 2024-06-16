@@ -29,6 +29,16 @@ namespace lix
             GLuint layoutOffset=0,
             GLuint attribDivisor=0,
             GLuint componentType=GL_UNSIGNED_BYTE);
+
+        VertexArrayBuffer(GLenum usage,
+            const lix::Attributes& attributes,
+            GLuint byteLength,
+            GLuint componentSize,
+            const void* data,
+            GLuint layoutOffset=0,
+            GLuint attribDivisor=0,
+            GLuint componentType=GL_UNSIGNED_BYTE);
+
         VertexArrayBuffer(GLenum usage,
             const lix::Attributes& attributes,
             const std::vector<GLfloat>& vertices,

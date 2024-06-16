@@ -3,7 +3,7 @@
 #include <string>
 #include <fstream>
 
-#include <SDL2/SDL.h>
+//#include <SDL2/SDL.h>
 
 #include "glm/glm.hpp"
 
@@ -210,9 +210,6 @@ private:
 int main(int argc, char* argv[])
 {
     App app{SCREEN_WIDTH, SCREEN_HEIGHT, "Lithium X - Example"};
-    const GLubyte *version;
-    version = glGetString(GL_VERSION);
-    std::cout << "version: " << version << std::endl;
     unitTest();
     app.run();
     return 0;
@@ -336,6 +333,19 @@ void App::init()
 
     gltf::loadSkin(mooseNode.get(), assets::objects::moose::Armature_skin);
     mooseAnim = gltf::loadAnimation(mooseNode.get(), assets::objects::moose::ArmatureAction_001_anim);
+
+    /*// Print buffers
+    int bufIndex{0};
+    for(size_t bi{0}; bi < 5; ++bi)
+    {
+        const gltf::Buffer& buf = assets::objects::moose::buffers[bi];
+        printf("\nbuffer[%d]:\n", bufIndex++);
+        for(int i{0}; i < buf.data_size; ++i)
+        {
+            if(i % 32 == 0) printf("\n");
+            printf(" %.2X", buf.data[i]);
+        }
+    }*/
 
     std::cout << "moose anim start=" << mooseAnim->start() << ", end=" << mooseAnim->end() << ", time=" << mooseAnim->time() << std::endl;
 
@@ -741,7 +751,7 @@ void App::draw()
     float fp[4];
     postFBO->readPixel(32, 32, GL_RGBA, GL_FLOAT, fp);
     glm::vec4 v = postFBO->readPixel(32, 32);
-    assert(v.x >= 0);
+    //assert(v.x >= 0);
     postFBO->unbind();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

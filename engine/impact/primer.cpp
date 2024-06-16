@@ -63,7 +63,7 @@ int lix::indexAlongDirection(const std::vector<glm::vec3>& s, const glm::vec3& D
         float value = glm::dot(s[i], D);
         if(value > maxValue)
         {
-            index = i;
+            index = static_cast<int>(i);
             maxValue = value;
         }
     }
@@ -83,14 +83,14 @@ bool lix::isAdjacent(const unsigned int* a, const unsigned int* b, lix::Edge& ed
 
             if(aa == ba && ab == bb)
             {
-                edge.first = aa;
-                edge.second = ab;
+                edge.first = static_cast<unsigned int>(aa);
+                edge.second = static_cast<unsigned int>(ab);
                 return true;
             }
             else if(aa == bb && ab == ba)
             {
-                edge.first = aa;
-                edge.second = ab;
+                edge.first = static_cast<unsigned int>(aa);
+                edge.second = static_cast<unsigned int>(ab);
                 return true;
             }
         }

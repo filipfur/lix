@@ -39,6 +39,13 @@ void lix::Buffer::bufferData(GLuint byteLength, GLuint componentSize, void* data
     _count = byteLength / componentSize;
     glBufferData(_target, _byteLength, data, _usage);
 }
+
+void lix::Buffer::bufferData(GLuint byteLength, GLuint componentSize, const void* data)
+{
+    _byteLength = byteLength;
+    _count = byteLength / componentSize;
+    glBufferData(_target, _byteLength, data, _usage);
+}
  
 void lix::Buffer::bufferData(const std::vector<GLuint>& data)
 {

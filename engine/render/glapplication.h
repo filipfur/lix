@@ -7,6 +7,9 @@
 #define GLEW_STATIC
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
+#ifdef _WIN32
+#undef main
+#endif
 
 #include <functional>
 
@@ -56,8 +59,8 @@ namespace lix
         static void loop();
 
         void handleMouseMotion(float x, float y);
-        void handleMouseButtonDown(lix::KeySym button, lix::KeySym mod, float x, float y);
-        void handleMouseButtonUp(lix::KeySym button, lix::KeySym mod, float x, float y);
+        void handleMouseButtonDown(lix::KeySym button, lix::KeyMod mod, float x, float y);
+        void handleMouseButtonUp(lix::KeySym button, lix::KeyMod mod, float x, float y);
         void handleKeyDown(lix::KeySym key, lix::KeyMod mod);
         void handleKeyUp(lix::KeySym key, lix::KeyMod mod);
 
@@ -69,6 +72,7 @@ namespace lix
             MOUSE_UP,
             LAST
         };
+        const char* _title;
         SDL_Window* _window{nullptr};
         float _time{0.0f};
         float _fps{0.0f};
