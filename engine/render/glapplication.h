@@ -4,8 +4,7 @@
 #include <emscripten/emscripten.h>
 #endif
 
-#define GLEW_STATIC
-#include <GL/glew.h>
+#include <GLES3/gl32.h>
 #include <SDL2/SDL.h>
 #ifdef _WIN32
 #undef main

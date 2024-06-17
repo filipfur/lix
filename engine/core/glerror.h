@@ -1,7 +1,8 @@
 #pragma once
 
 #include <string>
-#include <GL/glew.h>
+
+#include <GLES3/gl32.h>
 
 namespace lix
 {

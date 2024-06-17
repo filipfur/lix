@@ -59,7 +59,7 @@ lix::MeshPtr gltf::loadMesh(const gltf::Mesh& gltfMesh)
                             break;
                         case 4:
                             format = GL_RGBA;
-                            internalFormat = GL_SRGB_ALPHA;
+                            internalFormat = GL_SRGB8_ALPHA8;
                             internalFormat = GL_RGBA;
                             break;
                         default:

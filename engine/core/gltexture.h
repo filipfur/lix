@@ -56,7 +56,7 @@ namespace lix
 					format = srgb ? GL_SRGB : GL_RGB;
 					break;
 				case 4:
-					format = srgb ? GL_SRGB_ALPHA : GL_RGBA;
+					format = srgb ? GL_SRGB8_ALPHA8 : GL_RGBA;
 					break;
 				default:
 					throw std::runtime_error("unsupported no. channels");

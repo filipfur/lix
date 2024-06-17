@@ -185,8 +185,8 @@ void lix::Application::run(bool forever)
     _glContext = SDL_GL_CreateContext(_window);
     assert(SDL_GL_MakeCurrent(_window, _glContext) == 0);
 
-    glewExperimental = GL_TRUE;
-    glewInit();
+    //glewExperimental = GL_TRUE;
+    //glewInit();
 
     context = this;
     this->init();

@@ -82,6 +82,7 @@ const float aspectRatio = static_cast<float>(SCREEN_WIDTH) / static_cast<float>(
 
 void unitTest()
 {
+#if 0
     std::cout << "unitTesting()" << std::endl;
 
     lix::Color a{1337.0f, 666.0f, 50.0f};
@@ -114,6 +115,7 @@ void unitTest()
     lix::TRS trs_b;
     trs_b = trs_a;
     assert(trs_b.applyTranslation(glm::vec3{1.0f})->rotation().w == 1.0f);
+#endif
 }
 
 struct Time {

@@ -96,7 +96,7 @@ lix::Texture* lix::Texture::generateMipmap()
 lix::Texture* lix::Texture::setLodBias(float bias)
 {
     assert(_bound[_active - GL_TEXTURE0] == this);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, bias);
+    glTexParameterf(GL_TEXTURE_2D, GL_MAX_TEXTURE_LOD_BIAS, bias);
     return this;
 }
 

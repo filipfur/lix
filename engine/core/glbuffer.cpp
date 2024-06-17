@@ -1,5 +1,7 @@
 #include "glbuffer.h"
 
+#include <cstddef>
+
 #include <cassert>
 
 lix::Buffer::Buffer(GLenum target, GLenum usage) : _target{target}, _usage{usage}

@@ -56,7 +56,9 @@ set_target_properties(${LIX_ENGINE} PROPERTIES
 
 include(GNUInstallDirs)
 
-if(APPLE)
+if(RASPBERRY_PI)
+	target_link_libraries(${LIX_ENGINE} PUBLIC json GLESv2 SDL2)
+elseif(APPLE)
     find_package(GLEW REQUIRED HINTS $ENV{GLEW_HOME})
     find_package(SDL2 REQUIRED HINTS $ENV{SDL2_HOME})
     target_compile_options(${LIX_ENGINE} PRIVATE -Wall -Wextra -Wpedantic -Werror)

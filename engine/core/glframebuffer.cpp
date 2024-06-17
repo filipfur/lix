@@ -165,6 +165,7 @@ void lix::FrameBuffer::bindColorsAsDrawBuffers()
 
 
 const char* lix::FrameBuffer::getFramebufferStatusString(GLenum status) {
+#if 0
     switch (status) {
         case GL_FRAMEBUFFER_UNDEFINED:
             return "GL_FRAMEBUFFER_UNDEFINED: The framebuffer object is not complete because it has no defined buffers.";
@@ -183,6 +184,8 @@ const char* lix::FrameBuffer::getFramebufferStatusString(GLenum status) {
         default:
             return "Unknown framebuffer status";
     }
+#endif
+    return "";
 }
 
 void lix::FrameBuffer::checkStatus()
