@@ -48,10 +48,6 @@ void procPlyFile(fs::path filePath, fs::path outputDir)
             {
                 unsigned short i, a, b, c;
                 iss >> i >> a >> b >> c;
-                if(i != 3)
-                {
-                    printf("%s [faceCount=%d]\n", str.c_str(), faceCount);
-                }
                 assert(i == 3);
                 indices.insert(indices.end(), {a, b, c});
                 --faceCount;
@@ -60,18 +56,14 @@ void procPlyFile(fs::path filePath, fs::path outputDir)
         else if(strncmp(str.c_str(), "element vertex", el_vertex_n) == 0)
         {
             auto lab = str.substr(str.find_last_of(' ') + 1);
-            printf("lab=%s\n", lab.c_str());
             vertexCount = std::stoi(lab);
             vertices.reserve(vertexCount);
-            printf("vertexCount=%d\n", vertexCount);
         }
         else if(strncmp(str.c_str(), "element face", el_face_n) == 0)
         {
             auto lab = str.substr(str.find_last_of(' ') + 1);
-            printf("lab=%s\n", lab.c_str());
             faceCount = std::stoi(lab);
             indices.reserve(faceCount * 3);
-            printf("faceCount=%d\n", vertexCount);
         }
         else if(strncmp(str.c_str(), "end_header", header_n) == 0)
         {
@@ -95,7 +87,7 @@ void procPlyFile(fs::path filePath, fs::path outputDir)
     indexBuffer.target = 34963;
     indexBuffer.type = gltf::Buffer::SCALAR;
     indexBuffer.data = (unsigned char*)indices.data();
-    indexBuffer.data_size = indices.size();
+    indexBuffer.data_size = indices.size() * sizeof(unsigned short);
 
     std::string sceneName = filePath.filename().string();
     sceneName = sceneName.substr(0, sceneName.find('.'));
@@ -115,19 +107,28 @@ void procPlyFile(fs::path filePath, fs::path outputDir)
     mesh.primitives = primitives.data();
     mesh.primitives_size = primitives.size();
 
+    std::vector<unsigned char> buf;
+    buf.reserve(vertexBuffer.data_size + indexBuffer.data_size);
+    std::copy(vertexBuffer.data, vertexBuffer.data + vertexBuffer.data_size, std::back_inserter(buf));
+    std::copy(indexBuffer.data, indexBuffer.data + indexBuffer.data_size, std::back_inserter(buf));
+
     { // export .cpp
         const std::string cppFile = (sceneName + ".cpp");
         std::ofstream ofs{outputDir / cppFile};
         const std::string scope = "assets::objects::" + sceneName + "::";
         ofs << "#include \"" << sceneName << ".h\"\n";
-
-        ofs << "gltf::Buffer " << scope << "buffers[" << buffers.size() << "] = {\n";
+        ofs << "static unsigned char binaryData0[] = {\n";
+        common::exportBytes((const unsigned char*)buf.data(), buf.size(), ofs);
+        ofs << "\n};\n";
+        ofs << "const gltf::Buffer " << scope << "buffers[] = {\n";
         std::string delim{""};
-        for(const auto& buffer : buffers)
+        size_t offset{0};
+        for(auto bufferIt = std::begin(buffers); bufferIt != std::end(buffers); ++bufferIt)
         {
             ofs << delim;
             delim = ",\n";
-            //exportBuffer(buffer, ofs, "    "); TODO: Fixme
+            exportBuffer(*bufferIt, 0, offset, ofs, "    ");
+            offset += bufferIt->data_size;
         }
         ofs << "\n};\n";
 
@@ -147,14 +148,14 @@ void procPlyFile(fs::path filePath, fs::path outputDir)
         << "#include \"gltftypes.h\"\n"
         << "namespace assets {\n"
         << "    namespace objects {\n"
-        << "    struct "
+        << "    namespace "
         << sceneName << " {\n";
 
-        ofs << "    static gltf::Buffer buffers[" << buffers.size() << "];\n";
+        ofs << "    extern const gltf::Buffer buffers[];\n";
 
-        ofs << "    static gltf::Mesh " << meshName(mesh) << ";\n";
+        ofs << "    extern const gltf::Mesh " << meshName(mesh) << ";\n";
 
-        ofs << "    };\n    }}\n";
+        ofs << "    };\n    }\n}\n";
 
         ofs.flush();
         ofs.close();

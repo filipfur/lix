@@ -265,10 +265,11 @@ void App::init()
 
     bunny = gltf::loadMesh(assets::objects::bun_zipper_res2::bun_zipper_res2_mesh);
 
+    const gltf::Buffer* bunnyPosAttrib = assets::objects::bun_zipper_res2::bun_zipper_res2_mesh.primitives[0].attributes[0];
+
     std::vector<glm::vec3> bunnyCloud{
-        (glm::vec3*)assets::objects::bun_zipper_res2::bun_zipper_res2_mesh.primitives.front().attributes.front()->data.data(),
-        (glm::vec3*)assets::objects::bun_zipper_res2::bun_zipper_res2_mesh.primitives.front().attributes.front()->data.data()
-        + assets::objects::bun_zipper_res2::bun_zipper_res2_mesh.primitives.front().attributes.front()->data.size() / sizeof(glm::vec3)};
+        (glm::vec3*)bunnyPosAttrib->data,
+        (glm::vec3*)bunnyPosAttrib->data + bunnyPosAttrib->data_size / sizeof(glm::vec3)};
 
     bunnyCH = std::make_shared<lix::Convex_Hull>(bunnyCloud);
     {

@@ -223,9 +223,9 @@ lix::Convex_Hull::Convex_Hull(const std::vector<glm::vec3>& points)
 
                 auto& uvw = _faces.emplace_back(glm::normalize(UVW));
 
-                auto uv = new Half_Edge(A, &uvw);
-                auto vw = new Half_Edge(B, &uvw);
-                auto wu = new Half_Edge(C, &uvw);
+                auto uv = new Half_Edge(U, &uvw);
+                auto vw = new Half_Edge(V, &uvw);
+                auto wu = new Half_Edge(W, &uvw);
 
                 //printf("prev link: <%d> : f%d\n", prev->id, prev->face->id);
                 connect(uv, vw, prev, &uvw);

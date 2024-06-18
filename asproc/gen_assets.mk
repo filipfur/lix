@@ -41,7 +41,7 @@ gen/ply/%.cpp : assets/ply/%.ply
 $(foreach subdir,$(AS_OBJECTS),$(eval $(call create_rule,$(subdir))))
 
 .PHONY: gen_assets
-gen_assets: $(AS_OBJECTS_CPP) $(AS_SHADERS_CPP) $(AS_IMAGES_CPP) $(AS_FONTS_CPP)
+gen_assets: $(AS_OBJECTS_CPP) $(AS_SHADERS_CPP) $(AS_IMAGES_CPP) $(AS_FONTS_CPP) $(AS_PLY_CPP)
 	$(info "GENERATED SOURCES!")
 
 .PHONY: gen
