@@ -6,6 +6,7 @@
 #include "glmesh.h"
 #include "glnode.h"
 #include "glskinanimation.h"
+#include "polygon.h"
 
 namespace gltf
 {
@@ -59,4 +60,6 @@ namespace gltf
             ++j;
         }
     }
+
+    std::shared_ptr<lix::Polygon> loadMeshCollider(const gltf::Mesh& gltfMesh);
 }

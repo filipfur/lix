@@ -254,7 +254,7 @@ void App::init()
     rectangle.reset(
         new lix::Polygon(vert_0)
     );
-    rectangle->setPosition(glm::vec3{2.0f, 0.0f, 0.0f})
+    rectangle->setTranslation(glm::vec3{2.0f, 0.0f, 0.0f})
         ->setRotation(glm::angleAxis(glm::pi<float>() * 0.05f, glm::vec3{0.0f, 0.0f, 1.0f}))
         ->setScale(glm::vec3{4.0f});
 
@@ -268,13 +268,13 @@ void App::init()
     circle.reset(
         new lix::Polygon(vert_1)
     );
-    circle->setPosition(glm::vec3{12.0f, 20.0f, 0.0f})
+    circle->setTranslation(glm::vec3{12.0f, 20.0f, 0.0f})
         ->setScale(glm::vec3{2.0f});
 
     circle2.reset(
         new lix::Polygon(vert_1)
     );
-    circle2->setPosition(glm::vec3{13.0f, 26.0f, 0.0f})
+    circle2->setTranslation(glm::vec3{13.0f, 26.0f, 0.0f})
         ->setScale(glm::vec3{1.4f});
 
     for(auto& poly : {rectangle, circle, circle2})
@@ -430,13 +430,13 @@ void App::tick(float dt)
             lix::Shape& shapeA = *actorA.shape;
             lix::Shape& shapeB = *actorB.shape;
 
-            std::vector<glm::vec3> simplex;
-            const glm::vec3 D{shapeB.position() - shapeA.position()};
+            std::vector<lix::Vertex> simplex;
+            const glm::vec3 D{shapeB.translation() - shapeA.translation()};
             if(lix::gjk(shapeA, shapeB, simplex, D, nullptr))
             {
                 glm::vec3 collisionVector;
                 float penetration;
-                if(lix::epa(shapeA, shapeB, simplex, collisionVector, penetration))
+                /*if(lix::epa(shapeA, shapeB, simplex, collisionVector, penetration))
                 {
                     if(actorA.moveable)
                     {
@@ -448,14 +448,14 @@ void App::tick(float dt)
                         actorB.velocity = collisionVector;
                         shapeB.move(-collisionVector * penetration);
                     }
-                }
+                }*/
             }
         });
     });
     
-    if(circle->position().y < 0)
+    if(circle->translation().y < 0)
     {
-        circle->setPosition(glm::vec3{12.0f, 20.0f, 0.0f});
+        circle->setTranslation(glm::vec3{12.0f, 20.0f, 0.0f});
     }
     static Time worldTime{0, 0};
     worldTime.time += dt;
@@ -465,7 +465,7 @@ void App::tick(float dt)
     actorSystem.update(entities, [](ecs::Entity /*entity*/, const Time& time, Actor& actor) {
         if(actor.moveable)
         {
-            actor.shape->move(actor.velocity * time.deltaTime);
+            actor.shape->applyTranslation(actor.velocity * time.deltaTime);
         }
     });
 

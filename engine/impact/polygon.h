@@ -4,41 +4,31 @@
 #include <memory>
 
 #include "shape.h"
-#include "gltrs.h"
 
 
 namespace lix
 {
-class Polygon : public lix::Shape, public lix::TRS
+class Polygon : public lix::Shape
 {
 public:
+    Polygon(const Polygon& other);
     Polygon(const std::vector<glm::vec3>& points);
     virtual ~Polygon() noexcept;
+    virtual Polygon* clone() const override;
     glm::vec3 supportPoint(const glm::vec3& dir) override;
-    void setPoints(const std::vector<glm::vec3>& points);
-    const std::vector<glm::vec3>& points();
+    const std::vector<glm::vec3>& points() const;
     const std::vector<glm::vec3>& transformedPoints();
     glm::vec3 center();
-    const glm::vec3& translation() = delete;
-    lix::TRS* setTranslation(const glm::vec3& translation) = delete;
-    lix::TRS* applyTranslation(const glm::vec3& translation) = delete;
-    const glm::vec3& position() override;
-    Polygon* setPosition(const glm::vec3& position) override;
-    Polygon* move(const glm::vec3& delta) override;
     virtual bool intersects(Sphere& sphere) override;
     virtual bool intersects(Polygon& polygon) override;
     virtual bool test(Shape& shape) override;
-    std::vector<glm::vec3> storedSimplex();
 
 protected:
     bool updateTransformedPoints();
 
-    virtual bool updateModelMatrix() override;
-
 private:
-    std::vector<glm::vec3> _points;
+    const std::vector<glm::vec3>& _points;
     std::vector<glm::vec3> _transformedPoints;
     glm::vec3 _center;
-    bool _transformedPointsInvalid;
 };
 }

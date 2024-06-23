@@ -7,16 +7,76 @@
 
 namespace lix
 {
+    struct Vertex
+    {
+        Vertex(uint32_t id_, glm::vec3 position_)
+            : id{id_}, position{position_}
+        {
+
+        }
+
+        Vertex(glm::vec3 position_)
+            : Vertex{0, position_}
+        {
+
+        }
+
+        Vertex()
+            : Vertex{0, {}}
+        {
+
+        }
+
+        Vertex(const Vertex& other)
+            : Vertex{other.id, other.position}
+        {
+
+        }
+
+        Vertex(Vertex&& other)
+            : Vertex{other.id, std::move(other.position)}
+        {
+            
+        }
+
+        Vertex& operator=(const Vertex& other)
+        {
+            id = other.id;
+            position = other.position;
+            return *this;
+        }
+
+        Vertex& operator=(Vertex&& other)
+        {
+            id = other.id;
+            position = std::move(other.position);
+            return *this;
+        }
+
+        ~Vertex() noexcept
+        {
+
+        }
+
+        /*operator glm::vec3() const
+        {
+            return position;
+        }*/
+
+        uint32_t id;
+        glm::vec3 position;
+    };
+
     struct Half_Edge
     {
-        Half_Edge(glm::vec3 vertex_, struct Face* face_) : vertex{vertex_}, face{face_}
+        Half_Edge(const lix::Vertex& vertex_, struct Face* face_) : vertex{vertex_}, face{face_}
         {
             static uint32_t nextId{0};
             id = nextId++;
         }
 
         uint32_t id;
-        glm::vec3 vertex;
+        Vertex vertex;
         struct Face* face;
         Half_Edge* next;
         Half_Edge* prev;

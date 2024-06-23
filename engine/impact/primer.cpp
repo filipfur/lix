@@ -20,10 +20,24 @@ bool lix::pointInTriangle(const glm::vec3& p, const glm::vec3& a, const glm::vec
     return !(hasNeg && hasPos);
 }
 
-bool lix::isSameVertex(const glm::vec3& a, const glm::vec3& b)
+glm::vec3 lix::barycentric(glm::vec3 p, glm::vec3 a, glm::vec3 b, glm::vec3 c)
 {
-    glm::vec3 c = b - a;
-    return glm::dot(c, c) < FLT_EPSILON;
+    glm::vec3 v0 = b - a;
+    glm::vec3 v1 = c - a;
+    glm::vec3 v2 = p - a;
+    
+    float d00 = glm::dot(v0, v0);
+    float d01 = glm::dot(v0, v1);
+    float d11 = glm::dot(v1, v1);
+    float d20 = glm::dot(v2, v0);
+    float d21 = glm::dot(v2, v1);
+    float denom = d00 * d11 - d01 * d01;
+    
+    glm::vec3 barycentric;
+    barycentric[0] = (d11 * d20 - d01 * d21) / denom;
+    barycentric[1] = (d00 * d21 - d01 * d20) / denom;
+    barycentric[2] = 1.0f - barycentric[0] - barycentric[1];
+    return barycentric;
 }
 
 /*
@@ -56,7 +70,7 @@ void lix::uniqueVertices(const std::vector<glm::vec3>& s, std::vector<glm::vec3>
 int lix::indexAlongDirection(const std::vector<glm::vec3>& s, const glm::vec3& D)
 {
     int index{-1};
-    float maxValue{0.0f};
+    float maxValue{-FLT_MAX}; //glm::dot(s[0], D)};
 
     for(size_t i{0}; i < s.size(); ++i)
     {

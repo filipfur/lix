@@ -28,8 +28,8 @@ namespace lix
         float j = numerator / denominator;
         glm::vec3 J = n * j;
 
-        w1 += glm::cross(r1, J) * I1_inv;
-        w2 += glm::cross(r2, J) * I2_inv;
+        w1 = glm::cross(r1, J) * I1_inv;
+        w2 = glm::cross(r2, J) * I2_inv;
 
         return j;
     }

@@ -21,20 +21,17 @@ namespace lix
         TRS(TRS&& other);
         TRS& operator=(TRS&& other);
 
-        const glm::vec3& translation() const;
-        lix::TRS* setTranslation(const glm::vec3& translation);
-        lix::TRS* applyTranslation(const glm::vec3& translation);
+        virtual const glm::vec3& translation() const;
+        virtual lix::TRS* setTranslation(const glm::vec3& translation);
+        virtual lix::TRS* applyTranslation(const glm::vec3& translation);
 
-        //using position = translation;
-        //using setPosition = setTranslation;
+        virtual const glm::quat& rotation() const;
+        virtual lix::TRS* setRotation(const glm::quat& rotation);
+        virtual lix::TRS* applyRotation(const glm::quat& translation);
 
-        const glm::quat& rotation() const;
-        lix::TRS* setRotation(const glm::quat& rotation);
-        lix::TRS* applyRotation(const glm::quat& translation);
-
-        const glm::vec3& scale() const;
-        lix::TRS* setScale(const glm::vec3& scale);
-        lix::TRS* applyScale(const glm::vec3& scale);
+        virtual const glm::vec3& scale() const;
+        virtual lix::TRS* setScale(const glm::vec3& scale);
+        virtual lix::TRS* applyScale(const glm::vec3& scale);
 
         const glm::mat4& model();
 
@@ -42,6 +39,11 @@ namespace lix
         virtual bool updateModelMatrix();
 
         virtual void invalidate();
+
+        bool invalid()
+        {
+            return _invalid;
+        }
 
     private:
         glm::vec3 _translation{0.0f};

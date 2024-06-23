@@ -2,8 +2,13 @@
 
 #include <stdexcept>
 
-lix::Sphere::Sphere(const glm::vec3& position, float radii)
-    : _position{position}, _radii{radii}
+lix::Sphere::Sphere(const lix::Sphere& other)
+    : Shape{other}, _radii{other._radii}
+{
+}
+
+lix::Sphere::Sphere(float radii)
+    : Shape{}, _radii{radii}
 {
 
 }
@@ -13,40 +18,20 @@ lix::Sphere::~Sphere() noexcept
 
 }
 
+lix::Sphere* lix::Sphere::clone() const
+{
+    return new lix::Sphere(*this);
+}
+
 glm::vec3 lix::Sphere::supportPoint(const glm::vec3& dir)
 {
-    return _position + glm::normalize(dir) * _radii;
-}
-
-const glm::vec3& lix::Sphere::position()
-{
-    return _position;
-}
-
-lix::Sphere* lix::Sphere::setPosition(const glm::vec3& position)
-{
-    _position = position;
-    if(_simplified)
-    {
-        _simplified->setPosition(position);
-    }
-    return this;
-}
-
-lix::Sphere* lix::Sphere::move(const glm::vec3& delta)
-{
-    _position += delta;
-    if(_simplified)
-    {
-        _simplified->move(delta);
-    }
-    return this;
+    return translation() + glm::normalize(dir) * _radii;
 }
 
 bool lix::Sphere::intersects(Sphere& sphere)
 {
-    glm::vec3 delta = _position - sphere._position;
-    float d2 = delta.x * delta.x + delta.y * delta.y + delta.z * delta.z;
+    glm::vec3 delta = translation() - sphere.translation();
+    float d2 = glm::dot(delta, delta);
     float srad = _radii + sphere._radii;
     float r2 = srad * srad;
     return d2 <= r2;
