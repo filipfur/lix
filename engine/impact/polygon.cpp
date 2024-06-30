@@ -23,8 +23,8 @@ lix::Polygon::Polygon(const lix::Polygon& other)
 
 }
 
-lix::Polygon::Polygon(const std::vector<glm::vec3>& points)
-    : Shape{}, _points{points}, _transformedPoints{}, _center{centerOfPolygon(points)}
+lix::Polygon::Polygon(lix::TRS* trs, const std::vector<glm::vec3>& points)
+    : Shape{trs}, _points{points}, _transformedPoints{}, _center{centerOfPolygon(points)}
 {
 }
 
@@ -69,12 +69,17 @@ const std::vector<glm::vec3>& lix::Polygon::transformedPoints()
 
 glm::vec3 lix::Polygon::center()
 {
-    return glm::vec3(model() * glm::vec4(_center, 1.0f));
+    return glm::vec3(trs()->modelMatrix() * glm::vec4(_center, 1.0f));
 }
 
 bool lix::Polygon::intersects(lix::Sphere& /*sphere*/)
 {
     throw std::runtime_error("polygon-sphere collision not implemented");
+}
+
+bool lix::Polygon::intersects(lix::AABB& /*aabb*/)
+{
+    throw std::runtime_error("polygon-aabb collision not implemented");
 }
 
 bool lix::Polygon::intersects(lix::Polygon& /*polygon*/)
@@ -89,10 +94,10 @@ bool lix::Polygon::test(lix::Shape& /*shape*/)
 
 bool lix::Polygon::updateTransformedPoints()
 {
-    if(invalid())
+    if(trs()->modelVersionSync(_mVersion) || _points.size() != _transformedPoints.size())
     {
         _transformedPoints.resize(_points.size());
-        const glm::mat4& m = model();
+        const glm::mat4& m = trs()->modelMatrix();
         std::transform(_points.begin(), _points.end(),
             _transformedPoints.begin(), [&m](const glm::vec3& p) {
                 return glm::vec3(m * glm::vec4(p, 1.0f));

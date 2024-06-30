@@ -40,6 +40,30 @@ lix::VertexArray::VertexArray(const Attributes& attributes,
     createEbo(usage, indices);
 }
 
+// UNSIGNED INT INDEX
+lix::VertexArray::VertexArray(const Attributes& attributes,
+    void* vertices_data, GLuint vertices_size,
+    GLuint* indices_data, GLuint indices_size,
+    GLenum mode,
+    GLenum usage) : VertexArray{mode}
+{
+    bind();
+    createVbo(usage, attributes, vertices_data, vertices_size);
+    createEbo(usage, indices_size, indices_data);
+}
+
+// UNSIGNED SHORT INDEX
+lix::VertexArray::VertexArray(const Attributes& attributes,
+    void* vertices_data, GLuint vertices_size,
+    GLushort* indices_data, GLuint indices_size,
+    GLenum mode,
+    GLenum usage) : VertexArray{mode}
+{
+    bind();
+    createVbo(usage, attributes, vertices_data, vertices_size);
+    createEbo(usage, indices_size, indices_data);
+}
+
 lix::VertexArray::VertexArray(const VertexArray& other) : VertexArray{other._mode}
 {
     bind();
@@ -108,6 +132,24 @@ std::shared_ptr<lix::Buffer> lix::VertexArray::createEbo(GLenum usage,
     _ebo = std::make_shared<lix::Buffer>(GL_ELEMENT_ARRAY_BUFFER, usage);
     _ebo->bind();
     _ebo->bufferData(indices);
+    return _ebo;
+}
+
+std::shared_ptr<lix::Buffer> lix::VertexArray::createEbo(GLenum usage,
+    GLuint indices_size, GLuint* indices_data)
+{
+    _ebo = std::make_shared<lix::Buffer>(GL_ELEMENT_ARRAY_BUFFER, usage);
+    _ebo->bind();
+    _ebo->bufferData(GL_UNSIGNED_INT, (GLuint)(indices_size * sizeof(GLuint)), (GLuint)sizeof(GLuint), indices_data);
+    return _ebo;
+}
+
+std::shared_ptr<lix::Buffer> lix::VertexArray::createEbo(GLenum usage,
+    GLuint indices_size, GLushort* indices_data)
+{
+    _ebo = std::make_shared<lix::Buffer>(GL_ELEMENT_ARRAY_BUFFER, usage);
+    _ebo->bind();
+    _ebo->bufferData(GL_UNSIGNED_SHORT, (GLuint)(indices_size * sizeof(GLushort)), (GLuint)sizeof(GLushort), indices_data);
     return _ebo;
 }
 

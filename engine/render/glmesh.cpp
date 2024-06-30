@@ -7,34 +7,19 @@ lix::Mesh::Mesh() : _primitives{}
 
 }
 
+lix::Mesh::Mesh(std::shared_ptr<lix::VertexArray> vao, std::shared_ptr<lix::Material> material)
+{
+    _primitives.emplace_back(vao, material ? material : std::make_shared<lix::Material>(defaultMaterial));
+}
+
 lix::Mesh::Mesh(const Mesh& other)
 {
     for(size_t i{0}; i < other._primitives.size(); ++i)
     {
         const auto& op = other._primitives.at(i);
         _primitives.emplace_back(std::make_shared<lix::VertexArray>(*op.vao),
-            op.material ? op.material : std::make_shared<lix::Material>(defaultMaterial));
+            std::make_shared<lix::Material>(op.material ? *op.material : defaultMaterial));
     }
-}
-
-lix::Mesh::Mesh(const lix::Attributes& attributes,
-    const std::vector<GLfloat>& vertices,
-    GLenum mode,
-    GLenum usage,
-    std::shared_ptr<lix::Material> material)
-{
-    _primitives.emplace_back(std::make_shared<lix::VertexArray>(attributes, vertices, mode, usage),
-        material ? material : std::make_shared<lix::Material>(defaultMaterial));
-}
-
-lix::Mesh::Mesh(const lix::Attributes& attributes,
-    const std::vector<GLfloat>& vertices, const std::vector<GLuint>& indices,
-    GLenum mode,
-    GLenum usage,
-    std::shared_ptr<lix::Material> material)
-{
-    _primitives.emplace_back(std::make_shared<lix::VertexArray>(attributes, vertices, indices, mode, usage),
-        material ? material : std::make_shared<lix::Material>(defaultMaterial));
 }
 
 lix::Mesh::~Mesh() noexcept

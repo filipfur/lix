@@ -222,8 +222,3 @@ void lix::quick_hull(const std::vector<glm::vec3>& points, std::vector<glm::vec3
         }
     }
 }
-
-void lix::extreme_points(const std::vector<glm::vec3>& /*s*/, std::vector<glm::vec3>& /*e*/)
-{
-    
-}

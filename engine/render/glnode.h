@@ -8,6 +8,7 @@
 #include "gltrs.h"
 #include "glmesh.h"
 #include "glskin.h"
+#include "shape.h"
 
 namespace lix
 {
@@ -80,5 +81,6 @@ namespace lix
         glm::mat4 _globalMatrix{1.0f};
         bool _fresch{false}; // is global matrix fresch?
         std::shared_ptr<Skin> _skin{nullptr};
+        std::shared_ptr<lix::Shape> _shape;
     };
 }

@@ -32,7 +32,7 @@ lix::Node::Node(const lix::TRS& other) : TRS{other}
 }
 
 lix::Node::Node(const lix::Node& other)
-    : TRS{other}, _name{other._name}, _mesh{other._mesh}, _skin{other._skin}
+    : TRS{other}, _name{other._name}, _mesh{other._mesh->clone()}, _skin{other._skin}
 {
     
 }
@@ -164,11 +164,11 @@ bool lix::Node::updateGlobalMatrix()
     if(_parent)
     {
         _parent->updateGlobalMatrix();
-        _globalMatrix = _parent->globalMatrix() * model();
+        _globalMatrix = _parent->globalMatrix() * modelMatrix();
     }
     else
     {
-        _globalMatrix = model();
+        _globalMatrix = modelMatrix();
     }
     _fresch = true;
     return true;

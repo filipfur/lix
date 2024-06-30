@@ -16,7 +16,7 @@ namespace lix
         virtual Buffer* bind() override;
         virtual Buffer* unbind() override;
     
-        void bufferData(GLuint byteLength, GLuint stride, void* data=0);
+        void bufferData(GLenum type, GLuint byteLength, GLuint stride, void* data=0);
         void bufferData(const std::vector<GLuint>& data);
         void bufferData(const std::vector<GLushort>& data);
         void bufferData(const std::vector<GLfloat>& data);

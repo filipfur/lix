@@ -61,5 +61,5 @@ namespace gltf
         }
     }
 
-    std::shared_ptr<lix::Polygon> loadMeshCollider(const gltf::Mesh& gltfMesh);
+    std::shared_ptr<lix::Polygon> loadMeshCollider(const gltf::Mesh& gltfMesh, bool generateConvexHull);
 }

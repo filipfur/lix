@@ -1,5 +1,7 @@
 #include "primer.h"
 
+#include "glcube.h"
+
 #include <algorithm>
 
 float lix::sign(const glm::vec3& a, const glm::vec3& b, const glm::vec3& c)
@@ -56,8 +58,9 @@ bool lix::containsVertex(const std::vector<glm::vec3>& s, const glm::vec3& v)
     return it != s.end();
 }
 
-void lix::uniqueVertices(const std::vector<glm::vec3>& s, std::vector<glm::vec3>& u)
+std::vector<glm::vec3> lix::uniqueVertices(const std::vector<glm::vec3>& s)
 {
+    std::vector<glm::vec3> u;
     for(const auto& p0 : s)
     {
         if(!containsVertex(u, p0))
@@ -65,6 +68,30 @@ void lix::uniqueVertices(const std::vector<glm::vec3>& s, std::vector<glm::vec3>
             u.push_back(p0);
         }
     }
+    return u;
+}
+
+std::pair<glm::vec3, glm::vec3> lix::extremePoints(const std::vector<glm::vec3>& s)
+{
+    glm::vec3 min{FLT_MAX};
+    glm::vec3 max{-FLT_MAX};
+
+    for(const auto& p0 : s)
+    {
+        max.x = std::max(max.x, p0.x);
+        max.y = std::max(max.y, p0.y);
+        max.z = std::max(max.z, p0.z);
+
+        min.x = std::min(min.x, p0.x);
+        min.y = std::min(min.y, p0.y);
+        min.z = std::min(min.z, p0.z);
+    }
+    return { min, max };
+}
+
+std::vector<glm::vec3> lix::minimumBoundingBox(const glm::vec3& min, const glm::vec3& max)
+{
+    return lix::cube_corner_points(min, max);
 }
 
 int lix::indexAlongDirection(const std::vector<glm::vec3>& s, const glm::vec3& D)

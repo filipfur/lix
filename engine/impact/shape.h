@@ -8,10 +8,10 @@
 
 namespace lix
 {
-    class Shape : public lix::TRS
+    class Shape
     {
     public:
-        Shape();
+        Shape(lix::TRS* trs);
         Shape(const Shape& other);
         Shape(Shape&& other) = delete;
 
@@ -24,16 +24,8 @@ namespace lix
 
         virtual glm::vec3 supportPoint(const glm::vec3& dir) = 0;
 
-        virtual lix::Shape* setTranslation(const glm::vec3& translation) override;
-        virtual lix::Shape* applyTranslation(const glm::vec3& translation) override;
-
-        virtual lix::Shape* setRotation(const glm::quat& rotation) override;
-        virtual lix::Shape* applyRotation(const glm::quat& rotation) override;
-
-        virtual lix::Shape* setScale(const glm::vec3& scale) override;
-        virtual lix::Shape* applyScale(const glm::vec3& scale) override;
-
         virtual bool intersects(class Sphere& sphere) = 0;
+        virtual bool intersects(class AABB& aabb) = 0;
         virtual bool intersects(class Polygon& polygon) = 0;
         virtual bool test(Shape& shape) = 0;
         void setSimplified(std::shared_ptr<Shape> simplified);
@@ -41,7 +33,21 @@ namespace lix
         // starts from simplest and keeps testing more detailed version until return false
         bool doRecursive(const std::function<bool(Shape*)>& callback);
 
+        lix::TRS* trs() const
+        {
+            return _trs;
+        }
+
+        void setTRS(lix::TRS* trs) {            
+            _trs = trs;
+            if(_simplified)
+            {
+                _simplified->setTRS(trs);
+            }
+        }
+
     protected:
+        lix::TRS* _trs{nullptr};
         std::shared_ptr<Shape> _simplified{nullptr};
     };
 }

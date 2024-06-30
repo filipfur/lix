@@ -1,5 +1,7 @@
 #include "collision2d.h"
 
+#include "primer.h"
+
 inline static constexpr float EPSILON{0.00001f};
 
 glm::vec3 minkowskiSupportPoint(lix::Shape& a, lix::Shape& b, const glm::vec3& D)
@@ -38,12 +40,12 @@ bool lix::gjk2d(Shape& shapeA, Shape& shapeB, std::vector<glm::vec3>& simplex,
     const glm::vec3 O{0.0f, 0.0f, 0.0f};
     glm::vec3 C = minkowskiSupportPoint(shapeA, shapeB, initialDirection);
 
-    glm::vec3 D = -C.position; // CO
+    glm::vec3 D = -C; // CO
 
     glm::vec3 B = minkowskiSupportPoint(shapeA, shapeB, D); // D=C0
 
-    glm::vec3 BO = -B.position;
-    glm::vec3 BC = C.position - B.position;
+    glm::vec3 BO = -B;
+    glm::vec3 BC = C - B;
 
     // Check if the CO and OB are pointing in the same "general" direction. Otherwise the origin was not crossed.
     if (glm::dot(BC, BO) < 0) // CO dot OB. From the perspective of C is point B further away than the origin.
@@ -59,9 +61,9 @@ bool lix::gjk2d(Shape& shapeA, Shape& shapeB, std::vector<glm::vec3>& simplex,
 
     for(size_t i{0}; i < 64; ++i)
     {
-        glm::vec3 AO = -A.position;
-        glm::vec3 AB = B.position - A.position;
-        glm::vec3 AC = C.position - A.position;
+        glm::vec3 AO = -A;
+        glm::vec3 AB = B - A;
+        glm::vec3 AC = C - A;
 
         glm::vec3 ABC = glm::cross(AB, AC);
 
@@ -72,7 +74,7 @@ bool lix::gjk2d(Shape& shapeA, Shape& shapeB, std::vector<glm::vec3>& simplex,
             //std::cout << "line is outside AB" << std::endl;
             C = minkowskiSupportPoint(shapeA, shapeB, ABperp);
             std::swap(B, C);
-            if(glm::dot(B.position - A.position, AO) < 0) // Really?
+            if(glm::dot(B - A, AO) < 0) // Really?
             {
                 //std::cout << "AB perp not pass the origin." << std::endl;
                 return false;
@@ -82,7 +84,7 @@ bool lix::gjk2d(Shape& shapeA, Shape& shapeB, std::vector<glm::vec3>& simplex,
             //std::cout << "line is outside AC" << std::endl;
             B = minkowskiSupportPoint(shapeA, shapeB, ACperp);
             std::swap(B, C);
-            if(glm::dot(C.position - A.position, AO) < 0) // Really?
+            if(glm::dot(C - A, AO) < 0) // Really?
             {
                 //std::cout << "AC perp not pass the origin." << std::endl;
                 return false;

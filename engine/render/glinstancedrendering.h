@@ -21,7 +21,7 @@ namespace lix
 
         static void allocate(T& t, std::vector<GLfloat>& buffer, size_t index)
         {
-            const glm::mat4& m = t->model();
+            const glm::mat4& m = t->modelMatrix();
             std::copy(glm::value_ptr(m), glm::value_ptr(m) + 16, buffer.begin() + index * 16);
         }
     };
@@ -83,6 +83,6 @@ namespace lix
 template<>
 inline void lix::ModelAllocator<lix::TRS>::allocate(lix::TRS& trs, std::vector<GLfloat>& buffer, size_t index)
 {
-    const glm::mat4& m = trs.model();
+    const glm::mat4& m = trs.modelMatrix();
     std::copy(glm::value_ptr(m), glm::value_ptr(m) + 16, buffer.begin() + index * 16);
 }

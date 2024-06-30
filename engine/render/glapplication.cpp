@@ -50,26 +50,34 @@ void lix::Application::loop()
     static float currentTime{0.0f};
     static size_t frames{0};
 
-    static float debt{0.0f};
-    debt += deltaTicks * 1e-3f;
-    while(debt >= context->_timeStep)
+    if(deltaTicks > 0)
     {
-        context->tick(context->_timeStep);
-        debt -= context->_timeStep;
-        currentTime = context->time() + context->_timeStep;
-        context->_time = currentTime;
-    }
-    context->draw();
-    ++frames;
+        static float debt{0.0f};
+        debt += deltaTicks * 1e-3f;
+        while(debt >= context->_timeStep)
+        {
+            context->tick(context->_timeStep);
+            debt -= context->_timeStep;
+            currentTime = context->time() + context->_timeStep;
+            context->_time = currentTime;
+        }
+        context->draw();
+        ++frames;
 
-    if(currentTime - lastTime >= 0.1f)
+        if(currentTime - lastTime >= 0.1f)
+        {
+            lastTime = glm::trunc(currentTime * 10.0f) * 0.1f;
+            context->_fps = frames * 10.0f;
+            frames = 0;
+        }
+
+        SDL_GL_SwapWindow(context->window());
+    }
+
+    if(context->_fps > 60)
     {
-        lastTime = glm::trunc(currentTime * 10.0f) * 0.1f;
-        context->_fps = frames * 10.0f;
-        frames = 0;
+        SDL_Delay(1);
     }
-
-    SDL_GL_SwapWindow(context->window());
 }
 
 lix::Application::Application(int windowX, int windowY, const char* title)

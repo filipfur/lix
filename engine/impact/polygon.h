@@ -12,7 +12,7 @@ class Polygon : public lix::Shape
 {
 public:
     Polygon(const Polygon& other);
-    Polygon(const std::vector<glm::vec3>& points);
+    Polygon(lix::TRS* trs, const std::vector<glm::vec3>& points);
     virtual ~Polygon() noexcept;
     virtual Polygon* clone() const override;
     glm::vec3 supportPoint(const glm::vec3& dir) override;
@@ -20,6 +20,7 @@ public:
     const std::vector<glm::vec3>& transformedPoints();
     glm::vec3 center();
     virtual bool intersects(Sphere& sphere) override;
+    virtual bool intersects(AABB& aabb) override;
     virtual bool intersects(Polygon& polygon) override;
     virtual bool test(Shape& shape) override;
 
@@ -29,6 +30,7 @@ protected:
 private:
     const std::vector<glm::vec3>& _points;
     std::vector<glm::vec3> _transformedPoints;
+    uint32_t _mVersion{0};
     glm::vec3 _center;
 };
 }

@@ -9,5 +9,4 @@ namespace lix
 
 
     void quick_hull(const std::vector<glm::vec3>& points, std::vector<glm::vec3>& vertices, std::vector<unsigned int>& indices);
-    void extreme_points(const std::vector<glm::vec3>& s, std::vector<glm::vec3>& e);
 }

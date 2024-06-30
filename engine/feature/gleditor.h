@@ -66,6 +66,6 @@ namespace lix
         bool _lmb{false};
         float _cameraYaw{0.0f};
         float _cameraPitch{0.0f};
-        float _cameraDistance{10.0f};
+        float _cameraDistance{4.0f};
     };
 }

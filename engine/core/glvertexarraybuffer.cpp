@@ -40,7 +40,7 @@ lix::VertexArrayBuffer::VertexArrayBuffer(GLenum usage,
     _attribDivisor{attribDivisor}
 {
     this->bind(); // call to virtual in ctor
-    this->bufferData(byteLength, countStride(attributes), data);
+    this->bufferData(GL_FLOAT, byteLength, countStride(attributes), data);
     linkAttributes();
     glEnableVertexAttribArray(0);
 }

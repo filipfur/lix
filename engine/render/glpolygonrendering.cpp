@@ -20,7 +20,7 @@ namespace
     }
 }
 
-lix::PolygonRendering::PolygonRendering(const std::vector<glm::vec3>& points, const std::vector<std::shared_ptr<lix::TRS>>& instances) : _points{points}, _instances{instances}
+lix::PolygonRendering::PolygonRendering(const std::vector<glm::vec3>& points, const std::vector<lix::TRS*>& instances) : _points{points}, _instances{instances}
 {
     std::vector<GLfloat> vs;
     std::vector<GLuint> is;
@@ -40,16 +40,11 @@ void lix::PolygonRendering::setPoints(const std::vector<glm::vec3>& points)
     _vao->ebo()->bufferData(is);
 }
 
-void lix::PolygonRendering::addInstance(std::shared_ptr<lix::TRS> trs)
-{
-    _instances.push_back(trs);
-}
-
 void lix::PolygonRendering::render(std::shared_ptr<lix::ShaderProgram> shaderProgram)
 {
     for(const auto& inst : _instances)
     {
-        shaderProgram->setUniform("u_model", inst->model());
+        shaderProgram->setUniform("u_model", inst->modelMatrix());
         _vao->bind();
         _vao->draw();
     }

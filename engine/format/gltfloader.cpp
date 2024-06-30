@@ -266,23 +266,35 @@ std::vector<glm::vec3> gltf::loadVertexPositions(const gltf::Mesh& mesh)
     return vertexPositions;
 }
 
-std::shared_ptr<lix::Polygon> gltf::loadMeshCollider(const gltf::Mesh& gltfMesh)
+std::shared_ptr<lix::Polygon> gltf::loadMeshCollider(const gltf::Mesh& gltfMesh, bool generateConvexHull)
 {
     uint64_t addr = (uint64_t)&gltfMesh;
     static std::unordered_map<uint64_t, std::vector<glm::vec3>> loadedMeshVertices;
+    static std::unordered_map<uint64_t, std::vector<glm::vec3>> convexHullVertices;
     auto it = loadedMeshVertices.find(addr);
     if(it == loadedMeshVertices.end())
     {
         std::vector<glm::vec3> vertices;
         std::vector<GLushort> indices;
-        std::vector<glm::vec3> unique;
         gltf::loadAttributes(gltfMesh, 0, gltf::A_POSITION, vertices, indices);
-        lix::uniqueVertices(vertices, unique);
+        auto unique = lix::uniqueVertices(vertices);
         //lix::ConvexHull convex_hull{unique};
-        //lix::uniqueVertices(convex_hull.points(), unique);
         loadedMeshVertices.emplace(addr, unique);
-        return std::shared_ptr<lix::Polygon>(
-            new lix::Polygon(loadedMeshVertices[addr]));
     }
-    return std::make_shared<lix::Polygon>(it->second);
+    if(generateConvexHull)
+    {
+        auto chIt = convexHullVertices.find(addr);
+        if(chIt == convexHullVertices.end())
+        {
+            lix::ConvexHull convexHull{loadedMeshVertices[addr]};
+            auto pts = convexHull.points();
+            convexHullVertices.emplace(addr, pts);
+        }
+        return std::make_shared<lix::Polygon>(nullptr, convexHullVertices[addr]);
+    }
+    else
+    {
+        return std::make_shared<lix::Polygon>(nullptr, loadedMeshVertices[addr]);
+    }
+    return nullptr;
 }

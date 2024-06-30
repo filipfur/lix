@@ -22,18 +22,8 @@ namespace lix
 		};
 
 		Mesh();
+		Mesh(std::shared_ptr<lix::VertexArray> vao, std::shared_ptr<lix::Material> material=nullptr);
 		Mesh(const Mesh& other);
-		Mesh(const lix::Attributes& attributes,
-			const std::vector<GLfloat>& vertices,
-			GLenum mode=GL_TRIANGLES,
-            GLenum usage=GL_STATIC_DRAW,
-			std::shared_ptr<lix::Material> material=nullptr);
-		Mesh(const lix::Attributes& attributes,
-			const std::vector<GLfloat>& vertices, const std::vector<GLuint>& indices,
-            GLenum mode=GL_TRIANGLES,
-            GLenum usage=GL_STATIC_DRAW,
-			std::shared_ptr<lix::Material> material=nullptr);
-
 		Mesh& operator=(const Mesh& other) = delete;
 
 		virtual ~Mesh() noexcept;

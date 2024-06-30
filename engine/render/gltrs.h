@@ -33,25 +33,26 @@ namespace lix
         virtual lix::TRS* setScale(const glm::vec3& scale);
         virtual lix::TRS* applyScale(const glm::vec3& scale);
 
-        const glm::mat4& model();
+        const glm::mat4& rotationMatrix() const;
+        const glm::mat4& modelMatrix();
+
+        bool rotationVersionSync(uint32_t& version) const;
+        bool modelVersionSync(uint32_t& version) const;
 
     protected:
+        virtual void invalidate();
         virtual bool updateModelMatrix();
 
-        virtual void invalidate();
-
-        bool invalid()
-        {
-            return _invalid;
-        }
-
     private:
+
         glm::vec3 _translation{0.0f};
         glm::quat _rotation{1.0f, 0.0f, 0.0f, 0.0f};
         glm::vec3 _scale{1.0f};
 
         bool _invalid{false};
-        glm::mat4 _model{1.0f};
-        glm::mat4 _rotMat{glm::mat4_cast(_rotation)};
+        glm::mat4 _rotationMatrix{glm::mat4_cast(_rotation)};
+        uint32_t _rotationMatrixVersion{0};
+        glm::mat4 _modelMatrix{1.0f};
+        uint32_t _modelMatrixVersion{0};
     };
 }

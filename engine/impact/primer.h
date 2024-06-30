@@ -23,7 +23,10 @@ namespace lix
 
     bool containsVertex(const std::vector<glm::vec3>& s, const glm::vec3& v);
 
-    void uniqueVertices(const std::vector<glm::vec3>& s, std::vector<glm::vec3>& u);
+    std::vector<glm::vec3> uniqueVertices(const std::vector<glm::vec3>& s);
+
+    std::pair<glm::vec3, glm::vec3> extremePoints(const std::vector<glm::vec3>& s);
+    std::vector<glm::vec3> minimumBoundingBox(const glm::vec3& min, const glm::vec3& max);
 
     int indexAlongDirection(const std::vector<glm::vec3>& s, const glm::vec3& D);
 

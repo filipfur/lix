@@ -10,11 +10,10 @@ lix::Buffer::Buffer(GLenum target, GLenum usage) : _target{target}, _usage{usage
 lix::Buffer::Buffer(const Buffer& other) : Buffer{other._target, other._usage}
 {
     bind();
-    bufferData(other._byteLength, other._stride);
+    bufferData(other._type, other._byteLength, other._stride);
     glBindBuffer(GL_COPY_READ_BUFFER, other._id);
     glBindBuffer(GL_COPY_WRITE_BUFFER, _id);
     glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, _byteLength);
-    _type = other._type;
 }
  
 lix::Buffer::~Buffer() noexcept
@@ -43,9 +42,10 @@ void lix::Buffer::bufferDataInternal(GLuint byteLength, GLuint stride, void* dat
     glBufferData(_target, _byteLength, data, _usage);
 }
 
-void lix::Buffer::bufferData(GLuint byteLength, GLuint stride, void* data)
+void lix::Buffer::bufferData(GLenum type, GLuint byteLength, GLuint stride, void* data)
 {
     bufferDataInternal(byteLength, stride, data);
+    _type = type;
 }
  
 void lix::Buffer::bufferData(const std::vector<GLuint>& data)

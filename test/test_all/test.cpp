@@ -36,7 +36,7 @@
 
 #include "gen/shaders/anim_vert.h"
 #include "gen/shaders/object_vert.h"
-#include "gen/shaders/texture_object_frag.h"
+#include "gen/shaders/texture_object_adv_frag.h"
 #include "gen/shaders/inst_vert.h"
 #include "gen/shaders/screen_vert.h"
 #include "gen/shaders/screen_frag.h"
@@ -229,13 +229,13 @@ void App::init()
     assert(inputAdapter() == this);
 
     shaderProgram.reset(new lix::ShaderProgram(assets::shaders::object_vert,
-        assets::shaders::texture_object_frag));
+        assets::shaders::texture_object_adv_frag));
     testShader.reset(new lix::ShaderProgram(assets::shaders::testtypes_vert,
         assets::shaders::testtypes_frag));
     animShader.reset(new lix::ShaderProgram(assets::shaders::anim_vert,
-        assets::shaders::texture_object_frag));
+        assets::shaders::texture_object_adv_frag));
     instShader.reset(new lix::ShaderProgram(assets::shaders::inst_vert,
-        assets::shaders::texture_object_frag));
+        assets::shaders::texture_object_adv_frag));
     screenShader.reset(new lix::ShaderProgram(assets::shaders::screen_vert,
         assets::shaders::bloom_frag));
     screenShader->bind();
@@ -251,30 +251,33 @@ void App::init()
         glm::vec3{5.0f, 3.0f, 0.0f},
         glm::vec3{1.0f, 3.0f, 0.0f}
     };
+    static lix::TRS trs_rect{};
     rectangle.reset(
-        new lix::Polygon(vert_0)
+        new lix::Polygon(&trs_rect, vert_0)
     );
-    rectangle->setTranslation(glm::vec3{2.0f, 0.0f, 0.0f})
+    rectangle->trs()->setTranslation(glm::vec3{2.0f, 0.0f, 0.0f})
         ->setRotation(glm::angleAxis(glm::pi<float>() * 0.05f, glm::vec3{0.0f, 0.0f, 1.0f}))
         ->setScale(glm::vec3{4.0f});
 
-    std::vector<glm::vec3> vert_1;
+    static std::vector<glm::vec3> vert_1;
     float ratio = glm::pi<float>() / 16.0f;
     for(int i{0}; i < 32; ++i)
     {
         float rad = static_cast<float>(i) * ratio;
         vert_1.push_back(glm::vec3{glm::cos(rad) * 1.0f, glm::sin(rad) * 1.0f, 0.0f});
     }
+    static lix::TRS circle_trs;
+    static lix::TRS circle2_trs;
     circle.reset(
-        new lix::Polygon(vert_1)
+        new lix::Polygon(&circle_trs, vert_1)
     );
-    circle->setTranslation(glm::vec3{12.0f, 20.0f, 0.0f})
+    circle->trs()->setTranslation(glm::vec3{12.0f, 20.0f, 0.0f})
         ->setScale(glm::vec3{2.0f});
 
     circle2.reset(
-        new lix::Polygon(vert_1)
+        new lix::Polygon(&circle2_trs, vert_1)
     );
-    circle2->setTranslation(glm::vec3{13.0f, 26.0f, 0.0f})
+    circle2->trs()->setTranslation(glm::vec3{13.0f, 26.0f, 0.0f})
         ->setScale(glm::vec3{1.4f});
 
     for(auto& poly : {rectangle, circle, circle2})
@@ -431,7 +434,7 @@ void App::tick(float dt)
             lix::Shape& shapeB = *actorB.shape;
 
             std::vector<lix::Vertex> simplex;
-            const glm::vec3 D{shapeB.translation() - shapeA.translation()};
+            const glm::vec3 D{shapeB.trs()->translation() - shapeA.trs()->translation()};
             if(lix::gjk(shapeA, shapeB, simplex, D, nullptr))
             {
                 glm::vec3 collisionVector;
@@ -453,9 +456,9 @@ void App::tick(float dt)
         });
     });
     
-    if(circle->translation().y < 0)
+    if(circle->trs()->translation().y < 0)
     {
-        circle->setTranslation(glm::vec3{12.0f, 20.0f, 0.0f});
+        circle->trs()->setTranslation(glm::vec3{12.0f, 20.0f, 0.0f});
     }
     static Time worldTime{0, 0};
     worldTime.time += dt;
@@ -465,7 +468,7 @@ void App::tick(float dt)
     actorSystem.update(entities, [](ecs::Entity /*entity*/, const Time& time, Actor& actor) {
         if(actor.moveable)
         {
-            actor.shape->applyTranslation(actor.velocity * time.deltaTime);
+            actor.shape->trs()->applyTranslation(actor.velocity * time.deltaTime);
         }
     });
 
@@ -524,7 +527,7 @@ void App::renderModels()
 
     for(lix::Node* node : {&donutA, &donutB})
     {
-        lix::renderMesh(*shaderProgram, *donutNode->mesh(), node->model());
+        lix::renderMesh(*shaderProgram, *donutNode->mesh(), node->modelMatrix());
     }
 }
 
@@ -543,27 +546,29 @@ void App::renderTest()
         lix::Color{1.0f, 0.0f, 0.0f}
     );
     static lix::Mesh triangle{
-        {lix::Attribute::VEC3, lix::Attribute::VEC3, lix::Attribute::VEC2}, {
+        std::make_shared<lix::VAO>(
+        lix::Attributes{lix::Attribute::VEC3, lix::Attribute::VEC3, lix::Attribute::VEC2}, std::vector<GLfloat>{
             -1.0f, 0.0f, 0.0f,  0.0f, 0.0f, 1.0f,   0.0f, 0.0f,
             1.0f, 0.0f, 0.0f,  0.0f, 0.0f, 1.0f,    1.0f, 0.0f,
             0.0f, 1.0f, 0.0f,  0.0f, 0.0f, 1.0f,   1.0f, 1.0f
         },
         GL_TRIANGLES,
-        GL_STATIC_DRAW,
+        GL_STATIC_DRAW),
         redMat
     };
     static lix::Mesh quad{
-        {lix::Attribute::VEC3, lix::Attribute::VEC3, lix::Attribute::VEC2}, {
+        std::make_shared<lix::VAO>(
+        lix::Attributes{lix::Attribute::VEC3, lix::Attribute::VEC3, lix::Attribute::VEC2}, std::vector<GLfloat>{
             -1.0f, -1.0f, 0.0f,  0.0f, 0.0f, 1.0f,   0.0f, 0.0f,
             1.0f, -1.0f, 0.0f,  0.0f, 0.0f, 1.0f,    1.0f, 0.0f,
             1.0f, 0.0f, 0.0f,  0.0f, 0.0f, 1.0f,   1.0f, 1.0f,
             -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f
-        },{
+        },std::vector<GLuint>{
             0, 1, 2,
             0, 2, 3
         },
         GL_TRIANGLES,
-        GL_STATIC_DRAW,
+        GL_STATIC_DRAW),
         nullptr
     };
     static auto blueTex = lix::Texture::Basic(glm::vec3{0.0f,0.0f,1.0f});
@@ -710,15 +715,18 @@ void App::renderText()
 void App::renderPolygons()
 {
     static std::shared_ptr<lix::Material> polygonMat = lix::Material::Basic({0.5f, 0.5f, 1.0f});
-    static lix::PolygonRendering rectangleRendering{rectangle->transformedPoints(),
-    {
-        std::make_shared<lix::TRS>(glm::vec3{0.0f, 0.0f, 0.0f}, glm::quat{1.0f, 0.0f, 0.0f, 0.0f}, glm::vec3{1.0f})
-    }};
+    static auto rectangleTRS = std::make_shared<lix::TRS>(glm::vec3{0.0f, 0.0f, 0.0f}, glm::quat{1.0f, 0.0f, 0.0f, 0.0f}, glm::vec3{1.0f});
+    static std::vector<lix::TRS*> rectangleTRSList = {
+        rectangleTRS.get()
+    };
+    static lix::PolygonRendering rectangleRendering{rectangle->transformedPoints(), rectangleTRSList};
+    static std::vector<lix::TRS*> polygon_render_trs{
+        circle->trs(),
+        circle2->trs()
+    };
     static lix::PolygonRendering circleRendering{circle->points(),
-    {
-        circle,
-        circle2
-    }};
+        polygon_render_trs
+    };
     shaderProgram->bind();
     lix::bindMaterial(*shaderProgram, *polygonMat);
     rectangleRendering.render(shaderProgram);

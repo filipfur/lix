@@ -35,7 +35,7 @@ void lix::UniformBuffer::bindShaders(const std::vector<lix::Element*>& shaders)
 void lix::UniformBuffer::bufferData()
 {
     bind();
-    Buffer::bufferData(_size, 1, _data);
+    Buffer::bufferData(GL_FLOAT, _size, 1, _data);
     unbind();
 }
 

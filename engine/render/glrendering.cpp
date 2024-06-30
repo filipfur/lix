@@ -73,10 +73,10 @@ void lix::renderNode(lix::ShaderProgram& shaderProgram, lix::Node& node, bool re
         auto parent = node.parent();
         while(parent)
         {
-            parent->model();
+            parent->modelMatrix();
             parent = parent->parent();
         }
-        renderMesh(shaderProgram, *node.mesh(), globalMatrices ? node.globalMatrix() : node.model());
+        renderMesh(shaderProgram, *node.mesh(), globalMatrices ? node.globalMatrix() : node.modelMatrix());
     }
     if(!recursive)
     {
@@ -110,7 +110,7 @@ void lix::renderSkinAnimationNode(lix::ShaderProgram& shaderProgram, lix::Node& 
         boundShaders.emplace(shaderProgram.id());
     }
     
-    const glm::mat4 globalWorldInverse = glm::inverse(node.parent() ? node.parent()->model() : node.model());
+    const glm::mat4 globalWorldInverse = glm::inverse(node.parent() ? node.parent()->modelMatrix() : node.modelMatrix());
     std::shared_ptr<lix::Skin> skin = node.skin();
     //static glm::mat4 jointMatrices[24];
     assert(skin->joints().size() <= 24);

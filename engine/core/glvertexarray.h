@@ -25,6 +25,16 @@ namespace lix
             const std::vector<GLfloat>& vertices,
             GLenum mode=GL_TRIANGLES,
             GLenum usage=GL_STATIC_DRAW);
+        VertexArray(const Attributes& attributes,
+            void* vertices_data, GLuint vertices_size,
+            GLuint* indices_data, GLuint indices_size,
+            GLenum mode=GL_TRIANGLES,
+            GLenum usage=GL_STATIC_DRAW);
+        VertexArray(const Attributes& attributes,
+            void* vertices_data, GLuint vertices_size,
+            GLushort* indices_data, GLuint indices_size,
+            GLenum mode=GL_TRIANGLES,
+            GLenum usage=GL_STATIC_DRAW);
         VertexArray(const VertexArray& other);
         VertexArray& operator=(const VertexArray& other);
         virtual ~VertexArray() noexcept;
@@ -49,6 +59,8 @@ namespace lix
             const lix::Attributes& attributes,
             const std::vector<GLfloat>& vertices,
             int attribDivisor=0);
+        std::shared_ptr<EBO> createEbo(GLenum usage, GLuint indices_size, GLuint* indices_data);
+        std::shared_ptr<EBO> createEbo(GLenum usage, GLuint indices_size, GLushort* indices_data);
         std::shared_ptr<EBO> createEbo(GLenum usage, const std::vector<GLuint>& indices);
         std::shared_ptr<EBO> createEbo(GLenum usage, const std::vector<GLushort>& indices);
 

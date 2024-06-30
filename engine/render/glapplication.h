@@ -76,7 +76,7 @@ namespace lix
         SDL_Window* _window{nullptr};
         float _time{0.0f};
         float _fps{0.0f};
-        float _tickFrequency{200.0f};
+        float _tickFrequency{100.0f};
         float _timeStep{1.0f / _tickFrequency};
         bool _forever{false};
         SDL_GLContext _glContext{nullptr};

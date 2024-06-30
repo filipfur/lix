@@ -12,16 +12,14 @@
 #include "gleditor.h"
 #include "polygon.h"
 #include "gltfloader.h"
-#include "collision.h"
+#include "collisionsystem.h"
 #include "gltextrendering.h"
 #include "quickhull.h"
-
 #include "convexhull.h"
-
-#include "primer.h"
 
 #include "gen/objects/cube.h"
 #include "gen/objects/arrow.h"
+#include "gen/objects/chinese_tea_table.h"
 #include "gen/ply/bun_zipper_res2.h"
 
 #include "gen/shaders/object_vert.h"
@@ -31,52 +29,24 @@
 
 #include "gen/fonts/arial.h"
 
-#include "response.h"
+#include "primer.h"
+#include "aabb.h"
+#include "glcube.h"
 
-#define SHOW_MINKOWSKI_VOLUME
+//#define SHOW_MINKOWSKI_VOLUME
 
 #define print_var(var) std::cout << #var << "=" << var << std::endl;
 
 inline static constexpr float SCREEN_WIDTH{600.0f};
 inline static constexpr float SCREEN_HEIGHT{600.0f};
 
-struct RigidBody
-{
-    unsigned int id;
-    std::shared_ptr<lix::Node> node;
-    std::shared_ptr<lix::Shape> shape;
-    lix::VertexArray debugVao;
-    bool collides;
-    bool dynamic;
-    glm::vec3 velocity;
-    glm::vec3 angularVelocity;
-    glm::mat3 I_inv;
-};
-
-glm::mat3 computeInertiaTensor(float mass, float sideLength) {
-    float inertia = (1.0f / 6.0f) * mass * sideLength * sideLength;
-    return inertia * glm::mat3(1.0f); // Diagonal inertia tensor
-}
-
-struct CollisionTrack
-{
-    glm::vec3 positionA;
-    glm::vec3 positionB;
-    std::shared_ptr<RigidBody> bodyA;
-    std::shared_ptr<RigidBody> bodyB;
-    lix::Collision collision;
-    std::vector<lix::Vertex> simplex;
-};
-
-std::shared_ptr<lix::VAO> vaoFromConvex(const lix::ConvexHull& ch)
+std::shared_ptr<lix::VAO> VAOFromConvex(const lix::ConvexHull& ch)
 {
     std::vector<GLfloat> mdv;
     std::vector<GLuint> mdi;
     ch.meshData(mdv, mdi);
     return std::shared_ptr<lix::VAO>(new lix::VAO(
         lix::Attributes{lix::VEC3},
-        //std::vector<GLfloat>{(GLfloat*)convex_vertices.data(), (GLfloat*)convex_vertices.data() + convex_vertices.size() * 3},
-        //convex_indices,
         mdv,
         mdi,
         GL_TRIANGLES,
@@ -116,46 +86,6 @@ glm::vec3 quatToDirection(const glm::quat& quat)
     return quat * UP;
 }
 
-struct Arrow
-{
-    Arrow(std::shared_ptr<lix::Node> node_, const glm::vec3& position, const glm::vec3& direction, const lix::Color& color_)
-        : node{node_}, color{color_}
-    {
-        setPosition(position);
-        setDirection(direction);
-    }
-
-    void setPosition(const glm::vec3& position)
-    {
-        node->setTranslation(position);
-    }
-
-    void setDirection(const glm::vec3& direction)
-    {
-        node->setRotation(directionToQuat(direction));
-    }
-
-    void set(const glm::vec3& position, const glm::vec3& direction, const lix::Color& color_)
-    {
-        setPosition(position);
-        setDirection(direction);
-        color = color_;
-    }
-
-    const glm::vec3& position() const
-    {
-        return node->translation();
-    }
-
-    glm::vec3 direction()
-    {
-        return quatToDirection(node->rotation());
-    }
-
-    lix::NodePtr node;
-    lix::Color color;
-};
-
 struct App : public lix::Application, public lix::Editor
 {
     App() : lix::Application{static_cast<int>(SCREEN_WIDTH), static_cast<int>(SCREEN_HEIGHT), "test_collision"},
@@ -174,37 +104,25 @@ struct App : public lix::Application, public lix::Editor
 
     virtual void onSubjectTransformed(std::shared_ptr<lix::Node> subject, lix::Editor::Transformation transformation) override;
 
-    void setArrowsTriangle(const std::vector<lix::Vertex>& simplex);
-    void setArrowsTetrahedron(const std::vector<lix::Vertex>& simplex);
+    std::shared_ptr<lix::RigidBody> createCube(const lix::Polygon& meshCollider, const lix::Node& node,
+        const glm::vec3& position, const glm::quat& rotation, const glm::vec3& scale, bool dynamic, float density);
 
-    void setArrowsHalfEdge();
-
-    void printCurEdge();
-
-    std::vector<std::shared_ptr<RigidBody>> rigidBodies;
     std::shared_ptr<lix::ShaderProgram> shaderProgram;
     std::shared_ptr<lix::ShaderProgram> debugShader;
-    std::vector<Arrow> arrows;
     std::shared_ptr<lix::Mesh> bunny;
     std::shared_ptr<lix::VAO> convexBunny;
     std::shared_ptr<lix::ConvexHull> bunnyCH;
-    std::shared_ptr<lix::VAO> minkowskiVAO;
-    bool shouldSetArrows{true};
-    std::unordered_map<unsigned int, std::unordered_map<unsigned int, lix::Collision>> collisions;
-    std::vector<CollisionTrack> collisionTracks;
-    std::vector<CollisionTrack>::iterator collisionTracksIt;
-    unsigned int collisionTrackIdentity;
-    bool traceCollisions{false};
-
-    lix::Half_Edge* curEdge{nullptr};
-    std::shared_ptr<lix::ConvexHull> convexHull;
-    std::list<lix::Face>::iterator curFaceIt;
-
+    //std::shared_ptr<lix::VAO> minkowskiVAO;
+    //std::shared_ptr<lix::ConvexHull> convexHull;
+    lix::CollisionSystem collisionSystem;
     std::vector<lix::TextPtr> texts;
     std::unique_ptr<lix::TextRendering> textRendering;
-
     std::shared_ptr<lix::ConvexHull> simplexHull;
     std::shared_ptr<lix::VAO> simplexHullVAO;
+    std::vector<std::shared_ptr<lix::RigidBody>> rigidBodies;
+    std::vector<std::shared_ptr<lix::Node>> cubeNodes;
+    std::vector<std::shared_ptr<lix::Node>> cubeSimpNodes;
+    std::vector<std::shared_ptr<lix::Node>> debugRNodes;
 };
 
 int main(int argc, const char* argv[])
@@ -214,13 +132,8 @@ int main(int argc, const char* argv[])
     return 0;
 }
 
-void App::printCurEdge()
-{
-    std::cout << "edge: <" << curEdge->id << "> f" <<  curEdge->face->id << " opposite: " << (curEdge->opposite ? std::to_string(curEdge->opposite->face->id) : "null") << std::endl;
-}
-
-void computeMinkowski(RigidBody& bodyA,
-    RigidBody& bodyB,
+void computeMinkowski(lix::RigidBody& bodyA,
+    lix::RigidBody& bodyB,
     std::vector<glm::vec3>& c)
 {
     auto polyA = std::dynamic_pointer_cast<lix::Polygon>(bodyA.shape);
@@ -242,50 +155,46 @@ void computeMinkowski(RigidBody& bodyA,
     }
 }
 
-void createCube(std::vector<std::shared_ptr<RigidBody>>& rigidBodies, const glm::vec3& position, const glm::quat& rotation, const glm::vec3& scale)
+std::shared_ptr<lix::RigidBody> App::createCube(const lix::Polygon& meshCollider, const lix::Node& node, const glm::vec3& position, const glm::quat& rotation, const glm::vec3& scale, bool dynamic, float density)
 {
-    static auto vertexPositions = gltf::loadVertexPositions(assets::objects::cube::Cube_mesh);
-    /*static std::vector<glm::vec3> cube_vertices;
-    static std::vector<GLushort> cube_indices;
-    static std::vector<glm::vec3> cube_unique;
-    static bool first{true};
-    if(first)
-    {
-        gltf::loadAttributes(assets::objects::cube::Cube_mesh, 0, gltf::A_POSITION, cube_vertices, cube_indices);
-        lix::uniqueVertices(cube_vertices, cube_unique);
-        first = false;
-    }*/
-    static auto meshCollider = gltf::loadMeshCollider(assets::objects::cube::Cube_mesh);
-
-    auto cube = gltf::loadNode(assets::objects::cube::Cube_node);
+    auto cube = lix::NodePtr(node.clone());
     cube->setTranslation(position);
     cube->setRotation(rotation);
     cube->setScale(scale);
     cube->mesh()->material()->setBaseColor(lix::Color::yellow);
-    rigidBodies.push_back(std::shared_ptr<RigidBody>(
-        new RigidBody{static_cast<unsigned int>(rigidBodies.size()), cube, std::shared_ptr<lix::Polygon>(meshCollider->clone()), {
-            lix::Attributes{lix::VEC3},
-            std::vector<GLfloat>{(GLfloat*)vertexPositions.data(), (GLfloat*)vertexPositions.data() + vertexPositions.size() * 3},
-            GL_TRIANGLES,
-            GL_STATIC_DRAW},
-            false,
-            false,
-            {0.0f, 0.0f, 0.0f}
-        }
-    ));
-    auto& rb = rigidBodies.back();
-    rb->shape->setTranslation(position);
-    rb->shape->setRotation(rotation);
-    rb->shape->setScale(scale);
-    /*if(auto poly = dynamic_cast<lix::Polygon*>(rb->shape))
+    cubeNodes.push_back(cube);
+
+    auto poly = std::shared_ptr<lix::Polygon>(meshCollider.clone());
+    poly->setTRS(cube.get());
+    auto aabb = std::make_shared<lix::AABB>(cube.get(), poly.get());
+    poly->setSimplified(aabb);
+
+    glm::vec3 extents = aabb->max() - aabb->min();
+    //glm::vec3 s = extents * scale;
+    static bool first{true};
+    if(first)
     {
-        poly->setRotation(rotation);
-        poly->setScale(scale);
-    }*/
-    rb->angularVelocity.x = 0.0f;
-    rb->angularVelocity.y = 0.0f;
-    rb->angularVelocity.z = 0.0f;
-    rb->I_inv = glm::inverse(computeInertiaTensor(scale.x * scale.y * scale.z * 1000.0f, scale.x));
+        printf("extens=%.1f %.1f %.1f\n", extents.x, extents.y, extents.z);
+        first = false;
+    }
+    auto rb = lix::CollisionSystem::createRigidBody(poly, dynamic,
+        extents.x * extents.y * extents.z * density, extents.x);
+    rigidBodies.push_back(rb);
+
+    auto cubeSimp = std::make_shared<lix::Node>(position);
+    auto pts = aabb->boundingBox();//lix::minimumBoundingBox(aabb->min(), aabb->max());
+    
+    cubeSimp->setMesh(std::make_shared<lix::Mesh>(
+        std::make_shared<lix::VAO>(
+        lix::Attributes{lix::Attribute::VEC3},
+        (void*)pts.data(), pts.size() * sizeof(glm::vec3),
+        (GLuint*)lix::cube_indices.data(), lix::cube_indices.size(),
+        GL_TRIANGLES,
+        GL_DYNAMIC_DRAW)));
+
+    cubeSimpNodes.push_back(cubeSimp);
+
+    return rb;
 }
 
 void App::init()
@@ -316,73 +225,11 @@ void App::init()
         (glm::vec3*)bunnyPosAttrib->data + bunnyPosAttrib->data_size / sizeof(glm::vec3)};
 
     bunnyCH = std::make_shared<lix::ConvexHull>(bunnyCloud);
-    convexBunny = vaoFromConvex(*bunnyCH);
+    convexBunny = VAOFromConvex(*bunnyCH);
 
     camera().setupUBO({
         shaderProgram.get(),
         debugShader.get()
-    });
-
-    setOnKeyDown(SDLK_j, [this](auto key, auto mod) {
-        if(!traceCollisions)
-        {
-            collisionTracksIt = collisionTracks.end() - 1;
-            traceCollisions = true;
-        }
-        else
-        {
-            if(collisionTracksIt == collisionTracks.begin())
-            {
-                collisionTracksIt = collisionTracks.end() - 1;
-            }
-            else
-            {
-                --collisionTracksIt;
-            }
-        }
-    });
-
-    setOnKeyDown(SDLK_n, [this](auto key, auto mod) {
-        if(mod & KMOD_ALT)
-        {
-            curEdge = curEdge->next;
-            printCurEdge();
-            setArrowsHalfEdge();
-        }
-        else if(traceCollisions)
-        {
-            if(collisionTracksIt == collisionTracks.end() - 1)
-            {
-                collisionTracksIt = collisionTracks.begin();
-            }
-            else
-            {
-                ++collisionTracksIt;
-            }
-        }
-    });
-
-    setOnKeyDown(SDLK_f, [this](auto, auto mod) {
-        if(mod & KMOD_ALT)
-        {
-            ++curFaceIt;
-            if(curFaceIt == convexHull->end())
-            {
-                curFaceIt = convexHull->begin();
-            }
-            curEdge = curFaceIt->half_edge;
-            printCurEdge();
-            setArrowsHalfEdge();
-        }
-    });
-
-    setOnKeyDown(SDLK_o, [this](auto, auto mod) {
-        if(mod & KMOD_ALT)
-        {
-            curEdge = curEdge->opposite;
-            printCurEdge();
-            setArrowsHalfEdge();
-        }
     });
 
     setOnKeyDown(SDLK_c, [this](auto key, auto mod) {
@@ -399,62 +246,66 @@ void App::init()
         }
     });
 
-    /*for(const auto& v : vertexPositions)
-    {
-        std::cout << "[" << v.x << ", " << v.y << ", " << v.z << "]" << std::endl;
-    }*/
-
-    auto arrowNode = gltf::loadNode(assets::objects::arrow::Arrow_node);
     const glm::vec3 origo{0.0f, 0.0f, 0.0f};
-
 
     glm::vec3 A{1.0f, 0.0f, 2.0f};
     glm::vec3 B{2.0f, 1.0f, 1.0f};
     glm::vec3 C{3.0f, 0.0f, 2.0f};
 
-    std::vector<lix::Vertex> test_s = {{0,A}, {1,B}, {2,C}};
+    static auto cubeMeshCollider = gltf::loadMeshCollider(assets::objects::chinese_tea_table::Plane_003_mesh, true);
+    static auto cubeNode = gltf::loadNode(assets::objects::chinese_tea_table::chinese_tea_table_node);
 
-    for(size_t i{0}; i < 64; ++i)
+    static auto bunMeshCollider = gltf::loadMeshCollider(assets::objects::bun_zipper_res2::bun_zipper_res2_mesh, true);
+    static auto bunNode = std::make_shared<lix::Node>();
+    bunNode->setMesh(gltf::loadMesh(assets::objects::bun_zipper_res2::bun_zipper_res2_mesh));
+
+    auto cubeA = createCube(*bunMeshCollider, *bunNode, glm::vec3{-1.0f, 2.0f, 0.0f}, glm::quat{1.0f, 0.0f, 0.0f, 0.0f}, glm::vec3{1.0f}, true, 500.0f);
+    /*auto cubeB = createCube(*cubeMeshCollider, *cubeNode, glm::vec3{0.0f, 0.0f, 0.0f}, glm::quat{1.0f, 0.0f, 0.0f, 0.0f}, glm::vec3{1.0f, 1.0f, 1.0f}, false, 500.0f);
+    createCube(*cubeMeshCollider, *cubeNode, glm::vec3{0.0f, 0.0f, 3.0f}, glm::quat{1.0f, 0.0f, 0.0f, 0.0f}, glm::vec3{1.0f, 1.0f, 1.0f}, false, 500.0f);*/
+
+    createCube(*cubeMeshCollider, *cubeNode, glm::vec3{-1.0f, -0.5f, 0.0f}, glm::angleAxis(glm::radians(25.0f), glm::vec3{1.0f, 0.0f, 0.0f}), glm::vec3{4.0f, 2.5f, 4.0f} * 0.5f, false, 500.0f);
+    createCube(*cubeMeshCollider, *cubeNode, glm::vec3{-1.0f, 0.5f, 3.0f}, glm::angleAxis(glm::radians(60.0f), glm::vec3{-1.0f, 0.0f, 0.0f}), glm::vec3{4.0f, 2.5f, 4.0f} * 0.5f, false, 500.0f);
+
+    for(const auto& rb : rigidBodies)
     {
-        arrows.push_back({arrowNode->clone(), glm::vec3{9999.0f}, glm::vec3{1.0f, 0.0f, 0.0f}, lix::Color::red});
+        auto polygon = std::dynamic_pointer_cast<lix::Polygon>(rb->shape);
+        if(polygon)
+        {
+            auto pts = polygon->points();
+            std::vector<glm::vec3> rotatedPoints(pts.size());
+            std::transform(pts.begin(), pts.end(), rotatedPoints.begin(), [&polygon](const glm::vec3& p) {
+                return glm::vec3(glm::scale(polygon->trs()->rotationMatrix(), polygon->trs()->scale()) * glm::vec4{p, 1.0f});
+            });
+            auto node = std::make_shared<lix::Node>(polygon->trs()->translation());
+
+            auto aabb = dynamic_cast<lix::AABB*>(polygon->simplified());
+            std::vector<glm::vec3> minmax = {aabb->min(), aabb->max()};
+            auto [vs, is] = lix::cubes_at_points(minmax);
+
+            node->setMesh(std::make_shared<lix::Mesh>(std::make_shared<lix::VAO>(
+                lix::Attributes{lix::Attribute::VEC3},
+                vs,
+                is
+            )
+            ));
+            debugRNodes.push_back(node);
+        }
     }
-    arrows.at(0).set(origo, glm::vec3{1.0f, 0.0f, 0.0f}, lix::Color::red);
-    arrows.at(1).set(origo, glm::vec3{0.0f, 1.0f, 0.0f}, lix::Color::green);
-    arrows.at(2).set(origo, glm::vec3{0.0f, 0.0f, 1.0f}, lix::Color::blue);
-    setArrowsTriangle(test_s);
 
-    createCube(rigidBodies, glm::vec3{-4.0f, 2.0f, 1.0f}, glm::quat{1.0f, 0.0f, 0.0f, 0.0f} /*glm::angleAxis(glm::radians(35.0f), glm::vec3{0.0f, 1.0f, 0.0f})*/, glm::vec3{0.2f, 0.2f, 0.2f});
-    collisionTrackIdentity = rigidBodies.back()->id;
-    rigidBodies.back()->dynamic = true;
+    //std::vector<glm::vec3> minkowski;
+    //computeMinkowski(*cubeA, *cubeB, minkowski);
 
-    createCube(rigidBodies, glm::vec3{0.0f, 0.0f, 0.0f}, glm::quat{1.0f, 0.0f, 0.0f, 0.0f}, glm::vec3{1.0f, 1.0f, 1.0f});
-    createCube(rigidBodies, glm::vec3{0.0f, 0.0f, 3.0f}, glm::quat{1.0f, 0.0f, 0.0f, 0.0f}, glm::vec3{1.0f, 1.0f, 1.0f});
-
-    createCube(rigidBodies, glm::vec3{-4.0f, -1.0f, 0.0f}, glm::angleAxis(glm::radians(15.0f), glm::vec3{1.0f, 0.0f, 0.0f}), glm::vec3{2.0f, 0.2f, 2.0f});
-    createCube(rigidBodies, glm::vec3{-4.0f, 1.0f, 3.0f}, glm::angleAxis(glm::radians(-60.0f), glm::vec3{1.0f, 0.0f, 0.0f}), glm::vec3{2.0f, 0.2f, 2.0f});
-
-
-    auto& cubeA = rigidBodies.at(0);
-    auto& cubeB = rigidBodies.at(1);
-
-    std::vector<glm::vec3> minkowski;
-    computeMinkowski(*cubeA, *cubeB, minkowski);
-
-    std::vector<glm::vec3> cloud;
-    lix::uniqueVertices(minkowski, cloud);
+    /*std::vector<glm::vec3> cloud = lix::uniqueVertices(minkowski);
     std::vector<lix::Vertex> minkowskiVertexInfo(cloud.size());
     std::transform(cloud.begin(), cloud.end(), minkowskiVertexInfo.begin(), [](const glm::vec3& v) -> lix::Vertex {
         static uint32_t id{0};
         return {id++, v};
     });
-    convexHull = std::make_shared<lix::ConvexHull>(minkowskiVertexInfo);
-    curEdge = convexHull->begin()->half_edge;
-    curFaceIt = convexHull->begin();
-    setArrowsHalfEdge();
+    convexHull = std::make_shared<lix::ConvexHull>(minkowskiVertexInfo);*/
 
-    minkowskiVAO = vaoFromConvex(*convexHull);
+    //minkowskiVAO = VAOFromConvex(*convexHull);
 
-    setSubjectNode((*(++rigidBodies.begin()))->node);
+    setSubjectNode(cubeNodes.front());
 
     std::shared_ptr<lix::Font> font = std::make_shared<lix::Font>(assets::fonts::arial::create());
 
@@ -467,308 +318,35 @@ void App::init()
     ));
 }
 
-void App::setArrowsTriangle(const std::vector<lix::Vertex>& simplex)
-{
-#ifdef SHOW_ARROWS_MINKOWSKI
-    const glm::vec3 origo{0.0f, 0.0f, 0.0f};
-    const glm::vec3& C = simplex.at(0);
-    const glm::vec3& B = simplex.at(1);
-    const glm::vec3& A = simplex.at(2);
-
-    glm::vec3 DirToA = glm::cross(glm::cross(C - B, -B), C - B);
-    
-    glm::vec3 AB = B - A;
-    glm::vec3 AC = C - A;    
-
-    glm::vec3 ABC_normal = glm::cross(AC, AB);
-    glm::vec3 ABC_center = (A + B + C) / 3.0f;
-
-    glm::vec3 AB_center = (A + B) / 2.0f;
-    glm::vec3 AB_normal = glm::cross(ABC_normal, AB);
-
-    glm::vec3 AC_center = (A + C) / 2.0f;
-    glm::vec3 AC_normal = glm::cross(AC, ABC_normal);
-
-    arrows.at(3).set(A, ABC_normal, lix::Color::red);
-    arrows.at(4).set(B, ABC_normal, lix::Color::green);
-    arrows.at(5).set(C, ABC_normal, lix::Color::blue);
-    arrows.at(6).set(A, AB, lix::Color::magenta);
-    arrows.at(7).set(A, AC, lix::Color::magenta);
-    arrows.at(8).set(ABC_center, ABC_normal, lix::Color::magenta);
-    arrows.at(9).set(AB_center, AB_normal, lix::Color::magenta);
-    arrows.at(10).set(AC_center, AC_normal, lix::Color::magenta);
-    arrows.at(11).set((C + B) / 2.0f, DirToA, lix::Color::cyan);
-
-    glm::vec3 BC = C - B;
-    float t = -(glm::dot(BC, B) / glm::dot(BC, BC));
-    glm::vec3 rt = B + BC * t;
-
-    arrows.at(12).set(rt, glm::normalize(-rt), lix::Color::yellow);
-#endif
-}
-
-void App::setArrowsTetrahedron(const std::vector<lix::Vertex>& simplex)
-{
-#ifdef SHOW_ARROWS_MINKOWSKI
-    setArrowsTriangle(simplex);
-
-    const glm::vec3 origo{0.0f, 0.0f, 0.0f};
-    const glm::vec3& D = simplex.at(0);
-    const glm::vec3& C = simplex.at(1);
-    const glm::vec3& B = simplex.at(2);
-    const glm::vec3& A = simplex.at(3);
-
-    const glm::vec3 BC = C - B;
-    const glm::vec3 BD = D - B;
-    const glm::vec3 BCD = glm::cross(BC, BD);
-
-    arrows.at(20).set(A, BCD, lix::Color::white);
-#endif
-}
-
-void App::setArrowsHalfEdge()
-{
-#if 0
-    glm::vec3 verts[3];
-    lix::Half_Edge* e = curEdge;
-    for(size_t i{0}; i < 3; ++i)
-    {
-        verts[i] = e->vertex;
-        e = e->next;
-    }
-
-    const glm::vec3& a = verts[0];
-    const glm::vec3& b = verts[1];
-    const glm::vec3& c = verts[2];
-    const glm::vec3 ab = b - a;
-    const glm::vec3 bc = c - b;
-    const glm::vec3 ca = a - c;
-    const glm::vec3 ac = c - a;
-    const glm::vec3 abc = glm::normalize(glm::cross(ab, ac));
-
-    arrows.at(24).set(a, ab, 0xff0000);
-    arrows.at(25).set(b, bc, 0xff8800);
-    arrows.at(26).set(c, ca, 0xff8800);
-#endif
-}
-
-void collisionResponse(RigidBody& rigidBody, const glm::vec3& normal, float penetration)
-{
-    rigidBody.velocity = glm::reflect(rigidBody.velocity, normal);
-    rigidBody.node->applyTranslation(normal * penetration);
-}
-
-
 void App::tick(float dt)
 {
     refresh(dt);
 
-    if(traceCollisions)
+
+    auto aabb_dyn = dynamic_cast<lix::AABB*>(rigidBodies.front()->shape->simplified());
+    auto dynSimp = cubeSimpNodes.at(0);
+    dynSimp->mesh()->bindVertexArray(0);
+    dynSimp->mesh()->vertexArray(0)->vbo(0)->bind();
+    auto pts = aabb_dyn->boundingBox();
+    dynSimp->mesh()->vertexArray(0)->vbo(0)->bufferData(GL_FLOAT, pts.size() * sizeof(glm::vec3), sizeof(glm::vec3), pts.data());
+    dynSimp->setTranslation(aabb_dyn->trs()->translation());
+
+    for(size_t i{1}; i < rigidBodies.size(); ++i)
     {
-        static auto cacheIt = collisionTracks.end();
-        if(collisionTracksIt != cacheIt)
+        auto aabb_stat = dynamic_cast<lix::AABB*>(rigidBodies.at(i)->shape->simplified());
+        if(aabb_dyn->intersects(*aabb_stat))
         {
-            switch(collisionTracksIt->simplex.size())
-            {
-            case 3:
-                setArrowsTriangle(collisionTracksIt->simplex);
-                break;
-            case 4:
-                setArrowsTetrahedron(collisionTracksIt->simplex);
-                break;
-            }
-            
-            collisionTracksIt->bodyA->shape->setTranslation(collisionTracksIt->positionA);
-            collisionTracksIt->bodyB->shape->setTranslation(collisionTracksIt->positionB);
-
-            arrows.at(29).setPosition(collisionTracksIt->bodyA->shape->translation());
-            arrows.at(29).setDirection(collisionTracksIt->collision.collisionNormal);
-            arrows.at(29).color = lix::Color::white;
-
-            simplexHull.reset(new lix::ConvexHull(collisionTracksIt->simplex));
-
-            simplexHullVAO = vaoFromConvex(*simplexHull);
-
-            glm::vec3 closestA = collisionTracksIt->collision.contactPoint;
-            arrows.at(31).setPosition(closestA);
-            arrows.at(31).setDirection(collisionTracksIt->collision.collisionNormal);
-            arrows.at(31).color = lix::Color::cyan;
-
-            arrows.at(32).setPosition(collisionTracksIt->collision.a);
-            arrows.at(32).setDirection(collisionTracksIt->collision.collisionNormal);
-            arrows.at(32).color = lix::Color::yellow;
-
-            arrows.at(33).setPosition(collisionTracksIt->collision.b);
-            arrows.at(33).setDirection(collisionTracksIt->collision.collisionNormal);
-            arrows.at(33).color = lix::Color::yellow;
-
-            arrows.at(34).setPosition(collisionTracksIt->collision.c);
-            arrows.at(34).setDirection(collisionTracksIt->collision.collisionNormal);
-            arrows.at(34).color = lix::Color::yellow;
-
-            /*auto faceIt = simplexHull->begin();
-            for(size_t i{0}; i < 4; ++i)
-            {
-                const glm::vec3& A = faceIt->half_edge->vertex;
-                const glm::vec3& B = faceIt->half_edge->next->vertex;
-                const glm::vec3& C = faceIt->half_edge->next->next->vertex;
-                arrows.at(32 + i).setPosition((A + B + C) * 0.333333f);
-                arrows.at(32 + i).setDirection(faceIt->normal);
-                arrows.at(32 + i).color = lix::Color::magenta;
-                ++faceIt;
-            }*/
-
-
-            texts.at(0)->setText(std::to_string(collisionTracksIt->collision.penetrationDepth));
-            cacheIt = collisionTracksIt;
-
-            collisionTracksIt->bodyA->shape->setTranslation(collisionTracksIt->positionA);
-            collisionTracksIt->bodyA->node->setTranslation(collisionTracksIt->positionA);
-            collisionTracksIt->bodyB->shape->setTranslation(collisionTracksIt->positionB);
-            collisionTracksIt->bodyB->node->setTranslation(collisionTracksIt->positionB);
-
-            std::vector<glm::vec3> minkowski;
-            computeMinkowski(*collisionTracksIt->bodyA, *collisionTracksIt->bodyB, minkowski);
-
-            std::vector<glm::vec3> cloud;
-            lix::uniqueVertices(minkowski, cloud);
-
-            std::vector<lix::Vertex> minkowskiVertexInfo(cloud.size());
-            std::transform(minkowski.begin(), minkowski.end(), minkowskiVertexInfo.begin(), [](const glm::vec3& v) -> lix::Vertex {
-                static uint32_t id{0};
-                return {id++, v};
-            });
-
-            convexHull = std::make_shared<lix::ConvexHull>(minkowskiVertexInfo);
-            std::vector<GLfloat> mdv;
-            std::vector<GLuint> mdi;
-            convexHull->meshData(mdv, mdi);
-            curEdge = convexHull->begin()->half_edge;
-            curFaceIt = convexHull->begin();
-            setArrowsHalfEdge();
-
-            minkowskiVAO->bind();
-            minkowskiVAO->vbo()->bind();
-            minkowskiVAO->vbo()->bufferData(mdv);
-            minkowskiVAO->ebo()->bind();
-            minkowskiVAO->ebo()->bufferData(mdi);
-
-            //std::vector<GLfloat> minkowskiVertices{(GLfloat*)cloud.data(), (GLfloat*)cloud.data() + cloud.size() * 3};
-            //minkowskiVAO.reset(new lix::VAO({lix::Attribute::VEC3}, minkowskiVertices, GL_TRIANGLES));
+            cubeNodes.at(i)->mesh()->material()->setBaseColor(lix::Color::white);
         }
-        return;
+        else
+        {
+            cubeNodes.at(i)->mesh()->material()->setBaseColor(lix::Color::red);
+        }
     }
 
-    for(const auto& cr1 : collisions)
-    {
-        for(const auto& cr2 : cr1.second)
-        {
-            std::shared_ptr<RigidBody> r1 =  rigidBodies.at(cr1.first);
-            std::shared_ptr<RigidBody> r2 =  rigidBodies.at(cr2.first);
-            //printf("resolve collision: %d, %d\n", r1->id, r2->id);
-            if(r1->dynamic)
-            {
-                collisionResponse(*r1, cr2.second.collisionNormal, r2->dynamic
-                    ? (cr2.second.penetrationDepth * 0.5f)
-                    : cr2.second.penetrationDepth);
-            }
-            if(r2->dynamic)
-            {
-                collisionResponse(*r2, -cr2.second.collisionNormal, r1->dynamic
-                    ? (cr2.second.penetrationDepth * 0.5f)
-                    : cr2.second.penetrationDepth);
-            }
+    texts.front()->setText("fps: " + std::to_string(static_cast<int>(fps())));
 
-            lix::impulse(0.5f, 1.0f, 1.0f, r1->I_inv, r2->I_inv,
-                cr2.second.contactPoint - r1->shape->translation(),
-                cr2.second.contactPoint - r2->shape->translation(),
-                cr2.second.collisionNormal, 
-                r1->velocity, r2->velocity,
-                r1->angularVelocity, r2->angularVelocity);
-            printf("angualr: %.1f %.1f %.1f\n", r1->angularVelocity.x, r1->angularVelocity.y, r1->angularVelocity.z);
-        }
-    }
-    collisions.clear();
-
-    float deltaTime = dt;
-    while(deltaTime > 0)
-    {
-        float ddt = glm::min(deltaTime, 0.1f);
-        deltaTime -= ddt;
-        for(const auto& rigidBody : rigidBodies)
-        {
-            if(rigidBody->dynamic)
-            {
-                rigidBody->velocity.y = std::max(-8.0f, rigidBody->velocity.y - 2.0f * ddt);
-                rigidBody->node->applyTranslation(rigidBody->velocity * ddt);
-                float dampingFactor = exp(-0.5f * ddt);
-                rigidBody->angularVelocity *= dampingFactor;
-                glm::quat deltaRotation = glm::quat(0.0f, rigidBody->angularVelocity * ddt); // Small rotation step
-                rigidBody->node->setRotation(glm::normalize(rigidBody->node->rotation() + 0.5f * deltaRotation * rigidBody->node->rotation()));
-            }
-            rigidBody->shape->setTranslation(rigidBody->node->translation());
-            rigidBody->collides = false;
-        }
-
-        for(const auto& bodyA : rigidBodies)
-        {
-            for(const auto& bodyB : rigidBodies)
-            {
-                if(bodyA->id >= bodyB->id)
-                {
-                    continue;
-                }
-                unsigned int minId = bodyA->id;
-                unsigned int maxId = bodyB->id;
-                auto minIt = collisions.find(minId);
-                if(minIt != collisions.end())
-                {
-                    auto maxIt = minIt->second.find(maxId);
-                    if(maxIt != minIt->second.end())
-                    {
-                        continue; // already colliding
-                    }
-                }
-                std::vector<lix::Vertex> simplex;
-                glm::vec3 D = glm::ballRand(1.0f);
-                lix::Collision collision;
-                if(lix::gjk(*bodyA->shape, *bodyB->shape, simplex, D, &collision))
-                {
-                    if(!lix::epa(*bodyA->shape, *bodyB->shape, simplex, &collision))
-                    {
-                        printf("EPA fail\n");
-                    }
-                    const glm::vec3& n = collision.collisionNormal;
-                    if(minId == collisionTrackIdentity || maxId == collisionTrackIdentity)
-                    {
-                        auto body = bodyA->id == collisionTrackIdentity ? bodyA : bodyB;
-                        auto other = bodyA->id == collisionTrackIdentity ? bodyB : bodyA;
-                        collisionTracks.push_back({body->shape->translation(), other->shape->translation(), body, other, collision, {simplex.begin(), simplex.end()}});
-                        texts.at(0)->setText(std::to_string(collision.penetrationDepth));
-                    }
-                    if(bodyA->dynamic || bodyB->dynamic)
-                    {
-                        collisions[minId][maxId] = std::move(collision);
-                    }
-                    bodyA->collides = true;
-                    bodyB->collides = true;
-                }
-                if(shouldSetArrows)
-                {
-                    switch(simplex.size())
-                    {
-                    case 3:
-                        setArrowsTriangle(simplex);
-                        break;
-                    case 4:
-                        setArrowsTetrahedron(simplex);
-                        break;
-                    }
-                    shouldSetArrows = false;
-                }
-            }
-        }
-    }
+    collisionSystem.tick(rigidBodies, dt);
 }
 
 void App::draw()
@@ -782,15 +360,13 @@ void App::draw()
     {
         lix::renderNode(*shaderProgram, *rigidBody->node);
     }*/
+    for(const auto& node : cubeNodes)
+    {
+        lix::renderNode(*shaderProgram, *node);
+    }
 
     glClear(GL_DEPTH_BUFFER_BIT);
     debugShader->bind();
-
-    for(const auto& arrow : arrows)
-    {
-        debugShader->setUniform("u_rgb", glm::vec3(arrow.color.vec4()));
-        lix::renderNode(*debugShader, *arrow.node);
-    }
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     debugShader->setUniform("u_rgb", glm::vec3{1.0f, 0.0f, 1.0f});
@@ -799,7 +375,7 @@ void App::draw()
     minkowskiVAO->bind();
     minkowskiVAO->draw();
 #endif
-    debugShader->setUniform("u_model", glm::mat4{16.0f});
+    debugShader->setUniform("u_model", glm::translate(glm::mat4{16.0f}, glm::vec3{0.0f, 0.25f, 0.0f}));
     convexBunny->bind();
     convexBunny->draw();
     if(simplexHullVAO)
@@ -811,8 +387,16 @@ void App::draw()
     }
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    debugShader->setUniform("u_rgb", glm::vec3{1.0f, 1.0f, 0.0f});
+    static auto arrowNode = gltf::loadNode(assets::objects::arrow::Arrow_node);
+    for(const auto& v : {glm::vec3{1.0f, 0.0f, 0.0f}, glm::vec3{0.0f, 1.0f, 0.0f}, glm::vec3{0.0f, 0.0f, 1.0f}})
+    {
+        debugShader->setUniform("u_rgb", v);
+        arrowNode->setRotation(directionToQuat(v));
+        lix::renderNode(*debugShader, *arrowNode);
+    }
+
     debugShader->setUniform("u_model", glm::mat4{1.0f});
+    debugShader->setUniform("u_rgb", glm::vec3{1.0f, 1.0f, 0.0f});
 /*#ifdef SHOW_MINKOWSKI_VOLUME
     glDepthMask(GL_FALSE);
     minkowskiVAO->bind();
@@ -831,7 +415,7 @@ void App::draw()
 #endif
 
     //debugShader->setUniform("u_model", glm::scale(glm::translate(glm::mat4{1.0f}, glm::vec3{0.0f, 1.0f, 0.0f}), glm::vec3{16.0f}));
-    debugShader->setUniform("u_model", glm::mat4{16.0f});
+    debugShader->setUniform("u_model", glm::translate(glm::mat4{16.0f}, glm::vec3{0.0f, 0.25f, 0.0f}));
     bunny->draw();
 
     //debugShader->setUniform("u_model", glm::mat4{16.0f});
@@ -849,13 +433,23 @@ void App::draw()
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    for(const auto& rigidBody : rigidBodies)
+    //render cubes here
+    /*for(const auto& node : cubeNodes)
     {
-        debugShader->setUniform("u_model", rigidBody->node->model());
-        debugShader->setUniform("u_rgb", glm::vec3(rigidBody->collides
-            ? lix::Color::red.vec4() : lix::Color::green.vec4()));
-        rigidBody->debugVao.bind();
-        rigidBody->debugVao.draw();
+        debugShader->setUniform("u_rgb", glm::vec3(node->mesh()->material()->baseColor().vec4()));
+        lix::renderNode(*debugShader, *node);
+    }*/
+
+    debugShader->setUniform("u_rgb", glm::vec3{0.0f, 1.0f, 0.0f});
+    for(const auto& node : cubeSimpNodes)
+    {
+        lix::renderNode(*debugShader, *node);
+    }
+
+    debugShader->setUniform("u_rgb", glm::vec3{0.0f, 0.0f, 1.0f});
+    for(const auto& node : debugRNodes)
+    {
+        lix::renderNode(*debugShader, *node);
     }
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -865,10 +459,9 @@ void App::draw()
 
 void App::onSubjectTransformed(std::shared_ptr<lix::Node> /*subject*/, lix::Editor::Transformation /*transformation*/)
 {
-    std::vector<glm::vec3> minkowski;
+    /*std::vector<glm::vec3> minkowski;
     computeMinkowski(*rigidBodies.at(0), *rigidBodies.at(1), minkowski);
     minkowskiVAO->bind();
     minkowskiVAO->vbo()->bind();
-    minkowskiVAO->vbo()->bufferData(std::vector<GLfloat>{(GLfloat*)minkowski.data(), (GLfloat*)minkowski.data() + minkowski.size() * 3});
-    shouldSetArrows = true;
+    minkowskiVAO->vbo()->bufferData(std::vector<GLfloat>{(GLfloat*)minkowski.data(), (GLfloat*)minkowski.data() + minkowski.size() * 3});*/
 }
