@@ -56,7 +56,7 @@ int edgeCase(lix::Shape& shapeA, lix::Shape& shapeB, std::vector<lix::Vertex>& s
     {
         if(collision)
         {
-            collision->collisionNormal = glm::normalize(-C);
+            collision->normal = glm::normalize(-C);
             collision->penetrationDepth = glm::sqrt(C_dist);
         }
         return 1;
@@ -172,7 +172,7 @@ int tetrahedronCase(lix::Shape& /*shapeA*/, lix::Shape& /*shapeB*/, std::vector<
         float d = minDistance / glm::length(ABC); //glm::sqrt(glm::dot(ABC, ABC));
 
         collision->penetrationDepth = -d;
-        collision->collisionNormal = glm::normalize(minNormal);
+        collision->normal = glm::normalize(minNormal);
     }
 
     return 1;
@@ -309,7 +309,7 @@ bool lix::epa(Shape& shapeA, Shape& shapeB, const std::vector<lix::Vertex>& simp
                 collision->a = aa;
                 collision->b = bb;
                 collision->c = cc;
-                collision->collisionNormal = -minFaceIt->normal;
+                collision->normal = -minFaceIt->normal;
                 collision->penetrationDepth = glm::dot(minFaceIt->normal, a.position);
             }
             //printf("converged on iteration: %zu\n", i);

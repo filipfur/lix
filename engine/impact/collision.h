@@ -9,7 +9,7 @@ namespace lix
     struct Collision
     {
         glm::vec3 contactPoint;
-        glm::vec3 collisionNormal;
+        glm::vec3 normal;
         float penetrationDepth;
         glm::vec3 a;
         glm::vec3 b;

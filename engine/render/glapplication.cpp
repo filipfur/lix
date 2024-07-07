@@ -41,37 +41,34 @@ void lix::Application::loop()
         }
     }
 
-    static GLuint previousTicks{0};
-    GLuint ticks = SDL_GetTicks();
-    GLuint deltaTicks = ticks - previousTicks;
+    static uint32_t previousTicks{0};
+    uint32_t ticks = SDL_GetTicks();
+    static uint32_t deltaTicks{0};
+    deltaTicks += (ticks - previousTicks);
     previousTicks = ticks;
 
-    static float lastTime{0.0f};
-    static float currentTime{0.0f};
+    static Timer timer10Hz{lix::Time::fromHz<10>()};
     static size_t frames{0};
 
-    if(deltaTicks > 0)
+    while(deltaTicks >= context->_deltaTime)
     {
-        static float debt{0.0f};
-        debt += deltaTicks * 1e-3f;
-        while(debt >= context->_timeStep)
-        {
-            context->tick(context->_timeStep);
-            debt -= context->_timeStep;
-            currentTime = context->time() + context->_timeStep;
-            context->_time = currentTime;
-        }
+
+        context->tick(context->_deltaTimeSeconds);
+
         context->draw();
         ++frames;
 
-        if(currentTime - lastTime >= 0.1f)
+        if(timer10Hz.elapsed())
         {
-            lastTime = glm::trunc(currentTime * 10.0f) * 0.1f;
             context->_fps = frames * 10.0f;
             frames = 0;
+            timer10Hz.reset();
         }
 
         SDL_GL_SwapWindow(context->window());
+
+        deltaTicks -= context->_deltaTime;
+        lix::Time::increment(context->_deltaTime);
     }
 
     if(context->_fps > 60)
@@ -87,8 +84,6 @@ lix::Application::Application(int windowX, int windowY, const char* title)
 }
 
 SDL_Window* lix::Application::window() const { return _window; }
-
-float lix::Application::time() const { return _time; }
 
 void lix::Application::setOnKeyDown(KeySym key, const KeyCallback& keyCallback)
 {
@@ -145,10 +140,12 @@ float lix::Application::fps() const
     return _fps;
 }
 
-void lix::Application::setTickFrequency(float tickFrequency)
+void lix::Application::setTickFrequency(lix::Time::Raw hz)
 {
-    _tickFrequency = tickFrequency;
-    _timeStep = 1.0f / tickFrequency;
+    _tickFrequency = hz;
+    assert(1000 % hz == 0); // not nice numbers
+    _deltaTime = 1000 / hz;
+    _deltaTimeSeconds = _deltaTime * 1e-3f;
 }
 
 void lix::Application::handleCallback(lix::Application::KeyAction keyAction,

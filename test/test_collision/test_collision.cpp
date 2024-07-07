@@ -12,7 +12,8 @@
 #include "gleditor.h"
 #include "polygon.h"
 #include "gltfloader.h"
-#include "collisionsystem.h"
+//#include "collisionsystem.h"
+#include "physicsengine.h"
 #include "gltextrendering.h"
 #include "quickhull.h"
 #include "convexhull.h"
@@ -37,8 +38,8 @@
 
 #define print_var(var) std::cout << #var << "=" << var << std::endl;
 
-inline static constexpr float SCREEN_WIDTH{600.0f};
-inline static constexpr float SCREEN_HEIGHT{600.0f};
+inline static constexpr float SCREEN_WIDTH{1080.0f};
+inline static constexpr float SCREEN_HEIGHT{720.0f};
 
 std::shared_ptr<lix::VAO> VAOFromConvex(const lix::ConvexHull& ch)
 {
@@ -104,7 +105,7 @@ struct App : public lix::Application, public lix::Editor
 
     virtual void onSubjectTransformed(std::shared_ptr<lix::Node> subject, lix::Editor::Transformation transformation) override;
 
-    std::shared_ptr<lix::RigidBody> createCube(const lix::Polygon& meshCollider, const lix::Node& node,
+    void createCube(const lix::Polygon& meshCollider, const lix::Node& node,
         const glm::vec3& position, const glm::quat& rotation, const glm::vec3& scale, bool dynamic, float density);
 
     std::shared_ptr<lix::ShaderProgram> shaderProgram;
@@ -114,12 +115,13 @@ struct App : public lix::Application, public lix::Editor
     std::shared_ptr<lix::ConvexHull> bunnyCH;
     //std::shared_ptr<lix::VAO> minkowskiVAO;
     //std::shared_ptr<lix::ConvexHull> convexHull;
-    lix::CollisionSystem collisionSystem;
+    //lix::CollisionSystem collisionSystem;
     std::vector<lix::TextPtr> texts;
     std::unique_ptr<lix::TextRendering> textRendering;
     std::shared_ptr<lix::ConvexHull> simplexHull;
     std::shared_ptr<lix::VAO> simplexHullVAO;
-    std::vector<std::shared_ptr<lix::RigidBody>> rigidBodies;
+    std::vector<lix::StaticBody> staticBodies;
+    std::vector<lix::DynamicBody> dynamicBodies;
     std::vector<std::shared_ptr<lix::Node>> cubeNodes;
     std::vector<std::shared_ptr<lix::Node>> cubeSimpNodes;
     std::vector<std::shared_ptr<lix::Node>> debugRNodes;
@@ -132,8 +134,8 @@ int main(int argc, const char* argv[])
     return 0;
 }
 
-void computeMinkowski(lix::RigidBody& bodyA,
-    lix::RigidBody& bodyB,
+void computeMinkowski(lix::DynamicBody& bodyA,
+    lix::DynamicBody& bodyB,
     std::vector<glm::vec3>& c)
 {
     auto polyA = std::dynamic_pointer_cast<lix::Polygon>(bodyA.shape);
@@ -155,7 +157,7 @@ void computeMinkowski(lix::RigidBody& bodyA,
     }
 }
 
-std::shared_ptr<lix::RigidBody> App::createCube(const lix::Polygon& meshCollider, const lix::Node& node, const glm::vec3& position, const glm::quat& rotation, const glm::vec3& scale, bool dynamic, float density)
+void App::createCube(const lix::Polygon& meshCollider, const lix::Node& node, const glm::vec3& position, const glm::quat& rotation, const glm::vec3& scale, bool dynamic, float density)
 {
     auto cube = lix::NodePtr(node.clone());
     cube->setTranslation(position);
@@ -177,9 +179,19 @@ std::shared_ptr<lix::RigidBody> App::createCube(const lix::Polygon& meshCollider
         printf("extens=%.1f %.1f %.1f\n", extents.x, extents.y, extents.z);
         first = false;
     }
-    auto rb = lix::CollisionSystem::createRigidBody(poly, dynamic,
-        extents.x * extents.y * extents.z * density, extents.x);
-    rigidBodies.push_back(rb);
+    if(dynamic)
+    {
+        dynamicBodies.push_back(
+            lix::PhysicsEngine::createDynamicBody(poly,
+                extents.x * extents.y * extents.z * density, extents.x)
+        );
+    }
+    else
+    {
+        staticBodies.push_back(
+            lix::PhysicsEngine::createStaticBody(poly)
+        );
+    }
 
     auto cubeSimp = std::make_shared<lix::Node>(position);
     auto pts = aabb->boundingBox();//lix::minimumBoundingBox(aabb->min(), aabb->max());
@@ -193,8 +205,6 @@ std::shared_ptr<lix::RigidBody> App::createCube(const lix::Polygon& meshCollider
         GL_DYNAMIC_DRAW)));
 
     cubeSimpNodes.push_back(cubeSimp);
-
-    return rb;
 }
 
 void App::init()
@@ -259,16 +269,16 @@ void App::init()
     static auto bunNode = std::make_shared<lix::Node>();
     bunNode->setMesh(gltf::loadMesh(assets::objects::bun_zipper_res2::bun_zipper_res2_mesh));
 
-    auto cubeA = createCube(*bunMeshCollider, *bunNode, glm::vec3{-1.0f, 2.0f, 0.0f}, glm::quat{1.0f, 0.0f, 0.0f, 0.0f}, glm::vec3{1.0f}, true, 500.0f);
+    createCube(*bunMeshCollider, *bunNode, glm::vec3{-1.0f, 2.0f, 0.5f}, glm::quat{1.0f, 0.0f, 0.0f, 0.0f}, glm::vec3{2.0f}, true, 500.0f);
     /*auto cubeB = createCube(*cubeMeshCollider, *cubeNode, glm::vec3{0.0f, 0.0f, 0.0f}, glm::quat{1.0f, 0.0f, 0.0f, 0.0f}, glm::vec3{1.0f, 1.0f, 1.0f}, false, 500.0f);
     createCube(*cubeMeshCollider, *cubeNode, glm::vec3{0.0f, 0.0f, 3.0f}, glm::quat{1.0f, 0.0f, 0.0f, 0.0f}, glm::vec3{1.0f, 1.0f, 1.0f}, false, 500.0f);*/
 
     createCube(*cubeMeshCollider, *cubeNode, glm::vec3{-1.0f, -0.5f, 0.0f}, glm::angleAxis(glm::radians(25.0f), glm::vec3{1.0f, 0.0f, 0.0f}), glm::vec3{4.0f, 2.5f, 4.0f} * 0.5f, false, 500.0f);
     createCube(*cubeMeshCollider, *cubeNode, glm::vec3{-1.0f, 0.5f, 3.0f}, glm::angleAxis(glm::radians(60.0f), glm::vec3{-1.0f, 0.0f, 0.0f}), glm::vec3{4.0f, 2.5f, 4.0f} * 0.5f, false, 500.0f);
 
-    for(const auto& rb : rigidBodies)
-    {
-        auto polygon = std::dynamic_pointer_cast<lix::Polygon>(rb->shape);
+
+    static auto createDebugNode = [this](const auto& rb) {
+        auto polygon = std::dynamic_pointer_cast<lix::Polygon>(rb.shape);
         if(polygon)
         {
             auto pts = polygon->points();
@@ -290,6 +300,15 @@ void App::init()
             ));
             debugRNodes.push_back(node);
         }
+    };
+
+    for(const auto& rb : dynamicBodies)
+    {
+        createDebugNode(rb);
+    }
+    for(const auto& rb : staticBodies)
+    {
+        createDebugNode(rb);
     }
 
     //std::vector<glm::vec3> minkowski;
@@ -323,7 +342,7 @@ void App::tick(float dt)
     refresh(dt);
 
 
-    auto aabb_dyn = dynamic_cast<lix::AABB*>(rigidBodies.front()->shape->simplified());
+    auto aabb_dyn = dynamic_cast<lix::AABB*>(dynamicBodies.front().shape->simplified());
     auto dynSimp = cubeSimpNodes.at(0);
     dynSimp->mesh()->bindVertexArray(0);
     dynSimp->mesh()->vertexArray(0)->vbo(0)->bind();
@@ -331,22 +350,29 @@ void App::tick(float dt)
     dynSimp->mesh()->vertexArray(0)->vbo(0)->bufferData(GL_FLOAT, pts.size() * sizeof(glm::vec3), sizeof(glm::vec3), pts.data());
     dynSimp->setTranslation(aabb_dyn->trs()->translation());
 
-    for(size_t i{1}; i < rigidBodies.size(); ++i)
+    for(size_t i{0}; i < staticBodies.size(); ++i)
     {
-        auto aabb_stat = dynamic_cast<lix::AABB*>(rigidBodies.at(i)->shape->simplified());
+        auto aabb_stat = dynamic_cast<lix::AABB*>(staticBodies.at(i).shape->simplified());
         if(aabb_dyn->intersects(*aabb_stat))
         {
-            cubeNodes.at(i)->mesh()->material()->setBaseColor(lix::Color::white);
+            cubeNodes.at(i + 1)->mesh()->material()->setBaseColor(lix::Color::blue);
         }
         else
         {
-            cubeNodes.at(i)->mesh()->material()->setBaseColor(lix::Color::red);
+            cubeNodes.at(i + 1)->mesh()->material()->setBaseColor(lix::Color::red);
         }
     }
 
     texts.front()->setText("fps: " + std::to_string(static_cast<int>(fps())));
 
-    collisionSystem.tick(rigidBodies, dt);
+    /*static constexpr float deltaTime50hz = 1.0f / 50.0f;
+    static float physicsTimer = 0;
+    if((physicsTimer -= dt) <= 0)
+    {
+        lix::PhysicsEngine::step(staticBodies, dynamicBodies, deltaTime50hz);
+        physicsTimer += deltaTime50hz;
+    }*/
+   lix::PhysicsEngine::step(dynamicBodies, staticBodies, dt);
 }
 
 void App::draw()
@@ -434,11 +460,11 @@ void App::draw()
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     //render cubes here
-    /*for(const auto& node : cubeNodes)
+    for(const auto& node : cubeNodes)
     {
-        debugShader->setUniform("u_rgb", glm::vec3(node->mesh()->material()->baseColor().vec4()));
+        debugShader->setUniform("u_rgb", glm::vec3{1.0f, 1.0f, 0.0f});
         lix::renderNode(*debugShader, *node);
-    }*/
+    }
 
     debugShader->setUniform("u_rgb", glm::vec3{0.0f, 1.0f, 0.0f});
     for(const auto& node : cubeSimpNodes)

@@ -17,6 +17,7 @@
 
 #include "gltypes.h"
 #include "glinputadapter.h"
+#include "gltimer.h"
 
 namespace lix
 {
@@ -31,7 +32,6 @@ namespace lix
         Application(int windowX, int windowY, const char* title="Untitled");
 
         SDL_Window* window() const;
-        float time() const;
         void run(bool forever=true);
         virtual void init() = 0;
         virtual void tick(float dt) = 0;
@@ -51,8 +51,7 @@ namespace lix
         glm::vec2 normalizedMousePosition() const; // n.x: -1.0f - 1.0f == left - right, n.y: -1.0f - 1.0f == bottom - top 
 
         float fps() const;
-
-        void setTickFrequency(float tickFrequency);
+        void setTickFrequency(lix::Time::Raw hz);
 
         void quit();
     private:
@@ -74,10 +73,10 @@ namespace lix
         };
         const char* _title;
         SDL_Window* _window{nullptr};
-        float _time{0.0f};
         float _fps{0.0f};
-        float _tickFrequency{100.0f};
-        float _timeStep{1.0f / _tickFrequency};
+        lix::Time::Raw _tickFrequency{100};
+        lix::Time::Raw _deltaTime{1000 / _tickFrequency};
+        float _deltaTimeSeconds{_deltaTime * 1e-3f};
         bool _forever{false};
         SDL_GLContext _glContext{nullptr};
         glm::vec2 _windowSize;

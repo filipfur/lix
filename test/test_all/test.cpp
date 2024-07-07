@@ -481,7 +481,7 @@ void App::tick(float dt)
     static auto earthNode = planetsNode->find("Icosphere");
     earthNode->applyRotation(glm::angleAxis(dt * 0.32f, glm::vec3{1.0f, 0.0f, 0.0f}));
 
-    spikesNode->setScale(glm::vec3{4.0f + sin(time() * 16.0f) * 0.08f});
+    spikesNode->setScale(glm::vec3{4.0f + sin(lix::Time::seconds() * 16.0f) * 0.08f});
 
     mooseAnim->update(dt);
     cubeAnim->update(dt);
@@ -493,7 +493,7 @@ void App::renderModels()
 {
     shaderProgram->bind();
     shaderProgram->setUniform("u_model", model);
-    shaderProgram->setUniform("u_time", time());
+    shaderProgram->setUniform("u_time", lix::Time::seconds());
     shaderProgram->setUniform("u_lights", lights);
 
     lix::renderNode(*shaderProgram, *monkeyStageNode);
@@ -518,11 +518,11 @@ void App::renderModels()
     };
     donutA.setTranslation(glm::vec3{
         donutA.translation().x,
-        4.0f + sinf(time() * 8.0f) * 0.4f,
+        4.0f + sinf(lix::Time::seconds() * 8.0f) * 0.4f,
         donutB.translation().z});
     donutB.setTranslation(glm::vec3{
         donutB.translation().x,
-        4.0f + sinf((time() + 0.2f) * 8.0f) * 0.4f,
+        4.0f + sinf((lix::Time::seconds() + 0.2f) * 8.0f) * 0.4f,
         donutB.translation().z});
 
     for(lix::Node* node : {&donutA, &donutB})
@@ -608,7 +608,7 @@ void App::renderTerrainInstances()
     };
 
     instShader->bind();
-    instShader->setUniform("u_time", time());
+    instShader->setUniform("u_time", lix::Time::seconds());
     instShader->setUniform("u_lights", lights);
     bushRendering.render(*instShader);
 }
@@ -627,7 +627,7 @@ void App::renderBoneInstances()
 void App::renderSkinnedModels()
 {
     animShader->bind();
-    animShader->setUniform("u_time", time());
+    animShader->setUniform("u_time", lix::Time::seconds());
     animShader->setUniform("u_lights", lights);
     for(auto node : {mooseNode, animatedCubeNode})
     {
@@ -708,7 +708,7 @@ void App::renderText()
         ->setTranslation(glm::vec3{300.0f, 200.0f, 0.0f})
         ->setScale(glm::vec3{0.5f});
     wavyTextRendering.shaderProgram()->bind();
-    wavyTextRendering.shaderProgram()->setUniform("u_time", time());
+    wavyTextRendering.shaderProgram()->setUniform("u_time", lix::Time::seconds());
     wavyTextRendering.render();
 }
 
