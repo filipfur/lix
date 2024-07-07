@@ -1,23 +1,14 @@
 cmake_minimum_required(VERSION 3.22) 
 
-project(lix_test)
+project(lix_unit_test)
 
-if(NOT DEFINED ASPROC_HOME)
-  message(FATAL_ERROR "ASPROC_HOME is not set.")
-endif()
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if(WIN32)
-  message(STATUS "Make not a thing on windows.")
-else()
-  add_custom_target(
-      GenerateAssets ALL
-      COMMAND make -C ${CMAKE_CURRENT_SOURCE_DIR} -f ${ASPROC_HOME}/gen_assets.mk gen_assets ASPROC_HOME=${ASPROC_HOME}
-  )
-  add_dependencies(GenerateAssets asproc)
-endif()
+function(lix_add_test target_name)
+  add_executable(${target_name} unit_test.cpp ${target_name}.cpp)
+  target_link_libraries(${target_name} engine)
+  add_test(NAME ${target_name} COMMAND $<TARGET_FILE:${target_name}>)
+endfunction()
 
-add_subdirectory(test_all)
-add_subdirectory(test_basic)
-add_subdirectory(test_collision)
-
-add_subdirectory(unit_test)
+lix_add_test(test_time)

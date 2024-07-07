@@ -1,0 +1,30 @@
+cmake_minimum_required(VERSION 3.22) 
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(target_name example_collision)
+
+project(${target_name})
+
+file(GLOB GEN_SOURCES
+    ../gen/objects/cube.cpp
+    ../gen/objects/arrow.cpp
+    ../gen/objects/chinese_tea_table.cpp
+    ../gen/ply/bun_zipper_res2.cpp
+    ../gen/shaders/object_vert.cpp
+    ../gen/shaders/texture_object_frag.cpp
+    ../gen/shaders/debug_vao_vert.cpp
+    ../gen/shaders/debug_vao_frag.cpp
+    ../gen/fonts/arial.cpp
+)
+
+add_executable(${target_name} example_collision.cpp ${GEN_SOURCES})
+target_include_directories(${target_name} PRIVATE ..)
+target_link_libraries(${target_name} PRIVATE engine)
+
+if(MSVC)
+    copy_ext_dll(${target_name})
+endif()
+
+install(TARGETS ${target_name} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/deploy)

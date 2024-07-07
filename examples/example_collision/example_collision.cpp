@@ -12,7 +12,6 @@
 #include "gleditor.h"
 #include "polygon.h"
 #include "gltfloader.h"
-//#include "collisionsystem.h"
 #include "physicsengine.h"
 #include "gltextrendering.h"
 #include "quickhull.h"
@@ -365,13 +364,6 @@ void App::tick(float dt)
 
     texts.front()->setText("fps: " + std::to_string(static_cast<int>(fps())));
 
-    /*static constexpr float deltaTime50hz = 1.0f / 50.0f;
-    static float physicsTimer = 0;
-    if((physicsTimer -= dt) <= 0)
-    {
-        lix::PhysicsEngine::step(staticBodies, dynamicBodies, deltaTime50hz);
-        physicsTimer += deltaTime50hz;
-    }*/
    lix::PhysicsEngine::step(dynamicBodies, staticBodies, dt);
 }
 
