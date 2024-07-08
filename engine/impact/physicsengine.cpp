@@ -20,13 +20,18 @@ inline static float impulse(lix::DynamicBody& dynamicBody, const lix::Collision&
     return J;
 }
 
-inline static void updateDerivatives(lix::DynamicBody& rigidBody, float dt)
+inline static void applyForces(lix::DynamicBody& dynamicBody, float dt)
 {
-    rigidBody.velocity.y = std::max(-8.0f, rigidBody.velocity.y - 1.0f * dt);
+    // gravity
+    dynamicBody.velocity.y -= 9.82f * dt;
+
+    const glm::vec3 dragForce = -0.02f * dynamicBody.velocity;
+    const glm::vec3 dragAcceleration = dragForce * dynamicBody.mass_inv;
+    dynamicBody.velocity += dragAcceleration * dt;
 
     float dampingFactor = exp(-0.5f * dt);
-    rigidBody.angularVelocity *= dampingFactor;
-    glm::quat deltaRotation = glm::quat(0.0f, rigidBody.angularVelocity * dt); // Small rotation step
+    dynamicBody.angularVelocity *= dampingFactor;
+    glm::quat deltaRotation = glm::quat(0.0f, dynamicBody.angularVelocity * dt); // Small rotation step
 }
 
 inline static void forwardBody(lix::DynamicBody& rigidBody, float dt)
@@ -53,8 +58,6 @@ static inline bool narrowPhaseCollision(lix::RigidBody& bodyA, lix::RigidBody& b
     lix::Collision* collision=nullptr)
 {
     simplex.clear();
-    //std::vector<lix::Vertex> simplex;
-    //glm::vec3 D = glm::normalize(bodyB.shape->trs()->translation() - bodyA.shape->trs()->translation());
     return lix::gjk(*bodyA.shape, *bodyB.shape, simplex, D, collision);
 }
 
@@ -63,7 +66,6 @@ inline static float backtrackCollision(lix::DynamicBody& dynamicBody,
     float dt,
     std::vector<lix::Vertex>& simplex, const glm::vec3& D, lix::Collision& collision)
 {
-    //return 0.0f;
     float t = dt;
     bool backtrack{true};
     float rewindedTime{0.0f};
@@ -103,7 +105,7 @@ void lix::PhysicsEngine::step(std::vector<lix::DynamicBody>& dynamicBodies,
 {
     for(auto& dynamicBody : dynamicBodies)
     {
-        updateDerivatives(dynamicBody, dt);
+        applyForces(dynamicBody, dt);
         forwardBody(dynamicBody, dt); // fast forward
     }
     std::vector<std::pair<lix::DynamicBody&, lix::RigidBody&>> broadPhaseCollisions;
@@ -138,15 +140,18 @@ void lix::PhysicsEngine::step(std::vector<lix::DynamicBody>& dynamicBodies,
         {
             printf("EPA fail\n");
         }
-        /*if(bodyA.dynamic || bodyB.dynamic)
-        {
-            _collisions[minId][maxId] = std::move(collision);
-        }*/
-        dynamicBody.velocity = glm::reflect(dynamicBody.velocity, collision.normal);
-        dynamicBody.shape->trs()->applyTranslation(collision.normal * collision.penetrationDepth);
-        
-        float J = impulse(dynamicBody, collision, 0.5f);
+
+        float J = impulse(dynamicBody, collision, 0.99f);
         assert(J != 0);
+
+        // collision response
+        dynamicBody.shape->trs()->applyTranslation(collision.normal * collision.penetrationDepth);
+        //dynamicBody.velocity += J * dynamicBody.mass_inv * collision.normal;
+        //dynamicBody.velocity *= glm::length(dynamicBody.velocity) / (J * dynamicBody.mass_inv);
+        
+        dynamicBody.velocity = glm::reflect(dynamicBody.velocity, collision.normal);
+        dynamicBody.velocity += J * dynamicBody.mass_inv * collision.normal;// * 0.5f;
+        
         const glm::vec3 r = collision.contactPoint - dynamicBody.shape->trs()->translation();
         dynamicBody.angularVelocity += glm::cross(r, collision.normal * J) * dynamicBody.inertiaTensor_inv * 0.5f;
 

@@ -33,14 +33,14 @@
 #include "aabb.h"
 #include "glcube.h"
 
-//#define SHOW_MINKOWSKI_VOLUME
+// #define SHOW_MINKOWSKI_VOLUME
 
 #define print_var(var) std::cout << #var << "=" << var << std::endl;
 
 inline static constexpr float SCREEN_WIDTH{1080.0f};
 inline static constexpr float SCREEN_HEIGHT{720.0f};
 
-std::shared_ptr<lix::VAO> VAOFromConvex(const lix::ConvexHull& ch)
+std::shared_ptr<lix::VAO> VAOFromConvex(const lix::ConvexHull &ch)
 {
     std::vector<GLfloat> mdv;
     std::vector<GLuint> mdi;
@@ -50,23 +50,22 @@ std::shared_ptr<lix::VAO> VAOFromConvex(const lix::ConvexHull& ch)
         mdv,
         mdi,
         GL_TRIANGLES,
-        GL_DYNAMIC_DRAW
-    ));
+        GL_DYNAMIC_DRAW));
 }
 
-glm::quat directionToQuat(const glm::vec3& direction)
+glm::quat directionToQuat(const glm::vec3 &direction)
 {
     glm::vec3 n = glm::normalize(direction);
     glm::vec3 UP{0.0f, 1.0f, 0.0f};
     float angle;
     glm::vec3 axis;
-    
-    if(n.y >= 1.0f)
+
+    if (n.y >= 1.0f)
     {
         angle = 0.0f;
         axis = glm::vec3{1.0f, 0.0f, 0.0f};
     }
-    else if(n.y <= -1.0f)
+    else if (n.y <= -1.0f)
     {
         angle = glm::pi<float>();
         axis = glm::vec3{1.0f, 0.0f, 0.0f};
@@ -76,11 +75,11 @@ glm::quat directionToQuat(const glm::vec3& direction)
         axis = glm::normalize(glm::cross(UP, n));
         angle = acosf(glm::dot(UP, n));
     }
-    
+
     return glm::angleAxis(angle, axis);
 }
 
-glm::vec3 quatToDirection(const glm::quat& quat)
+glm::vec3 quatToDirection(const glm::quat &quat)
 {
     glm::vec3 UP{0.0f, 1.0f, 0.0f};
     return quat * UP;
@@ -89,11 +88,9 @@ glm::vec3 quatToDirection(const glm::quat& quat)
 struct App : public lix::Application, public lix::Editor
 {
     App() : lix::Application{static_cast<int>(SCREEN_WIDTH), static_cast<int>(SCREEN_HEIGHT), "test_collision"},
-        lix::Editor{glm::perspective(glm::radians(45.0f), SCREEN_WIDTH / SCREEN_HEIGHT, 0.01f, 100.0f),
-            glm::vec2{SCREEN_WIDTH, SCREEN_HEIGHT}
-        }
+            lix::Editor{glm::perspective(glm::radians(45.0f), SCREEN_WIDTH / SCREEN_HEIGHT, 0.01f, 100.0f),
+                        glm::vec2{SCREEN_WIDTH, SCREEN_HEIGHT}}
     {
-
     }
 
     virtual void init() override;
@@ -104,17 +101,17 @@ struct App : public lix::Application, public lix::Editor
 
     virtual void onSubjectTransformed(std::shared_ptr<lix::Node> subject, lix::Editor::Transformation transformation) override;
 
-    void createCube(const lix::Polygon& meshCollider, const lix::Node& node,
-        const glm::vec3& position, const glm::quat& rotation, const glm::vec3& scale, bool dynamic, float density);
+    void createCube(const lix::Polygon &meshCollider, const lix::Node &node,
+                    const glm::vec3 &position, const glm::quat &rotation, const glm::vec3 &scale, bool dynamic, float density);
 
     std::shared_ptr<lix::ShaderProgram> shaderProgram;
     std::shared_ptr<lix::ShaderProgram> debugShader;
     std::shared_ptr<lix::Mesh> bunny;
     std::shared_ptr<lix::VAO> convexBunny;
     std::shared_ptr<lix::ConvexHull> bunnyCH;
-    //std::shared_ptr<lix::VAO> minkowskiVAO;
-    //std::shared_ptr<lix::ConvexHull> convexHull;
-    //lix::CollisionSystem collisionSystem;
+    // std::shared_ptr<lix::VAO> minkowskiVAO;
+    // std::shared_ptr<lix::ConvexHull> convexHull;
+    // lix::CollisionSystem collisionSystem;
     std::vector<lix::TextPtr> texts;
     std::unique_ptr<lix::TextRendering> textRendering;
     std::shared_ptr<lix::ConvexHull> simplexHull;
@@ -126,29 +123,29 @@ struct App : public lix::Application, public lix::Editor
     std::vector<std::shared_ptr<lix::Node>> debugRNodes;
 };
 
-int main(int argc, const char* argv[])
+int main(int argc, const char *argv[])
 {
     App app;
     app.run();
     return 0;
 }
 
-void computeMinkowski(lix::DynamicBody& bodyA,
-    lix::DynamicBody& bodyB,
-    std::vector<glm::vec3>& c)
+void computeMinkowski(lix::DynamicBody &bodyA,
+                      lix::DynamicBody &bodyB,
+                      std::vector<glm::vec3> &c)
 {
     auto polyA = std::dynamic_pointer_cast<lix::Polygon>(bodyA.shape);
     auto polyB = std::dynamic_pointer_cast<lix::Polygon>(bodyB.shape);
-    
-    if(polyA && polyB)
+
+    if (polyA && polyB)
     {
-        const auto& a = polyA->transformedPoints();
-        const auto& b = polyB->transformedPoints();
+        const auto &a = polyA->transformedPoints();
+        const auto &b = polyB->transformedPoints();
 
         c.resize(a.size() * b.size());
-        for(size_t i{0UL}; i < a.size(); ++i)
+        for (size_t i{0UL}; i < a.size(); ++i)
         {
-            for(size_t j{0UL}; j < b.size(); ++j)
+            for (size_t j{0UL}; j < b.size(); ++j)
             {
                 c[i * a.size() + j] = a[i] - b[j];
             }
@@ -156,7 +153,7 @@ void computeMinkowski(lix::DynamicBody& bodyA,
     }
 }
 
-void App::createCube(const lix::Polygon& meshCollider, const lix::Node& node, const glm::vec3& position, const glm::quat& rotation, const glm::vec3& scale, bool dynamic, float density)
+void App::createCube(const lix::Polygon &meshCollider, const lix::Node &node, const glm::vec3 &position, const glm::quat &rotation, const glm::vec3 &scale, bool dynamic, float density)
 {
     auto cube = lix::NodePtr(node.clone());
     cube->setTranslation(position);
@@ -171,37 +168,35 @@ void App::createCube(const lix::Polygon& meshCollider, const lix::Node& node, co
     poly->setSimplified(aabb);
 
     glm::vec3 extents = aabb->max() - aabb->min();
-    //glm::vec3 s = extents * scale;
+    // glm::vec3 s = extents * scale;
     static bool first{true};
-    if(first)
+    if (first)
     {
         printf("extens=%.1f %.1f %.1f\n", extents.x, extents.y, extents.z);
         first = false;
     }
-    if(dynamic)
+    if (dynamic)
     {
         dynamicBodies.push_back(
             lix::PhysicsEngine::createDynamicBody(poly,
-                extents.x * extents.y * extents.z * density, extents.x)
-        );
+                                                  extents.x * extents.y * extents.z * density, extents.x));
     }
     else
     {
         staticBodies.push_back(
-            lix::PhysicsEngine::createStaticBody(poly)
-        );
+            lix::PhysicsEngine::createStaticBody(poly));
     }
 
     auto cubeSimp = std::make_shared<lix::Node>(position);
-    auto pts = aabb->boundingBox();//lix::minimumBoundingBox(aabb->min(), aabb->max());
-    
+    auto pts = aabb->boundingBox(); // lix::minimumBoundingBox(aabb->min(), aabb->max());
+
     cubeSimp->setMesh(std::make_shared<lix::Mesh>(
         std::make_shared<lix::VAO>(
-        lix::Attributes{lix::Attribute::VEC3},
-        (void*)pts.data(), pts.size() * sizeof(glm::vec3),
-        (GLuint*)lix::cube_indices.data(), lix::cube_indices.size(),
-        GL_TRIANGLES,
-        GL_DYNAMIC_DRAW)));
+            lix::Attributes{lix::Attribute::VEC3},
+            (void *)pts.data(), pts.size() * sizeof(glm::vec3),
+            (GLuint *)lix::cube_indices.data(), lix::cube_indices.size(),
+            GL_TRIANGLES,
+            GL_DYNAMIC_DRAW)));
 
     cubeSimpNodes.push_back(cubeSimp);
 }
@@ -212,36 +207,33 @@ void App::init()
     glEnable(GL_BLEND);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
-    //glFrontFace(GL_CCW);
+    // glFrontFace(GL_CCW);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     setInputAdapter(this);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     shaderProgram.reset(new lix::ShaderProgram(
         assets::shaders::object_vert,
-        assets::shaders::texture_object_frag
-    ));
+        assets::shaders::texture_object_frag));
     debugShader.reset(new lix::ShaderProgram(
         assets::shaders::debug_vao_vert,
-        assets::shaders::debug_vao_frag
-    ));
+        assets::shaders::debug_vao_frag));
 
     bunny = gltf::loadMesh(assets::objects::bun_zipper_res2::bun_zipper_res2_mesh);
 
-    const gltf::Buffer* bunnyPosAttrib = assets::objects::bun_zipper_res2::bun_zipper_res2_mesh.primitives[0].attributes[0];
+    const gltf::Buffer *bunnyPosAttrib = assets::objects::bun_zipper_res2::bun_zipper_res2_mesh.primitives[0].attributes[0];
 
     std::vector<glm::vec3> bunnyCloud{
-        (glm::vec3*)bunnyPosAttrib->data,
-        (glm::vec3*)bunnyPosAttrib->data + bunnyPosAttrib->data_size / sizeof(glm::vec3)};
+        (glm::vec3 *)bunnyPosAttrib->data,
+        (glm::vec3 *)bunnyPosAttrib->data + bunnyPosAttrib->data_size / sizeof(glm::vec3)};
 
     bunnyCH = std::make_shared<lix::ConvexHull>(bunnyCloud);
     convexBunny = VAOFromConvex(*bunnyCH);
 
-    camera().setupUBO({
-        shaderProgram.get(),
-        debugShader.get()
-    });
+    camera().setupUBO({shaderProgram.get(),
+                       debugShader.get()});
 
-    setOnKeyDown(SDLK_c, [this](auto key, auto mod) {
+    setOnKeyDown(SDLK_c, [this](auto key, auto mod)
+                 {
         static bool cullFace{true};
         if(cullFace)
         {
@@ -252,8 +244,7 @@ void App::init()
         {
             glEnable(GL_CULL_FACE);
             cullFace = true;
-        }
-    });
+        } });
 
     const glm::vec3 origo{0.0f, 0.0f, 0.0f};
 
@@ -268,50 +259,47 @@ void App::init()
     static auto bunNode = std::make_shared<lix::Node>();
     bunNode->setMesh(gltf::loadMesh(assets::objects::bun_zipper_res2::bun_zipper_res2_mesh));
 
-    createCube(*bunMeshCollider, *bunNode, glm::vec3{-1.0f, 2.0f, 0.5f}, glm::quat{1.0f, 0.0f, 0.0f, 0.0f}, glm::vec3{2.0f}, true, 500.0f);
+    createCube(*bunMeshCollider, *bunNode, glm::vec3{-1.1f, 3.0f, 2.5f}, glm::quat{1.0f, 0.0f, 0.0f, 0.0f}, glm::vec3{2.0f}, true, 0.7f);
     /*auto cubeB = createCube(*cubeMeshCollider, *cubeNode, glm::vec3{0.0f, 0.0f, 0.0f}, glm::quat{1.0f, 0.0f, 0.0f, 0.0f}, glm::vec3{1.0f, 1.0f, 1.0f}, false, 500.0f);
     createCube(*cubeMeshCollider, *cubeNode, glm::vec3{0.0f, 0.0f, 3.0f}, glm::quat{1.0f, 0.0f, 0.0f, 0.0f}, glm::vec3{1.0f, 1.0f, 1.0f}, false, 500.0f);*/
 
-    createCube(*cubeMeshCollider, *cubeNode, glm::vec3{-1.0f, -0.5f, 0.0f}, glm::angleAxis(glm::radians(25.0f), glm::vec3{1.0f, 0.0f, 0.0f}), glm::vec3{4.0f, 2.5f, 4.0f} * 0.5f, false, 500.0f);
-    createCube(*cubeMeshCollider, *cubeNode, glm::vec3{-1.0f, 0.5f, 3.0f}, glm::angleAxis(glm::radians(60.0f), glm::vec3{-1.0f, 0.0f, 0.0f}), glm::vec3{4.0f, 2.5f, 4.0f} * 0.5f, false, 500.0f);
+    createCube(*cubeMeshCollider, *cubeNode, glm::vec3{-1.0f, -0.5f, 0.0f}, glm::angleAxis(glm::radians(25.0f), glm::vec3{1.0f, 0.0f, 0.0f}), glm::vec3{4.0f, 2.5f, 4.0f} * 0.5f, false, 1000000.0f);
+    createCube(*cubeMeshCollider, *cubeNode, glm::vec3{-1.0f, 0.5f, 3.0f}, glm::angleAxis(glm::radians(60.0f), glm::vec3{-1.0f, 0.0f, 0.0f}), glm::vec3{4.0f, 2.5f, 4.0f} * 0.5f, false, 1000000.0f);
 
-
-    static auto createDebugNode = [this](const auto& rb) {
+    static auto createDebugNode = [this](const auto &rb)
+    {
         auto polygon = std::dynamic_pointer_cast<lix::Polygon>(rb.shape);
-        if(polygon)
+        if (polygon)
         {
             auto pts = polygon->points();
             std::vector<glm::vec3> rotatedPoints(pts.size());
-            std::transform(pts.begin(), pts.end(), rotatedPoints.begin(), [&polygon](const glm::vec3& p) {
-                return glm::vec3(glm::scale(polygon->trs()->rotationMatrix(), polygon->trs()->scale()) * glm::vec4{p, 1.0f});
-            });
+            std::transform(pts.begin(), pts.end(), rotatedPoints.begin(), [&polygon](const glm::vec3 &p)
+                           { return glm::vec3(glm::scale(polygon->trs()->rotationMatrix(), polygon->trs()->scale()) * glm::vec4{p, 1.0f}); });
             auto node = std::make_shared<lix::Node>(polygon->trs()->translation());
 
-            auto aabb = dynamic_cast<lix::AABB*>(polygon->simplified());
+            auto aabb = dynamic_cast<lix::AABB *>(polygon->simplified());
             std::vector<glm::vec3> minmax = {aabb->min(), aabb->max()};
             auto [vs, is] = lix::cubes_at_points(minmax);
 
             node->setMesh(std::make_shared<lix::Mesh>(std::make_shared<lix::VAO>(
                 lix::Attributes{lix::Attribute::VEC3},
                 vs,
-                is
-            )
-            ));
+                is)));
             debugRNodes.push_back(node);
         }
     };
 
-    for(const auto& rb : dynamicBodies)
+    for (const auto &rb : dynamicBodies)
     {
         createDebugNode(rb);
     }
-    for(const auto& rb : staticBodies)
+    for (const auto &rb : staticBodies)
     {
         createDebugNode(rb);
     }
 
-    //std::vector<glm::vec3> minkowski;
-    //computeMinkowski(*cubeA, *cubeB, minkowski);
+    // std::vector<glm::vec3> minkowski;
+    // computeMinkowski(*cubeA, *cubeB, minkowski);
 
     /*std::vector<glm::vec3> cloud = lix::uniqueVertices(minkowski);
     std::vector<lix::Vertex> minkowskiVertexInfo(cloud.size());
@@ -321,7 +309,7 @@ void App::init()
     });
     convexHull = std::make_shared<lix::ConvexHull>(minkowskiVertexInfo);*/
 
-    //minkowskiVAO = VAOFromConvex(*convexHull);
+    // minkowskiVAO = VAOFromConvex(*convexHull);
 
     setSubjectNode(cubeNodes.front());
 
@@ -332,16 +320,14 @@ void App::init()
     texts.insert(texts.end(), {text});
     textRendering.reset(new lix::TextRendering(
         glm::vec2{SCREEN_WIDTH, SCREEN_HEIGHT},
-        texts
-    ));
+        texts));
 }
 
 void App::tick(float dt)
 {
     refresh(dt);
 
-
-    auto aabb_dyn = dynamic_cast<lix::AABB*>(dynamicBodies.front().shape->simplified());
+    auto aabb_dyn = dynamic_cast<lix::AABB *>(dynamicBodies.front().shape->simplified());
     auto dynSimp = cubeSimpNodes.at(0);
     dynSimp->mesh()->bindVertexArray(0);
     dynSimp->mesh()->vertexArray(0)->vbo(0)->bind();
@@ -349,10 +335,10 @@ void App::tick(float dt)
     dynSimp->mesh()->vertexArray(0)->vbo(0)->bufferData(GL_FLOAT, pts.size() * sizeof(glm::vec3), sizeof(glm::vec3), pts.data());
     dynSimp->setTranslation(aabb_dyn->trs()->translation());
 
-    for(size_t i{0}; i < staticBodies.size(); ++i)
+    for (size_t i{0}; i < staticBodies.size(); ++i)
     {
-        auto aabb_stat = dynamic_cast<lix::AABB*>(staticBodies.at(i).shape->simplified());
-        if(aabb_dyn->intersects(*aabb_stat))
+        auto aabb_stat = dynamic_cast<lix::AABB *>(staticBodies.at(i).shape->simplified());
+        if (aabb_dyn->intersects(*aabb_stat))
         {
             cubeNodes.at(i + 1)->mesh()->material()->setBaseColor(lix::Color::blue);
         }
@@ -364,13 +350,18 @@ void App::tick(float dt)
 
     texts.front()->setText("fps: " + std::to_string(static_cast<int>(fps())));
 
-   lix::PhysicsEngine::step(dynamicBodies, staticBodies, dt);
+    static lix::Timer waitInitTimer{lix::Time::fromSeconds(3)};
+
+    if (waitInitTimer.elapsed())
+    {
+        lix::PhysicsEngine::step(dynamicBodies, staticBodies, dt);
+    }
 }
 
 void App::draw()
 {
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-    
+
     shaderProgram->bind();
     static auto basicTex = lix::Texture::Basic(lix::Color::white);
     basicTex->bind();
@@ -378,7 +369,7 @@ void App::draw()
     {
         lix::renderNode(*shaderProgram, *rigidBody->node);
     }*/
-    for(const auto& node : cubeNodes)
+    for (const auto &node : cubeNodes)
     {
         lix::renderNode(*shaderProgram, *node);
     }
@@ -396,7 +387,7 @@ void App::draw()
     debugShader->setUniform("u_model", glm::translate(glm::mat4{16.0f}, glm::vec3{0.0f, 0.25f, 0.0f}));
     convexBunny->bind();
     convexBunny->draw();
-    if(simplexHullVAO)
+    if (simplexHullVAO)
     {
         debugShader->setUniform("u_model", glm::mat4{1.0f});
         debugShader->setUniform("u_rgb", glm::vec3{1.0f, 0.0f, 0.0f});
@@ -406,7 +397,7 @@ void App::draw()
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     static auto arrowNode = gltf::loadNode(assets::objects::arrow::Arrow_node);
-    for(const auto& v : {glm::vec3{1.0f, 0.0f, 0.0f}, glm::vec3{0.0f, 1.0f, 0.0f}, glm::vec3{0.0f, 0.0f, 1.0f}})
+    for (const auto &v : {glm::vec3{1.0f, 0.0f, 0.0f}, glm::vec3{0.0f, 1.0f, 0.0f}, glm::vec3{0.0f, 0.0f, 1.0f}})
     {
         debugShader->setUniform("u_rgb", v);
         arrowNode->setRotation(directionToQuat(v));
@@ -415,15 +406,15 @@ void App::draw()
 
     debugShader->setUniform("u_model", glm::mat4{1.0f});
     debugShader->setUniform("u_rgb", glm::vec3{1.0f, 1.0f, 0.0f});
-/*#ifdef SHOW_MINKOWSKI_VOLUME
-    glDepthMask(GL_FALSE);
-    minkowskiVAO->bind();
-    minkowskiVAO->draw();
-    glDepthMask(GL_TRUE);
-#endif*/
+    /*#ifdef SHOW_MINKOWSKI_VOLUME
+        glDepthMask(GL_FALSE);
+        minkowskiVAO->bind();
+        minkowskiVAO->draw();
+        glDepthMask(GL_TRUE);
+    #endif*/
 
 #if 1
-    if(simplexHullVAO)
+    if (simplexHullVAO)
     {
         debugShader->setUniform("u_model", glm::mat4{1.0f});
         debugShader->setUniform("u_rgb", glm::vec3{0.0f, 1.0f, 1.0f});
@@ -432,40 +423,40 @@ void App::draw()
     }
 #endif
 
-    //debugShader->setUniform("u_model", glm::scale(glm::translate(glm::mat4{1.0f}, glm::vec3{0.0f, 1.0f, 0.0f}), glm::vec3{16.0f}));
+    // debugShader->setUniform("u_model", glm::scale(glm::translate(glm::mat4{1.0f}, glm::vec3{0.0f, 1.0f, 0.0f}), glm::vec3{16.0f}));
     debugShader->setUniform("u_model", glm::translate(glm::mat4{16.0f}, glm::vec3{0.0f, 0.25f, 0.0f}));
     bunny->draw();
 
-    //debugShader->setUniform("u_model", glm::mat4{16.0f});
-    //bunny->draw();
+    // debugShader->setUniform("u_model", glm::mat4{16.0f});
+    // bunny->draw();
 
     debugShader->setUniform("u_model", glm::mat4{1.0f});
 
     glCullFace(GL_FRONT);
     debugShader->setUniform("u_rgb", glm::vec3{1.0f, 0.0f, 0.0f});
-/*#ifdef SHOW_MINKOWSKI_VOLUME
-    minkowskiVAO->bind();
-    minkowskiVAO->draw();
-#endif*/
+    /*#ifdef SHOW_MINKOWSKI_VOLUME
+        minkowskiVAO->bind();
+        minkowskiVAO->draw();
+    #endif*/
     glCullFace(GL_BACK);
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    //render cubes here
-    for(const auto& node : cubeNodes)
+    // render cubes here
+    for (const auto &node : cubeNodes)
     {
         debugShader->setUniform("u_rgb", glm::vec3{1.0f, 1.0f, 0.0f});
         lix::renderNode(*debugShader, *node);
     }
 
     debugShader->setUniform("u_rgb", glm::vec3{0.0f, 1.0f, 0.0f});
-    for(const auto& node : cubeSimpNodes)
+    for (const auto &node : cubeSimpNodes)
     {
         lix::renderNode(*debugShader, *node);
     }
 
     debugShader->setUniform("u_rgb", glm::vec3{0.0f, 0.0f, 1.0f});
-    for(const auto& node : debugRNodes)
+    for (const auto &node : debugRNodes)
     {
         lix::renderNode(*debugShader, *node);
     }
