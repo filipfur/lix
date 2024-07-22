@@ -10,5 +10,5 @@ namespace lix
 
     std::vector<glm::vec3> cube_corner_points(const glm::vec3& min, const glm::vec3& max);
 
-    std::pair<std::vector<float>, std::vector<unsigned int>> cubes_at_points(const std::vector<glm::vec3>& points);
+    std::pair<std::vector<float>, std::vector<unsigned int>> cubes_at_points(const std::vector<glm::vec3>& points, float radii=0.01f);
 }

@@ -31,6 +31,13 @@ namespace json
 
         void insert(Json& obj);
 
+        template <typename T>
+        void put(const T& t)
+        {
+            auto& o = _array.emplace_back(json::Element, "", std::to_string(t));
+            o._parent = this;
+        }
+
         Json(const Json& other) : _type{other._type}, _key{other._key}, _value{other._value}, _parent{other._parent}, _children{other._children}, _array{other._array}, _stringType{other._stringType}
         {
 

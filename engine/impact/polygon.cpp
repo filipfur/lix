@@ -40,11 +40,12 @@ lix::Polygon* lix::Polygon::clone() const
 
 glm::vec3 lix::Polygon::supportPoint(const glm::vec3& D)
 {
-    float maxVal = std::numeric_limits<float>::lowest();
+    float maxVal = -FLT_MAX;
     int maxIndex{-1};
     updateTransformedPoints();
     for(size_t i{0}; i < _transformedPoints.size(); ++i)
     {
+        //printf("checking: %f %f %f\n", _transformedPoints[i].x, _transformedPoints[i].y, _transformedPoints[i].z);
         float val = glm::dot(_transformedPoints[i], D);
         if(val > maxVal)
         {
@@ -94,7 +95,7 @@ bool lix::Polygon::test(lix::Shape& /*shape*/)
 
 bool lix::Polygon::updateTransformedPoints()
 {
-    if(trs()->modelVersionSync(_mVersion) || _points.size() != _transformedPoints.size())
+    if(!trs()->modelVersionSync(_mVersion) || _points.size() != _transformedPoints.size())
     {
         _transformedPoints.resize(_points.size());
         const glm::mat4& m = trs()->modelMatrix();

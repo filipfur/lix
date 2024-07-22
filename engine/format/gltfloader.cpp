@@ -278,7 +278,6 @@ std::shared_ptr<lix::Polygon> gltf::loadMeshCollider(const gltf::Mesh& gltfMesh,
         std::vector<GLushort> indices;
         gltf::loadAttributes(gltfMesh, 0, gltf::A_POSITION, vertices, indices);
         auto unique = lix::uniqueVertices(vertices);
-        //lix::ConvexHull convex_hull{unique};
         loadedMeshVertices.emplace(addr, unique);
     }
     if(generateConvexHull)

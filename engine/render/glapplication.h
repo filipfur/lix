@@ -21,26 +21,30 @@
 
 namespace lix
 {
-    //bool onKeyPressed(int key);
-    using KeyCallback = std::function<void(KeySym, KeyMod)>;
     enum class DragState{START_DRAG, DRAGGING, END_DRAG};
     using MouseDragCallback = std::function<void(KeySym, KeyMod, DragState)>;
 
     class Application
     {
     public:
-        Application(int windowX, int windowY, const char* title="Untitled");
+        Application(float windowX, float windowY, const char* title="Untitled");
 
         SDL_Window* window() const;
+        void initialize();
         void run(bool forever=true);
         virtual void init() = 0;
         virtual void tick(float dt) = 0;
         virtual void draw() = 0;
+
+        void pause() { _paused = true; }
+        void resume() { _paused = false; }
+        void step(Time::Raw ms) { tick(ms * 1e-3f); Time::increment(ms); }
+        bool paused() { return _paused; }
     
-        void setOnKeyDown(KeySym key, const KeyCallback& keyCallback);
-        void setOnKeyUp(KeySym key, const KeyCallback& keyCallback);
-        void setOnMouseDown(KeySym key, const KeyCallback& keyCallback);
-        void setOnMouseUp(KeySym key, const KeyCallback& keyCallback);
+        void setOnKeyDown(KeySym key, const std::function<void(KeySym, KeyMod)>& keyCallback);
+        void setOnKeyUp(KeySym key, const std::function<void(KeySym, KeyMod)>& keyCallback);
+        void setOnMouseDown(KeySym key, const std::function<void(KeySym, KeyMod)>& keyCallback);
+        void setOnMouseUp(KeySym key, const std::function<void(KeySym, KeyMod)>& keyCallback);
         void setOnMouseDrag(KeySym key, const MouseDragCallback& keyCallback);
 
         void setInputAdapter(lix::InputAdapter* inputAdapter);
@@ -57,9 +61,10 @@ namespace lix
     private:
         static void loop();
 
-        void handleMouseMotion(float x, float y);
+        void handleMouseMotion(float x, float y, float xrel, float yrel);
         void handleMouseButtonDown(lix::KeySym button, lix::KeyMod mod, float x, float y);
         void handleMouseButtonUp(lix::KeySym button, lix::KeyMod mod, float x, float y);
+        void handleMouseWheel(float x, float y);
         void handleKeyDown(lix::KeySym key, lix::KeyMod mod);
         void handleKeyUp(lix::KeySym key, lix::KeyMod mod);
 
@@ -82,7 +87,7 @@ namespace lix
         glm::vec2 _windowSize;
         glm::vec2 _mousePosition;
         lix::InputAdapter* _inputAdapter{nullptr};
-        std::unordered_map<KeySym, KeyCallback> _callbacks[KeyAction::LAST];
+        std::unordered_map<KeySym, std::function<void(KeySym, KeyMod)>> _callbacks[KeyAction::LAST];
         inline void handleCallback(KeyAction keyAction, KeySym key, KeyMod mod) const;
         struct DragHandler{
             MouseDragCallback callback;
@@ -92,5 +97,6 @@ namespace lix
         DragHandler* getDragHandler(KeySym);
         lix::KeySym _stickyButton;
         lix::KeyMod _stickyMod;
+        bool _paused{false};
     };
 }

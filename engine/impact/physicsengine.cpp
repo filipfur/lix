@@ -4,6 +4,7 @@
 #include <glm/gtc/random.hpp>
 #include "collision.h"
 #include "gltimer.h"
+#include "inertia.h"
 
 inline static float impulse(lix::DynamicBody& dynamicBody, const lix::Collision& collision, float restitution)
 {
@@ -53,7 +54,7 @@ inline static bool broadPhaseCollision(lix::RigidBody& bodyA, lix::RigidBody& bo
 }
 
 static inline bool narrowPhaseCollision(lix::RigidBody& bodyA, lix::RigidBody& bodyB,
-    std::vector<lix::Vertex>& simplex,
+    std::vector<glm::vec3>& simplex,
     const glm::vec3& D,
     lix::Collision* collision=nullptr)
 {
@@ -64,7 +65,7 @@ static inline bool narrowPhaseCollision(lix::RigidBody& bodyA, lix::RigidBody& b
 inline static float backtrackCollision(lix::DynamicBody& dynamicBody,
     lix::RigidBody& staticBody,
     float dt,
-    std::vector<lix::Vertex>& simplex, const glm::vec3& D, lix::Collision& collision)
+    std::vector<glm::vec3>& simplex, const glm::vec3& D, lix::Collision& collision)
 {
     float t = dt;
     bool backtrack{true};
@@ -110,7 +111,7 @@ void lix::PhysicsEngine::step(std::vector<lix::DynamicBody>& dynamicBodies,
     }
     std::vector<std::pair<lix::DynamicBody&, lix::RigidBody&>> broadPhaseCollisions;
     glm::vec3 D = glm::ballRand(1.0f);
-    std::vector<lix::Vertex> simplex;
+    std::vector<glm::vec3> simplex;
     lix::Collision collision;
     for(auto& dynamicBody : dynamicBodies)
     {
@@ -162,15 +163,6 @@ void lix::PhysicsEngine::step(std::vector<lix::DynamicBody>& dynamicBodies,
     }
 }
 
-inline static glm::mat3 computeInertiaTensor(float mass, float sideLength) {
-    float inertia = mass * sideLength * sideLength;
-    return {
-        0.66f * inertia, -0.25f * inertia, -0.25f * inertia,
-        -0.25f * inertia, 0.66f * inertia, -0.25f * inertia,
-        -0.25f * inertia, -0.25f * inertia, 0.66f * inertia
-    };
-}
-
 lix::StaticBody lix::PhysicsEngine::createStaticBody(
     std::shared_ptr<lix::Shape> shape
 )
@@ -189,6 +181,6 @@ lix::DynamicBody lix::PhysicsEngine::createDynamicBody(
     return {
         shape,
         mass,
-        computeInertiaTensor(mass, sideLength)
+        lix::cubeInertiaTensor(mass, sideLength)
     };
 }

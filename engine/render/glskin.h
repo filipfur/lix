@@ -26,4 +26,6 @@ namespace lix
         std::vector<lix::Node*> _joints;
         std::map<std::string, std::shared_ptr<lix::SkinAnimation>> _animations;
     };
+
+    using SkinAnimationIterator = std::map<std::string, std::shared_ptr<lix::SkinAnimation>>::iterator;
 }

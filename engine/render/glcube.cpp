@@ -51,7 +51,7 @@ std::vector<glm::vec3> lix::cube_corner_points(const glm::vec3& min, const glm::
     };
 }
 
-std::pair<std::vector<float>, std::vector<unsigned int>> lix::cubes_at_points(const std::vector<glm::vec3>& points)
+std::pair<std::vector<float>, std::vector<unsigned int>> lix::cubes_at_points(const std::vector<glm::vec3>& points, float radii)
 {
     std::vector<float> vs;
     std::vector<unsigned int> is;
@@ -63,7 +63,7 @@ std::pair<std::vector<float>, std::vector<unsigned int>> lix::cubes_at_points(co
         const auto& p = points.at(i);
         for(const auto& v : lix::cube_positions)
         {
-            glm::vec3 d = p + v * 0.05f;
+            glm::vec3 d = p + v * radii;
             vs.insert(vs.end(), {
                 d.x, d.y, d.z
             });

@@ -15,18 +15,7 @@
 	"nodes":[
 		{
 			"mesh":0,
-			"name":"Torus",
-			"rotation":[
-				0.7071068286895752,
-				0,
-				0,
-				0.7071068286895752
-			],
-			"translation":[
-				0,
-				4,
-				0
-			]
+			"name":"Donut"
 		}
 	],
 	"materials":[
@@ -44,7 +33,7 @@
 	],
 	"meshes":[
 		{
-			"name":"Torus",
+			"name":"Donut",
 			"primitives":[
 				{
 					"attributes":{
@@ -54,6 +43,14 @@
 					},
 					"indices":3,
 					"material":0
+				},
+				{
+					"attributes":{
+						"POSITION":4,
+						"NORMAL":5,
+						"TEXCOORD_0":6
+					},
+					"indices":7
 				}
 			]
 		}
@@ -67,69 +64,127 @@
 	"images":[
 		{
 			"mimeType":"image/png",
-			"name":"Untitled",
-			"uri":"Untitled.png"
+			"name":"donut_diffuse",
+			"uri":"donut_diffuse.png"
 		}
 	],
 	"accessors":[
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":2304,
+			"count":1057,
 			"max":[
-				1.25,
-				0.25,
-				1.25
+				0.27326250076293945,
+				0.08978072553873062,
+				0.2722659409046173
 			],
 			"min":[
-				-1.25,
-				-0.25,
-				-1.25
+				-0.27257081866264343,
+				-0.11689965426921844,
+				-0.27478480339050293
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":2304,
+			"count":1057,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":2304,
+			"count":1057,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
 			"componentType":5123,
-			"count":3456,
+			"count":4608,
+			"type":"SCALAR"
+		},
+		{
+			"bufferView":4,
+			"componentType":5126,
+			"count":3336,
+			"max":[
+				0.27639657258987427,
+				0.09230189770460129,
+				0.2726585268974304
+			],
+			"min":[
+				-0.27527549862861633,
+				-0.03835655748844147,
+				-0.27604058384895325
+			],
+			"type":"VEC3"
+		},
+		{
+			"bufferView":5,
+			"componentType":5126,
+			"count":3336,
+			"type":"VEC3"
+		},
+		{
+			"bufferView":6,
+			"componentType":5126,
+			"count":3336,
+			"type":"VEC2"
+		},
+		{
+			"bufferView":7,
+			"componentType":5123,
+			"count":5004,
 			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":27648,
+			"byteLength":12684,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":27648,
-			"byteOffset":27648,
+			"byteLength":12684,
+			"byteOffset":12684,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":18432,
-			"byteOffset":55296,
+			"byteLength":8456,
+			"byteOffset":25368,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":6912,
-			"byteOffset":73728,
+			"byteLength":9216,
+			"byteOffset":33824,
+			"target":34963
+		},
+		{
+			"buffer":0,
+			"byteLength":40032,
+			"byteOffset":43040,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":40032,
+			"byteOffset":83072,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":26688,
+			"byteOffset":123104,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":10008,
+			"byteOffset":149792,
 			"target":34963
 		}
 	],
@@ -141,7 +196,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":80640,
+			"byteLength":159800,
 			"uri":"donut.bin"
 		}
 	]

@@ -52,7 +52,7 @@ void findHull(const std::vector<glm::vec3>& s, glm::vec3 p,
     std::vector<glm::vec3> s2;
     for(const auto& x : s)
     {
-        if(lix::pointInTriangle(x, p, *ret, q))
+        if(lix::pointInTriangle2d(x, p, *ret, q))
         {
             //s0.insert(...);
         }

@@ -10,6 +10,7 @@ namespace lix
     inline static constexpr float EPSILON{0.00001f};
 
     float sign(const glm::vec3& a, const glm::vec3& b, const glm::vec3& c);
+    bool pointInTriangle2d(const glm::vec3& p, const glm::vec3& a, const glm::vec3& b, const glm::vec3& c);
     bool pointInTriangle(const glm::vec3& p, const glm::vec3& a, const glm::vec3& b, const glm::vec3& c);
 
 
@@ -31,4 +32,8 @@ namespace lix
     int indexAlongDirection(const std::vector<glm::vec3>& s, const glm::vec3& D);
 
     bool isAdjacent(const unsigned int* a, const unsigned int* b, Edge& edge);
+
+    glm::quat directionToQuat(const glm::vec3 &direction);
+
+    glm::vec3 quatToDirection(const glm::quat &quat);
 }

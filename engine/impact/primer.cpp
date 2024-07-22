@@ -2,6 +2,7 @@
 
 #include "glcube.h"
 
+#include <glm/gtc/quaternion.hpp>
 #include <algorithm>
 
 float lix::sign(const glm::vec3& a, const glm::vec3& b, const glm::vec3& c)
@@ -9,7 +10,7 @@ float lix::sign(const glm::vec3& a, const glm::vec3& b, const glm::vec3& c)
     return (a.x - c.x) * (b.y - c.y) - (b.x - c.x) * (a.y - c.y);
 }
 
-bool lix::pointInTriangle(const glm::vec3& p, const glm::vec3& a, const glm::vec3& b, const glm::vec3& c)
+bool lix::pointInTriangle2d(const glm::vec3& p, const glm::vec3& a, const glm::vec3& b, const glm::vec3& c)
 {
     float d1;
     float d2;
@@ -20,6 +21,30 @@ bool lix::pointInTriangle(const glm::vec3& p, const glm::vec3& a, const glm::vec
     bool hasNeg = (d1 < 0 || d2 < 0 || d3 < 0);
     bool hasPos = (d1 > 0 || d2 > 0 || d3 > 0);
     return !(hasNeg && hasPos);
+}
+
+bool lix::pointInTriangle(const glm::vec3& p, const glm::vec3& a, const glm::vec3& b, const glm::vec3& c)
+{
+    const glm::vec3 A = a - p;
+    const glm::vec3 B = b - p;
+    const glm::vec3 C = c - p;
+    const glm::vec3 u = glm::cross(A, B);
+    const glm::vec3 v = glm::cross(B, C);
+    const glm::vec3 w = glm::cross(C, A);
+
+    float d1 = glm::dot(u, v);
+    float d2 = glm::dot(u, w);
+    if(d1 < 0)
+    {
+        //printf("d1=%.2f d2=%.2f\n", d1, d2);
+        return false;
+    }
+    if(d2 < 0)
+    {
+        //printf("d1=%.2f d2=%.2f\n", d1, d2);
+        return false;
+    }
+    return true;
 }
 
 glm::vec3 lix::barycentric(glm::vec3 p, glm::vec3 a, glm::vec3 b, glm::vec3 c)
@@ -137,4 +162,36 @@ bool lix::isAdjacent(const unsigned int* a, const unsigned int* b, lix::Edge& ed
         }
     }
     return false;
+}
+
+glm::quat lix::directionToQuat(const glm::vec3 &direction)
+{
+    glm::vec3 n = glm::normalize(direction);
+    glm::vec3 UP{0.0f, 1.0f, 0.0f};
+    float angle;
+    glm::vec3 axis;
+
+    if (n.y >= 1.0f)
+    {
+        angle = 0.0f;
+        axis = glm::vec3{1.0f, 0.0f, 0.0f};
+    }
+    else if (n.y <= -1.0f)
+    {
+        angle = glm::pi<float>();
+        axis = glm::vec3{1.0f, 0.0f, 0.0f};
+    }
+    else
+    {
+        axis = glm::normalize(glm::cross(UP, n));
+        angle = acosf(glm::dot(UP, n));
+    }
+
+    return glm::angleAxis(angle, axis);
+}
+
+glm::vec3 lix::quatToDirection(const glm::quat &quat)
+{
+    glm::vec3 UP{0.0f, 1.0f, 0.0f};
+    return quat * UP;
 }

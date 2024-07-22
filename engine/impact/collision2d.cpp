@@ -91,7 +91,7 @@ bool lix::gjk2d(Shape& shapeA, Shape& shapeB, std::vector<glm::vec3>& simplex,
             }
         }
         else {
-            if(lix::pointInTriangle(O, A, B, C))
+            if(lix::pointInTriangle2d(O, A, B, C))
             {
                 simplex.insert(simplex.end(), {A, B, C});
                 rval = true;

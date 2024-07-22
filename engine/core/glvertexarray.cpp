@@ -26,7 +26,7 @@ lix::VertexArray::VertexArray(const Attributes& attributes,
     GLenum usage) : VertexArray{mode}
 {
     bind();
-    createVbo(usage, attributes, vertices);
+    createVbo(usage, attributes, (void*)vertices.data(), vertices.size() * sizeof(GLfloat));
 }
 
 lix::VertexArray::VertexArray(const Attributes& attributes,
@@ -36,7 +36,27 @@ lix::VertexArray::VertexArray(const Attributes& attributes,
             GLenum usage) : VertexArray{mode}
 {
     bind();
-    createVbo(usage, attributes, vertices);
+    createVbo(usage, attributes, (void*)vertices.data(), vertices.size() * sizeof(GLfloat));
+    createEbo(usage, indices);
+}
+
+lix::VertexArray::VertexArray(const Attributes& attributes,
+            const std::vector<glm::vec3>& vertices,
+            GLenum mode,
+            GLenum usage) : VertexArray{mode}
+{
+    bind();
+    createVbo(usage, attributes, (void*)vertices.data(), vertices.size() * sizeof(glm::vec3));
+}
+
+lix::VertexArray::VertexArray(const Attributes& attributes,
+            const std::vector<glm::vec3>& vertices,
+            const std::vector<GLuint>& indices,
+            GLenum mode,
+            GLenum usage) : VertexArray{mode}
+{
+    bind();
+    createVbo(usage, attributes, (void*)vertices.data(), vertices.size() * sizeof(glm::vec3));
     createEbo(usage, indices);
 }
 
@@ -107,25 +127,6 @@ std::shared_ptr<lix::VertexArrayBuffer> lix::VertexArray::createVbo(GLenum usage
     return vbo;
 }
 
-std::shared_ptr<lix::VertexArrayBuffer> lix::VertexArray::createVbo(GLenum usage,
-    const lix::Attributes& attributes,
-    const std::vector<GLfloat>& vertices,
-    int attribDivisor)
-{
-    int layoutOffset{0};
-    for(auto vao : _vbos)
-    {
-        layoutOffset += vao->layouts();
-    }
-    auto vbo = std::make_shared<lix::VertexArrayBuffer>(usage,
-        attributes,
-        vertices,
-        layoutOffset,
-        attribDivisor);
-    _vbos.push_back(vbo);
-    return vbo;
-}
-
 std::shared_ptr<lix::Buffer> lix::VertexArray::createEbo(GLenum usage,
     const std::vector<GLuint>& indices)
 {
@@ -174,7 +175,7 @@ void lix::VertexArray::draw() const
         switch(_mode)
         {
         case GL_TRIANGLES:
-            n = _vbos.at(0)->count() / _vbos.at(0)->components(); // TODO: Oversight
+            n = _vbos.at(0)->count();// / _vbos.at(0)->components(); // TODO: Oversight
             glDrawArrays(_mode, 0, n);
             break;
         default:

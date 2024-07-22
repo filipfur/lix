@@ -5,6 +5,7 @@
 
 #include "glelement.h"
 #include "glvertexarraybuffer.h"
+#include <glm/glm.hpp>
 
 namespace lix
 {
@@ -23,6 +24,15 @@ namespace lix
             GLenum usage=GL_STATIC_DRAW);
         VertexArray(const Attributes& attributes,
             const std::vector<GLfloat>& vertices,
+            GLenum mode=GL_TRIANGLES,
+            GLenum usage=GL_STATIC_DRAW);
+        VertexArray(const Attributes& attributes,
+            const std::vector<glm::vec3>& vertices,
+            GLenum mode=GL_TRIANGLES,
+            GLenum usage=GL_STATIC_DRAW);
+        VertexArray(const Attributes& attributes,
+            const std::vector<glm::vec3>& vertices,
+            const std::vector<GLuint>& indices,
             GLenum mode=GL_TRIANGLES,
             GLenum usage=GL_STATIC_DRAW);
         VertexArray(const Attributes& attributes,
@@ -54,10 +64,6 @@ namespace lix
             const lix::Attributes& attributes,
             void* data,
             GLuint byteLength,
-            int attribDivisor=0);
-        std::shared_ptr<VBO> createVbo(GLenum usage,
-            const lix::Attributes& attributes,
-            const std::vector<GLfloat>& vertices,
             int attribDivisor=0);
         std::shared_ptr<EBO> createEbo(GLenum usage, GLuint indices_size, GLuint* indices_data);
         std::shared_ptr<EBO> createEbo(GLenum usage, GLuint indices_size, GLushort* indices_data);

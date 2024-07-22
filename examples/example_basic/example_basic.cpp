@@ -23,7 +23,7 @@ const float aspectRatio = static_cast<float>(SCREEN_WIDTH) / static_cast<float>(
 class App : public lix::Application
 {
 public:
-    App(int windowX, int windowY, const char* title);
+    App(float windowX, float windowY, const char* title);
 
     virtual void init() override;
 
@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-App::App(int windowX, int windowY, const char* title) : Application{windowX, windowY, title} {}
+App::App(float windowX, float windowY, const char* title) : Application{windowX, windowY, title} {}
 
 void App::init()
 {

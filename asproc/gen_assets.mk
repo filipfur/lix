@@ -4,6 +4,9 @@ AS_OBJECTS_CPP=$(addsuffix .cpp,$(addprefix gen/objects/,$(AS_OBJECTS)))
 AS_PLY=$(basename $(notdir $(wildcard assets/ply/*.ply)))
 AS_PLY_CPP=$(addsuffix .cpp,$(addprefix gen/ply/,$(AS_PLY)))
 
+AS_LEVELS=$(basename $(notdir $(wildcard assets/levels/*.blend)))
+AS_LEVELS_H=$(addsuffix .h,$(addprefix gen/levels/,$(AS_LEVELS)))
+
 AS_SHADERS=$(wildcard assets/shaders/*)
 AS_SHADERS_CPP=$(addsuffix .cpp,$(addprefix gen/shaders/,$(subst .,_,$(notdir $(AS_SHADERS)))))
 
@@ -38,11 +41,15 @@ gen/fonts/%.cpp : assets/fonts/%.json
 gen/ply/%.cpp : assets/ply/%.ply
 	@$(ASPROC_BIN) -p $^ gen/ply
 
+gen/levels/%.h : assets/levels/%.blend
+	@blender -b $< -P $(ASPROC_HOME)/bpy_gen_levels.py
+	@mv $(<:.blend=.h) gen/levels
+
 $(foreach subdir,$(AS_OBJECTS),$(eval $(call create_rule,$(subdir))))
 
 .PHONY: gen_assets
-gen_assets: $(AS_OBJECTS_CPP) $(AS_SHADERS_CPP) $(AS_IMAGES_CPP) $(AS_FONTS_CPP) $(AS_PLY_CPP)
-	$(info "GENERATED SOURCES!")
+gen_assets: $(AS_OBJECTS_CPP) $(AS_SHADERS_CPP) $(AS_IMAGES_CPP) $(AS_FONTS_CPP) $(AS_PLY_CPP) $(AS_LEVELS_H)
+	$(info "[asproc: GENERATED ASSETS!]")
 
 .PHONY: gen
 gen: gen_shaders gen_images gen_objects gen_fonts gen_ply
@@ -66,6 +73,9 @@ gen_ply:
 .PHONY: gen_fonts
 gen_fonts:
 	@$(ASPROC_BIN) -f assets/fonts gen/fonts
+
+.PHONY: gen_levels
+gen_levels: $(AS_LEVELS_H)
 
 .PHONY: clean_gen
 clean_gen:

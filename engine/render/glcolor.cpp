@@ -44,6 +44,11 @@ lix::Color::Color(const glm::vec3& rgb) : _rgba{rgb.x, rgb.y, rgb.z, 1.0f}
 
 }
 
+lix::Color lix::Color::opacity(float val)
+{
+    return lix::Color{1.0f, 1.0f, 1.0f, val};
+}
+
 lix::Color& lix::Color::operator=(const lix::Color& other)
 {
     _rgba = other._rgba;
@@ -54,6 +59,11 @@ lix::Color& lix::Color::operator=(lix::Color&& other)
 {
     _rgba = std::move(other._rgba);
     return *this;
+}
+
+lix::Color lix::Color::operator*(const lix::Color& other) const
+{
+    return {this->vec4() * other.vec4()};
 }
 
 lix::Color::operator glm::vec4() const

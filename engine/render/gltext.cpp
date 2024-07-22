@@ -3,15 +3,13 @@
 lix::Text::Text(std::shared_ptr<lix::Font> font,
     const lix::Text::Properties& properties,
     const std::string& text)
-    : _font{font}, _properties{properties}, _text{text}, _vao{GL_TRIANGLES}
+    : _font{font}, _properties{properties}, _text{text},
+        _vao{{lix::Attribute::VEC4}, {
+            0.0f, 0.0f, 0.0f, 0.0f,
+            300.0f, 0.0f, 1.0f, 0.0f,
+            300.0f, 300.0f, 1.0f, 1.0f
+            }, {0, 1, 2}}
 {
-    _vao.bind();
-    _vao.createVbo(GL_DYNAMIC_DRAW, {lix::Attribute::VEC4}, std::vector<GLfloat>{
-        0.0f, 0.0f, 0.0f, 0.0f,
-        300.0f, 0.0f, 1.0f, 0.0f,
-        300.0f, 300.0f, 1.0f, 1.0f
-    });
-    _vao.createEbo(GL_DYNAMIC_DRAW, std::vector<GLuint>{0, 1, 2});
     initBuffers();
 }
 

@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-lix::Editor::Editor(const glm::mat4& perspective, const glm::vec2& resolution_) : 
-    _camera{perspective, glm::vec3{8.0f, 8.0f, 8.0f}}, _resolution{resolution_}
+lix::Editor::Editor(const glm::mat4& perspective, const glm::vec2& resolution_, float cameraDistance) : 
+    _camera{perspective, glm::vec3{8.0f, 8.0f, 8.0f}}, _resolution{resolution_}, _cameraDistance{cameraDistance}
 {
     
 }
@@ -34,12 +34,8 @@ void lix::Editor::onMouseUp(lix::KeySym key, lix::KeyMod /*mod*/)
     }
 }
 
-void lix::Editor::onMouseMove(float x, float y)
+void lix::Editor::onMouseMove(float x, float y, float /*xrel*/, float /*yrel*/)
 {
-    if(_subjectNode == nullptr)
-    {
-        return;
-    }
     static auto prevDragPos = glm::vec2{x, y} / _resolution;
     auto dragPos = glm::vec2{x, y} / _resolution;
     auto d_xy = prevDragPos - dragPos;
@@ -56,25 +52,28 @@ void lix::Editor::onMouseMove(float x, float y)
 
     glm::vec3 delta = d_xy.x * right + d_xy.y * up;
 
-    switch(_translationMode)
+    if(_subjectNode)
     {
-    case TRANS_X:
-        delta = glm::vec3{1.0f, 0.0f, 0.0f} * glm::dot(glm::vec3{1.0f, 0.0f, 0.0f}, delta);
-        break;
-    case TRANS_Y:
-        delta = glm::vec3{0.0f, 1.0f, 0.0f} * glm::dot(glm::vec3{0.0f, 1.0f, 0.0f}, delta);
-        break;
-    case TRANS_Z:
-        delta = glm::vec3{0.0f, 0.0f, 1.0f} * glm::dot(glm::vec3{0.0f, 0.0f, 1.0f}, delta);
-        break;
-    default:
-        break;
+        switch(_translationMode)
+        {
+        case TRANS_X:
+            delta = glm::vec3{1.0f, 0.0f, 0.0f} * glm::dot(glm::vec3{1.0f, 0.0f, 0.0f}, delta);
+            break;
+        case TRANS_Y:
+            delta = glm::vec3{0.0f, 1.0f, 0.0f} * glm::dot(glm::vec3{0.0f, 1.0f, 0.0f}, delta);
+            break;
+        case TRANS_Z:
+            delta = glm::vec3{0.0f, 0.0f, 1.0f} * glm::dot(glm::vec3{0.0f, 0.0f, 1.0f}, delta);
+            break;
+        default:
+            break;
+        }
     }
 
     switch(_editMode)
     {
     case EDIT_TRANS:
-        _subjectNode->setTranslation(_subjectNode->translation() + delta);
+        if(_subjectNode) { _subjectNode->setTranslation(_subjectNode->translation() + delta); }
         break;
     default:
         if(_lmb)
@@ -85,6 +84,33 @@ void lix::Editor::onMouseMove(float x, float y)
         break;
     }
     prevDragPos = dragPos;
+}
+
+void lix::Editor::onMouseWheel(float x, float y)
+{
+    auto mod = SDL_GetModState();
+
+    static glm::vec2 prevDelta{x, y};
+    glm::vec2 delta{x, y};
+
+    auto d_xy = prevDelta - delta;
+    d_xy *= 0.1f;
+
+    _cameraDistance += d_xy.y;
+
+    return; /// !!!
+
+    if(mod & KMOD_SHIFT)
+    {
+        glm::vec3 rotatedVector = glm::angleAxis(_cameraYaw, glm::vec3{0.0f, 1.0f, 0.0f})
+            * glm::vec3{-d_xy.y, 0.0f, d_xy.x};
+        _centerPoint += rotatedVector;
+    }
+    else
+    {
+        _cameraYaw -= d_xy.x;
+        _cameraPitch -= d_xy.y;
+    }
 }
 
 void lix::Editor::onKeyDown(lix::KeySym key, lix::KeyMod /*mod*/)
@@ -137,9 +163,10 @@ void lix::Editor::onKeyUp(lix::KeySym /*key*/, lix::KeyMod /*mod*/)
 
 void lix::Editor::refresh(float dt)
 {
-    _camera.setTranslation(glm::vec3{
+    _camera.setTranslation(_centerPoint + glm::vec3{
         cosf(_cameraYaw) * cosf(_cameraPitch),
         sinf(_cameraPitch),
         sinf(_cameraYaw) * cosf(_cameraPitch)} * _cameraDistance);
+    _camera.setTarget(_centerPoint);
     _camera.refresh(dt);
 }

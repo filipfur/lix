@@ -41,6 +41,11 @@ namespace lix
 
         const std::vector<NodePtr>& children() const;
 
+        const lix::NodePtr& childAt(size_t index)
+        {
+            return _children.at(index);
+        }
+
         Node* parent() const;
 
         void setMesh(MeshPtr mesh);

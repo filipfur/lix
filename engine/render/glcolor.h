@@ -15,8 +15,12 @@ namespace lix
         Color(const glm::vec3& rgb);
         Color(const glm::vec4& rgba);
 
+        static Color opacity(float val);
+
         Color& operator=(const Color& color);
         Color& operator=(Color&& color);
+
+        Color operator*(const Color& other) const;
 
         operator glm::vec4() const;
 

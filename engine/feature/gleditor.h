@@ -10,15 +10,16 @@ namespace lix
     class Editor : public lix::InputAdapter
     {
     public:
-        Editor(const glm::mat4& perspective, const glm::vec2& resolution);
+        Editor(const glm::mat4& perspective, const glm::vec2& resolution, float cameraDistance=4.0f);
 
         virtual void onMouseDown(lix::KeySym key, lix::KeyMod mod) override;
         virtual void onMouseUp(lix::KeySym key, lix::KeyMod mod) override;
-        virtual void onMouseMove(float x, float y) override;
+        virtual void onMouseMove(float x, float y, float xrel, float yrel) override;
+        virtual void onMouseWheel(float x, float y) override;
         virtual void onKeyDown(lix::KeySym key, lix::KeyMod mod) override;
         virtual void onKeyUp(lix::KeySym key, lix::KeyMod mod) override;
 
-        void setSubjectNode(std::shared_ptr<lix::Node> subjectNode_)
+        void setSubjectNode(lix::Node* subjectNode_)
         {
             _subjectNode = subjectNode_;
         }
@@ -29,7 +30,7 @@ namespace lix
         }
 
         enum class Transformation {TRANSLATE, ROTATE};
-        virtual void onSubjectTransformed(std::shared_ptr<lix::Node> subject, Transformation transformation) = 0;
+        virtual void onSubjectTransformed(lix::Node* subject, Transformation transformation) = 0;
 
         void refresh(float dt);
 
@@ -58,14 +59,20 @@ namespace lix
         {
             _cameraDistance = distance;
         }
+
+        float cameraDistance() const
+        {
+            return _cameraDistance;
+        }
     
         Camera _camera;
         glm::vec2 _resolution;
-        std::shared_ptr<lix::Node> _subjectNode;
+        lix::Node* _subjectNode;
         glm::vec3 _prevPos;
         bool _lmb{false};
         float _cameraYaw{0.0f};
         float _cameraPitch{0.0f};
         float _cameraDistance{4.0f};
+        glm::vec3 _centerPoint{0.0f, 0.0f, 0.0f};
     };
 }

@@ -62,4 +62,6 @@ namespace lix
 
         std::unordered_map<std::string, GLuint> _uniforms;
     };
+
+    using ShaderProgramPtr = std::shared_ptr<ShaderProgram>;
 }

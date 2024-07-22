@@ -10,7 +10,7 @@
 
 #include "primer.h"
 
-bool popAlongDirection(std::vector<lix::Vertex>& s, const glm::vec3& D, lix::Vertex& rval)
+bool popAlongDirection(std::vector<glm::vec3>& s, const glm::vec3& D, glm::vec3& rval)
 {
     int index{-1};
     float maxValue{-FLT_MAX}; //glm::dot(s[0], D)};
@@ -19,7 +19,7 @@ bool popAlongDirection(std::vector<lix::Vertex>& s, const glm::vec3& D, lix::Ver
 
     for(size_t i{0}; i < s.size(); ++i)
     {
-        float value = glm::dot(s[i].position, D);
+        float value = glm::dot(s[i], D);
         if(value > maxValue)
         {
             index = static_cast<int>(i);
@@ -68,7 +68,7 @@ void printFaces(const std::list<lix::Face>& faces)
     }
 }
 
-auto toVertexVector(const std::vector<glm::vec3>& vector)
+/*auto toVertexVector(const std::vector<glm::vec3>& vector)
 {
     std::vector<lix::Vertex> rval(vector.size());
     uint32_t index{0};
@@ -82,28 +82,25 @@ lix::ConvexHull::ConvexHull(const std::vector<glm::vec3>& points)
     : ConvexHull{toVertexVector(points)}
 {
 
-}
+}*/
 
-lix::ConvexHull::ConvexHull(const std::vector<lix::Vertex>& points)
+lix::ConvexHull::ConvexHull(const std::vector<glm::vec3>& points)
 {
-    std::vector<lix::Vertex> P{points.begin(), points.end()};
-    glm::vec3 dir = glm::ballRand(1.0f);
-    lix::Vertex A;
-    lix::Vertex B;
+    std::vector<glm::vec3> P{points.begin(), points.end()};
+    glm::vec3 dir = glm::vec3{1.0f, 0.0f, 0.0f};//glm::ballRand(1.0f);
+    glm::vec3 A;
+    glm::vec3 B;
     
-    while(!popAlongDirection(P, dir, A))
-    {
-        dir = glm::ballRand(1.0f);
-    }
-    assert(popAlongDirection(P, -A.position, B));
+    assert(popAlongDirection(P, dir, A));
+    assert(popAlongDirection(P, -A, B));
 
-    glm::vec3 AB = B.position - A.position;
-    float t = -(glm::dot(AB, A.position) / glm::dot(AB, AB));
-    glm::vec3 r = A.position + AB * t;
+    glm::vec3 AB = B - A;
+    float t = -(glm::dot(AB, A) / glm::dot(AB, AB));
+    glm::vec3 r = A + AB * t;
 
     assert(glm::dot(r, r) > 0);
 
-    lix::Vertex C;
+    glm::vec3 C;
     bool status = popAlongDirection(P, r, C);
     if(!status)
     {
@@ -111,23 +108,23 @@ lix::ConvexHull::ConvexHull(const std::vector<lix::Vertex>& points)
         status = popAlongDirection(P, r, C);
     }
 
-    glm::vec3 AC = C.position - A.position;
+    glm::vec3 AC = C - A;
     glm::vec3 ABC = glm::cross(AB, AC);
 
-    if(glm::dot(ABC, -A.position) > 0)
+    if(glm::dot(ABC, -A) > 0)
     {
-        std::swap(B.position, C.position);
+        std::swap(B, C);
         std::swap(AC, AB);
         ABC = -ABC;
     }
 
-    lix::Vertex D;
+    glm::vec3 D;
     assert(popAlongDirection(P, -ABC, D));
 
     auto& abc = _faces.emplace_back(glm::normalize(ABC));
-    auto& acd = _faces.emplace_back(glm::normalize(glm::cross(C.position - A.position, D.position - A.position)));
-    auto& adb = _faces.emplace_back(glm::normalize(glm::cross(D.position - A.position, B.position - A.position)));
-    auto& bdc = _faces.emplace_back(glm::normalize(glm::cross(D.position - B.position, C.position - B.position)));
+    auto& acd = _faces.emplace_back(glm::normalize(glm::cross(C - A, D - A)));
+    auto& adb = _faces.emplace_back(glm::normalize(glm::cross(D - A, B - A)));
+    auto& bdc = _faces.emplace_back(glm::normalize(glm::cross(D - B, C - B)));
 
     auto ab = new Half_Edge(A, &abc);
     auto bc = new Half_Edge(B, &abc);
@@ -173,13 +170,13 @@ lix::ConvexHull::~ConvexHull() noexcept
     _faces.clear();
 }
 
-bool lix::ConvexHull::addPoint(const lix::Vertex& p, lix::Face* face, std::list<Face*>* Q)
+bool lix::ConvexHull::addPoint(const glm::vec3& p, lix::Face* face, std::list<Face*>* Q)
 {
     if(face == nullptr)
     {
         for(lix::Face& f : _faces)
         {
-            if((glm::dot(f.normal, p.position) + f.D) > 0)
+            if((glm::dot(f.normal, p) + f.D) > 0)
             {
                 face = &f;
                 break;
@@ -189,7 +186,7 @@ bool lix::ConvexHull::addPoint(const lix::Vertex& p, lix::Face* face, std::list<
     assert(face != nullptr);
 
     std::set<lix::Face*> visible;
-    checkFace(visible, face, p.position);
+    checkFace(visible, face, p);
     if(visible.size() < 1)
     {
         return false;
@@ -241,12 +238,12 @@ bool lix::ConvexHull::addPoint(const lix::Vertex& p, lix::Face* face, std::list<
         //assert(he->opposite == nullptr);
         if(prev)
         {
-            const lix::Vertex& U = he->vertex;
-            const lix::Vertex& V = prev->vertex;
-            const lix::Vertex& W = p;
+            const glm::vec3& U = he->vertex;
+            const glm::vec3& V = prev->vertex;
+            const glm::vec3& W = p;
             
-            const glm::vec3 UV = V.position - U.position;
-            const glm::vec3 UW = W.position - U.position;
+            const glm::vec3 UV = V - U;
+            const glm::vec3 UW = W - U;
             const glm::vec3 UVW = glm::normalize(glm::cross(UV, UW));
 
             auto& uvw = _faces.emplace_back(glm::normalize(UVW));
@@ -289,7 +286,7 @@ bool lix::ConvexHull::addPoint(const lix::Vertex& p, lix::Face* face, std::list<
     return true;
 }
 
-void lix::ConvexHull::addPoints(std::vector<lix::Vertex>& P)
+void lix::ConvexHull::addPoints(std::vector<glm::vec3>& P)
 {
     std::list<Face*> Q;
     std::for_each(std::begin(_faces), std::end(_faces), [&Q](Face& face) {
@@ -300,7 +297,7 @@ void lix::ConvexHull::addPoints(std::vector<lix::Vertex>& P)
         lix::Face* face = Q.front();
         Q.erase(Q.begin());
 
-        lix::Vertex p;
+        glm::vec3 p;
         if(!popAlongDirection(P, face->normal, p))
         {
             continue;
@@ -312,22 +309,18 @@ void lix::ConvexHull::addPoints(std::vector<lix::Vertex>& P)
     }
 }
 
-void lix::ConvexHull::meshData(std::vector<float>& points, std::vector<unsigned int>& indices) const
+std::pair<std::vector<glm::vec3>, std::vector<unsigned int>> lix::ConvexHull::meshData() const
 {
+    std::vector<glm::vec3> points;
+    points.reserve(_faces.size() * 3);
+    std::vector<unsigned int> indices;
+    indices.reserve(_faces.size() * 3);
     for(const auto& face : _faces)
     {
         points.insert(points.end(), {
-            face.half_edge->vertex.position.x,
-            face.half_edge->vertex.position.y,
-            face.half_edge->vertex.position.z,
-
-            face.half_edge->next->vertex.position.x,
-            face.half_edge->next->vertex.position.y,
-            face.half_edge->next->vertex.position.z,
-
-            face.half_edge->next->next->vertex.position.x,
-            face.half_edge->next->next->vertex.position.y,
-            face.half_edge->next->next->vertex.position.z,
+            face.half_edge->vertex,
+            face.half_edge->next->vertex,
+            face.half_edge->next->next->vertex
         });
 
         unsigned int i = static_cast<unsigned int>(indices.size());
@@ -337,6 +330,7 @@ void lix::ConvexHull::meshData(std::vector<float>& points, std::vector<unsigned 
             i + 2
         });
     }
+    return {points, indices};
 }
 
 std::vector<glm::vec3> lix::ConvexHull::points() const
@@ -346,9 +340,9 @@ std::vector<glm::vec3> lix::ConvexHull::points() const
     for(const auto& face : _faces)
     {
         rval.insert(rval.end(), {
-            face.half_edge->vertex.position,
-            face.half_edge->next->vertex.position,
-            face.half_edge->next->next->vertex.position
+            face.half_edge->vertex,
+            face.half_edge->next->vertex,
+            face.half_edge->next->next->vertex
         });
     }
 
@@ -362,5 +356,28 @@ void lix::ConvexHull::connect(Half_Edge* self, Half_Edge* next, Half_Edge* oppos
     self->opposite = opposite;
     self->face = face;
     face->half_edge = self;
-    face->D = glm::dot(-face->half_edge->vertex.position, face->normal) / glm::length(face->normal);
+    face->D = glm::dot(-face->half_edge->vertex, face->normal);
+}
+
+std::list<lix::Face>::const_iterator lix::ConvexHull::closestFace(const glm::vec3& p) const
+{
+    float minDistance{FLT_MAX};
+    std::list<lix::Face>::const_iterator rval{end()};
+
+    for(auto faceIt{begin()}; faceIt != end(); ++faceIt)
+    {
+        glm::vec3 relpos = (faceIt->half_edge->vertex - p);
+        float distance = glm::dot(faceIt->normal, relpos) + faceIt->D;
+        if(distance < minDistance)
+        {
+            minDistance = distance;
+            rval = faceIt;
+            /*if(glm::dot(faceIt->normal, glm::vec3{0.0f, 1.0f, 0.0f}) < 0)
+            {
+                printf("facer: %u\n", faceIt->id);
+            }*/
+        }
+    }
+    //printf("min distance: %.2f\n", minDistance);
+    return rval;
 }

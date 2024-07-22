@@ -136,7 +136,7 @@ namespace Component
 class App : public lix::Application, public lix::InputAdapter
 {
 public:
-    App(int windowX, int windowY, const char* title) : Application{windowX, windowY, title} {}
+    App(float windowX, float windowY, const char* title) : Application{windowX, windowY, title} {}
 
     virtual void init() override;
 
@@ -148,7 +148,8 @@ public:
     virtual void onKeyUp(lix::KeySym key, lix::KeyMod mod) override;
     virtual void onMouseDown(lix::KeySym key, lix::KeyMod mod) override;
     virtual void onMouseUp(lix::KeySym key, lix::KeyMod mod) override;
-    virtual void onMouseMove(float x, float y) override;
+    virtual void onMouseMove(float x, float y, float xrel, float yrel) override;
+    virtual void onMouseWheel(float x, float y) override;
 
 private:
     void renderModels();
@@ -294,7 +295,7 @@ void App::init()
     monkeyStageNode->setTranslation(glm::vec3{20.0f, 0.0f, -40.0f});
     monkeyStageNode->setScale(glm::vec3(4.0f));
     boneMesh = gltf::loadMesh(assets::objects::bone::Cube_mesh);
-    donutNode = gltf::loadNode(assets::objects::donut::Torus_node);
+    donutNode = gltf::loadNode(assets::objects::donut::Donut_node);
     bushMesh = gltf::loadMesh(assets::objects::bush::Plane_003_mesh);
     planetsNode = gltf::loadNode(assets::objects::planets::Icosphere_001_node);
     planetsNode->setTranslation(glm::vec3{-20.0f, 20.0f, -4.0f});
@@ -433,7 +434,7 @@ void App::tick(float dt)
             lix::Shape& shapeA = *actorA.shape;
             lix::Shape& shapeB = *actorB.shape;
 
-            std::vector<lix::Vertex> simplex;
+            std::vector<glm::vec3> simplex;
             const glm::vec3 D{shapeB.trs()->translation() - shapeA.trs()->translation()};
             if(lix::gjk(shapeA, shapeB, simplex, D, nullptr))
             {
@@ -791,7 +792,12 @@ void App::onMouseUp(lix::KeySym /*key*/, lix::KeyMod /*mod*/)
     
 }
 
-void App::onMouseMove(float /*x*/, float /*y*/)
+void App::onMouseMove(float /*x*/, float /*y*/, float, float)
+{
+    
+}
+
+void App::onMouseWheel(float, float)
 {
     
 }

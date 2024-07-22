@@ -42,47 +42,13 @@ inline static constexpr float SCREEN_HEIGHT{720.0f};
 
 std::shared_ptr<lix::VAO> VAOFromConvex(const lix::ConvexHull &ch)
 {
-    std::vector<GLfloat> mdv;
-    std::vector<GLuint> mdi;
-    ch.meshData(mdv, mdi);
+    auto [mdv, mdi] = ch.meshData();
     return std::shared_ptr<lix::VAO>(new lix::VAO(
         lix::Attributes{lix::VEC3},
         mdv,
         mdi,
         GL_TRIANGLES,
         GL_DYNAMIC_DRAW));
-}
-
-glm::quat directionToQuat(const glm::vec3 &direction)
-{
-    glm::vec3 n = glm::normalize(direction);
-    glm::vec3 UP{0.0f, 1.0f, 0.0f};
-    float angle;
-    glm::vec3 axis;
-
-    if (n.y >= 1.0f)
-    {
-        angle = 0.0f;
-        axis = glm::vec3{1.0f, 0.0f, 0.0f};
-    }
-    else if (n.y <= -1.0f)
-    {
-        angle = glm::pi<float>();
-        axis = glm::vec3{1.0f, 0.0f, 0.0f};
-    }
-    else
-    {
-        axis = glm::normalize(glm::cross(UP, n));
-        angle = acosf(glm::dot(UP, n));
-    }
-
-    return glm::angleAxis(angle, axis);
-}
-
-glm::vec3 quatToDirection(const glm::quat &quat)
-{
-    glm::vec3 UP{0.0f, 1.0f, 0.0f};
-    return quat * UP;
 }
 
 struct App : public lix::Application, public lix::Editor
@@ -99,7 +65,7 @@ struct App : public lix::Application, public lix::Editor
 
     virtual void draw() override;
 
-    virtual void onSubjectTransformed(std::shared_ptr<lix::Node> subject, lix::Editor::Transformation transformation) override;
+    virtual void onSubjectTransformed(lix::Node* subject, lix::Editor::Transformation transformation) override;
 
     void createCube(const lix::Polygon &meshCollider, const lix::Node &node,
                     const glm::vec3 &position, const glm::quat &rotation, const glm::vec3 &scale, bool dynamic, float density);
@@ -259,7 +225,7 @@ void App::init()
     static auto bunNode = std::make_shared<lix::Node>();
     bunNode->setMesh(gltf::loadMesh(assets::objects::bun_zipper_res2::bun_zipper_res2_mesh));
 
-    createCube(*bunMeshCollider, *bunNode, glm::vec3{-1.1f, 3.0f, 2.5f}, glm::quat{1.0f, 0.0f, 0.0f, 0.0f}, glm::vec3{2.0f}, true, 0.7f);
+    createCube(*bunMeshCollider, *bunNode, glm::vec3{-1.1f, 3.0f, 2.5f}, glm::quat{1.0f, 0.0f, 0.0f, 0.0f}, glm::vec3{2.0f}, true, 0.5f);
     /*auto cubeB = createCube(*cubeMeshCollider, *cubeNode, glm::vec3{0.0f, 0.0f, 0.0f}, glm::quat{1.0f, 0.0f, 0.0f, 0.0f}, glm::vec3{1.0f, 1.0f, 1.0f}, false, 500.0f);
     createCube(*cubeMeshCollider, *cubeNode, glm::vec3{0.0f, 0.0f, 3.0f}, glm::quat{1.0f, 0.0f, 0.0f, 0.0f}, glm::vec3{1.0f, 1.0f, 1.0f}, false, 500.0f);*/
 
@@ -311,7 +277,7 @@ void App::init()
 
     // minkowskiVAO = VAOFromConvex(*convexHull);
 
-    setSubjectNode(cubeNodes.front());
+    setSubjectNode(cubeNodes.front().get());
 
     std::shared_ptr<lix::Font> font = std::make_shared<lix::Font>(assets::fonts::arial::create());
 
@@ -400,7 +366,7 @@ void App::draw()
     for (const auto &v : {glm::vec3{1.0f, 0.0f, 0.0f}, glm::vec3{0.0f, 1.0f, 0.0f}, glm::vec3{0.0f, 0.0f, 1.0f}})
     {
         debugShader->setUniform("u_rgb", v);
-        arrowNode->setRotation(directionToQuat(v));
+        arrowNode->setRotation(lix::directionToQuat(v));
         lix::renderNode(*debugShader, *arrowNode);
     }
 
@@ -466,7 +432,7 @@ void App::draw()
     textRendering->render();
 }
 
-void App::onSubjectTransformed(std::shared_ptr<lix::Node> /*subject*/, lix::Editor::Transformation /*transformation*/)
+void App::onSubjectTransformed(lix::Node* /*subject*/, lix::Editor::Transformation /*transformation*/)
 {
     /*std::vector<glm::vec3> minkowski;
     computeMinkowski(*rigidBodies.at(0), *rigidBodies.at(1), minkowski);
