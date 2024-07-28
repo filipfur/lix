@@ -19,10 +19,11 @@ public:
     const std::vector<glm::vec3>& points() const;
     const std::vector<glm::vec3>& transformedPoints();
     glm::vec3 center();
+    virtual bool intersects(Capsule& capsule) override;
     virtual bool intersects(Sphere& sphere) override;
     virtual bool intersects(AABB& aabb) override;
     virtual bool intersects(Polygon& polygon) override;
-    virtual bool test(Shape& shape) override;
+    virtual bool doTest(Shape& shape) override;
 
 protected:
     bool updateTransformedPoints();

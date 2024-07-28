@@ -11,10 +11,16 @@ def generate_header_file():
     for obj in bpy.data.objects:
         icol = obj.instance_collection
         if not icol is None:
-            collectionNodes.append((obj, icol.library.filepath))
+            found = None
             for o in icol.objects:
-                linkedObjects[icol.library.filepath] = o
-                break
+                if o.type == "MESH":
+                    collectionNodes.append((obj, icol.library.filepath, o))
+                    linkedObjects[icol.library.filepath] = o
+                    found = o
+                    break
+            if found is None:
+                print(f"NONE FOUND: {icol.name}")
+                exit(1)
     
     fname = fileNameOnly(bpy.data.filepath)
     with open(bpy.path.abspath(f"//{fname}.h"), "w") as f:
@@ -23,9 +29,8 @@ def generate_header_file():
             f.write(f"#include \"gen/objects/{fn}.h\"\n")
         f.write(f"namespace assets::levels::{fname} {{\n\n    const gltf::Node nodes[] = {{")
         delim = ""
-        for obj, pth in collectionNodes:
+        for obj, pth, o in collectionNodes:
             fname = fileNameOnly(pth)
-            o = linkedObjects[pth]
             
             t = obj.location
             r = obj.rotation_quaternion if obj.rotation_mode == 'QUATERNION' else obj.rotation_euler.to_quaternion()
@@ -39,7 +44,7 @@ def generate_header_file():
             &assets::objects::{fname}::{meshName}_mesh,
             {{{t.x}f, {t.z}f, {-t.y}f}},
             {{{r.w}f, {r.x}f, {r.z}f, {-r.y}f}},
-            {{{s.x}f, {s.z}f, {-s.y}f}},
+            {{{s.x}f, {s.z}f, {s.y}f}},
             nullptr,
             nullptr,
             0

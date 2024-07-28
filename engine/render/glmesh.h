@@ -22,7 +22,9 @@ namespace lix
 		};
 
 		Mesh();
+		Mesh(const std::string& name);
 		Mesh(std::shared_ptr<lix::VertexArray> vao, std::shared_ptr<lix::Material> material=nullptr);
+		Mesh(const std::string& name, std::shared_ptr<lix::VertexArray> vao, std::shared_ptr<lix::Material> material=nullptr);
 		Mesh(const Mesh& other);
 		Mesh& operator=(const Mesh& other) = delete;
 
@@ -47,7 +49,13 @@ namespace lix
 
 		void draw();
 
+		const std::string& name()
+		{
+			return _name;
+		}
+
 	private:
+		const std::string& _name;
 		static const lix::Material defaultMaterial;
 		std::vector<Primitive> _primitives;
 	};

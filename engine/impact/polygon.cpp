@@ -73,6 +73,11 @@ glm::vec3 lix::Polygon::center()
     return glm::vec3(trs()->modelMatrix() * glm::vec4(_center, 1.0f));
 }
 
+bool lix::Polygon::intersects(lix::Capsule& /*capsule*/)
+{
+    throw std::runtime_error("polygon-capsule collision not implemented");
+}
+
 bool lix::Polygon::intersects(lix::Sphere& /*sphere*/)
 {
     throw std::runtime_error("polygon-sphere collision not implemented");
@@ -88,7 +93,7 @@ bool lix::Polygon::intersects(lix::Polygon& /*polygon*/)
     throw std::runtime_error("polygon-polygon collision not implemented");
 }
 
-bool lix::Polygon::test(lix::Shape& /*shape*/)
+bool lix::Polygon::doTest(lix::Shape& /*shape*/)
 {
     throw std::runtime_error("Polygon does not support simple test");
 }

@@ -8,14 +8,18 @@ namespace lix
     {
     public:
         Timer();
-        Timer(Time::Raw duration_ms);
+        Timer(Time::Raw duration);
 
-        bool elapsed();
+        bool active() const;
+        Time::Raw timeLeft() const;
+        float progress() const;
+        bool elapsed() const;
         bool cancel();
         void reset();
-
+        void set(Time::Raw duration);
+        
     private:
-        const Time::Raw _duration;
+        Time::Raw _duration;
         bool _active;
         Time::Raw _expired;
     };

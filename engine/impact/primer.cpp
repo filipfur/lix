@@ -1,6 +1,6 @@
 #include "primer.h"
 
-#include "glcube.h"
+#include "glgeometry.h"
 
 #include <glm/gtc/quaternion.hpp>
 #include <algorithm>

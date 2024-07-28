@@ -7,6 +7,11 @@ float lix::Time::seconds()
     return _time * 1e-3f;
 }
 
+lix::Time::Raw lix::Time::raw()
+{
+    return _time;
+}
+
 lix::Time::Raw lix::Time::millseconds()
 {
     return _time;

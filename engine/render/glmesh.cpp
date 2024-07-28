@@ -2,17 +2,31 @@
 
 const lix::Material lix::Mesh::defaultMaterial{{1.0f, 1.0f, 1.0f, 1.0f}};
 
-lix::Mesh::Mesh() : _primitives{}
+inline static const std::string noName{""};
+
+lix::Mesh::Mesh() : _name{noName}, _primitives{}
+{
+
+}
+
+lix::Mesh::Mesh(const std::string& name) : _name{name}, _primitives{}
 {
 
 }
 
 lix::Mesh::Mesh(std::shared_ptr<lix::VertexArray> vao, std::shared_ptr<lix::Material> material)
+    : Mesh(noName)
 {
     _primitives.emplace_back(vao, material ? material : std::make_shared<lix::Material>(defaultMaterial));
 }
 
-lix::Mesh::Mesh(const Mesh& other)
+lix::Mesh::Mesh(const std::string& name, std::shared_ptr<lix::VertexArray> vao, std::shared_ptr<lix::Material> material)
+    : Mesh{name}
+{
+    _primitives.emplace_back(vao, material ? material : std::make_shared<lix::Material>(defaultMaterial));
+}
+
+lix::Mesh::Mesh(const Mesh& other) : _name{other._name}
 {
     for(size_t i{0}; i < other._primitives.size(); ++i)
     {

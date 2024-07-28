@@ -61,11 +61,22 @@ namespace lix
             return _name;
         }
 
+        void setLooping(bool looping)
+        {
+            _looping = looping;
+        }
+
+        bool looping() const
+        {
+            return _looping;
+        }
+
     private:
         const std::string _name;
         std::list<Channel> _channels;
         float _start{0.0f};
         float _end{1.0f};
         float _time{0.0f};
+        bool _looping{true};
     };
 }

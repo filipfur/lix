@@ -15,6 +15,16 @@ namespace lix
 
         }
 
+        void setMaxWalkSpeed(float maxWalkSpeed)
+        {
+            this->maxWalkSpeed = maxWalkSpeed;
+        }
+
+        void setMaxJumpSpeed(float maxJumpSpeed)
+        {
+            this->maxJumpSpeed = maxJumpSpeed;
+        }
+
         bool onGround()
         {
             return platform != nullptr;
@@ -92,8 +102,9 @@ namespace lix
         }
 
         float walkSpeed{0.0f};
-        const float maxWalkSpeed{6.0f};
+        float maxWalkSpeed{4.0f};
         float walkAcceleration{30.0f};
+        float maxJumpSpeed{5.0f};
         std::shared_ptr<lix::DynamicBody> dynamicBody;
         std::shared_ptr<lix::StaticBody> platform;
         glm::vec3 deltaControl;
@@ -101,5 +112,6 @@ namespace lix
         float yaw{0};
         std::list<lix::Face>::const_iterator closestFace;
         MovementState movementState{MovementState::IDLE};
+        int floorCrumbling{0};
     };
 }

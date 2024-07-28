@@ -38,7 +38,8 @@ bool popAlongDirection(std::vector<glm::vec3>& s, const glm::vec3& D, glm::vec3&
 
 void checkFace(std::set<lix::Face*>& visible, lix::Face* face, const glm::vec3& p)
 {
-    if((glm::dot(face->normal, p) + face->D) > 0)
+    //if((glm::dot(face->normal, p) + face->D) > 0)
+    if(glm::dot(face->normal, p - face->half_edge->vertex) > 0)
     {
         if(visible.emplace(face).second)
         {
@@ -101,12 +102,7 @@ lix::ConvexHull::ConvexHull(const std::vector<glm::vec3>& points)
     assert(glm::dot(r, r) > 0);
 
     glm::vec3 C;
-    bool status = popAlongDirection(P, r, C);
-    if(!status)
-    {
-        printf("failed to pop P#=%zu\n", P.size());
-        status = popAlongDirection(P, r, C);
-    }
+    assert(popAlongDirection(P, r, C));
 
     glm::vec3 AC = C - A;
     glm::vec3 ABC = glm::cross(AB, AC);
@@ -298,14 +294,8 @@ void lix::ConvexHull::addPoints(std::vector<glm::vec3>& P)
         Q.erase(Q.begin());
 
         glm::vec3 p;
-        if(!popAlongDirection(P, face->normal, p))
-        {
-            continue;
-        }
-        if(!addPoint(p, face, &Q))
-        {
-            continue;
-        }
+        assert(popAlongDirection(P, face->normal, p));
+        addPoint(p, face, &Q);
     }
 }
 
@@ -359,25 +349,57 @@ void lix::ConvexHull::connect(Half_Edge* self, Half_Edge* next, Half_Edge* oppos
     face->D = glm::dot(-face->half_edge->vertex, face->normal);
 }
 
-std::list<lix::Face>::const_iterator lix::ConvexHull::closestFace(const glm::vec3& p) const
+std::optional<glm::vec3> lix::ConvexHull::rayIntersect(const glm::vec3& ray_origin, const glm::vec3& ray_dir) const
 {
-    float minDistance{FLT_MAX};
-    std::list<lix::Face>::const_iterator rval{end()};
+    std::optional<glm::vec3> intersection;
+    float minDistance{0.0f};
 
     for(auto faceIt{begin()}; faceIt != end(); ++faceIt)
     {
-        glm::vec3 relpos = (faceIt->half_edge->vertex - p);
-        float distance = glm::dot(faceIt->normal, relpos) + faceIt->D;
-        if(distance < minDistance)
+        const glm::vec3& a = faceIt->half_edge->vertex;
+        const glm::vec3& b = faceIt->half_edge->next->vertex;
+        const glm::vec3& c = faceIt->half_edge->next->next->vertex;
+        const glm::vec3 ab = b - a;
+        const glm::vec3 ac = c - a;
+        const glm::vec3 h = glm::cross(ray_dir, ac);
+        float alpha = glm::dot(ab, h);
+        if(alpha > -FLT_EPSILON && alpha < FLT_EPSILON)
         {
-            minDistance = distance;
-            rval = faceIt;
-            /*if(glm::dot(faceIt->normal, glm::vec3{0.0f, 1.0f, 0.0f}) < 0)
+            continue;
+        }
+        float f = 1.0f / alpha;
+        const glm::vec3 s = ray_origin - a;
+        float u = glm::dot(s, h) * f;
+        if(u < 0.0f || u > 1.0f)
+        {
+            continue;
+        }
+        const glm::vec3 q = glm::cross(s, ab);
+        float v = glm::dot(ray_dir, q) * f;
+        if(v < 0.0f || (u + v) > 1.0f)
+        {
+            continue;
+        }
+        float t = glm::dot(ac, q) * f;
+        if(t > FLT_EPSILON)
+        {
+            glm::vec3 candid = ray_origin + ray_dir * t;
+            glm::vec3 delta = candid - ray_origin;
+            float distance = glm::dot(delta, delta);
+            if(intersection.has_value())
             {
-                printf("facer: %u\n", faceIt->id);
-            }*/
+                if(distance < minDistance)
+                {
+                    intersection = candid;
+                    minDistance = distance;
+                }
+            }
+            else
+            {
+                intersection = candid;
+                minDistance = distance;
+            }
         }
     }
-    //printf("min distance: %.2f\n", minDistance);
-    return rval;
+    return intersection;
 }

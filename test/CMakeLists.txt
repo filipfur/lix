@@ -12,3 +12,4 @@ function(lix_add_test target_name)
 endfunction()
 
 lix_add_test(test_time)
+lix_add_test(test_audio)

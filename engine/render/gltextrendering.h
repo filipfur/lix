@@ -28,11 +28,23 @@ namespace lix
             return _resolution;
         }
 
+        const glm::mat4& projection() const
+        {
+            return _projection;
+        }
+
+        const glm::mat4& view() const
+        {
+            return _view;
+        }
+
     protected:
         void _renderText(lix::Text& text);
 
     private:
         glm::vec2 _resolution;
+        glm::mat4 _projection;
+        glm::mat4 _view;
         std::shared_ptr<lix::ShaderProgram> _shaderProgram;
         const std::vector<std::shared_ptr<lix::Text>>& _texts;
     };

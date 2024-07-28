@@ -31,7 +31,7 @@
 
 #include "primer.h"
 #include "aabb.h"
-#include "glcube.h"
+#include "glgeometry.h"
 
 // #define SHOW_MINKOWSKI_VOLUME
 

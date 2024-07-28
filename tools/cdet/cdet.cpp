@@ -4,18 +4,22 @@
 #include "gleditor.h"
 #include "glvertexarray.h"
 #include "glshaderprogram.h"
-#include "glcube.h"
+#include "glgeometry.h"
 #include "glrendering.h"
 #include "json.h"
 #include "primer.h"
 #include "glarrow.h"
 
 #include "polygon.h"
+#include "sphere.h"
 #include "aabb.h"
+#include "capsule.h"
 #include "collision.h"
 #include "convexhull.h"
 
 #define RUNONCE(call) do { static bool first=true; if (first) { call; first = false; } } while(0);
+
+float testRadii{0.09f};
 
 static constexpr float WINDOW_X = 1080;
 static constexpr float WINDOW_Y = 720;
@@ -140,6 +144,63 @@ public:
         poly->setSimplified(aabb);
     }
 
+    void createSphere(char op, const std::vector<lix::TRS>& frames, float radii)
+    {
+        allFrames.push_back(frames);
+        curFrameIt.push_back(allFrames.back().begin());
+        auto shape = std::make_shared<lix::Sphere>(&(*curFrameIt.back()), radii);
+        if(op == '+')
+        {
+            shapes.back()->addPositive(shape);
+        }
+        else if(op == '-')
+        {
+            shapes.back()->addNegative(shape);
+        }
+        else
+        {
+            shapes.push_back(shape);
+        }
+    }
+
+    void createAABB(char op, const std::vector<lix::TRS>& frames, const glm::vec3& min, const glm::vec3& max)
+    {
+        allFrames.push_back(frames);
+        curFrameIt.push_back(allFrames.back().begin());
+        auto shape = std::make_shared<lix::AABB>(&(*curFrameIt.back()), min, max);
+        if(op == '+')
+        {
+            shapes.back()->addPositive(shape);
+        }
+        else if(op == '-')
+        {
+            shapes.back()->addNegative(shape);
+        }
+        else
+        {
+            shapes.push_back(shape);
+        }
+    }
+
+    void createCapsule(char op, const std::vector<lix::TRS>& frames, const glm::vec3& a, const glm::vec3& b, float radii, bool caps)
+    {
+        allFrames.push_back(frames);
+        curFrameIt.push_back(allFrames.back().begin());
+        auto shape = std::make_shared<lix::Capsule>(&(*curFrameIt.back()), a, b, radii, caps);
+        if(op == '+')
+        {
+            shapes.back()->addPositive(shape);
+        }
+        else if(op == '-')
+        {
+            shapes.back()->addNegative(shape);
+        }
+        else
+        {
+            shapes.push_back(shape);
+        }
+    }
+
     virtual void onSubjectTransformed(lix::Node* subject, Transformation transformation) override;
 
     void incrementGJK(lix::Polygon& polyA, lix::Polygon& polyB);
@@ -163,7 +224,11 @@ public:
     lix::Node shapeEPA;
     std::vector<glm::vec3> triangleTestVertices;
     lix::Node triangleTestNode;
+    std::vector<std::shared_ptr<lix::Shape>> shapes;
+    std::shared_ptr<lix::VAO> cloudVAO;
 };
+
+char operatorOperandus = '0';
 
 void parseJSON(App& app, const char* file, std::list<std::vector<glm::vec3>>& allPoints)
 {
@@ -177,21 +242,78 @@ void parseJSON(App& app, const char* file, std::list<std::vector<glm::vec3>>& al
         glm::vec3 translation{};
         glm::quat rotation{};
         glm::vec3 scale{};
-        for(const auto& p : json["points"])
-        {
-            points.emplace_back(p[0].get<float>(), p[1].get<float>(), p[2].get<float>());
-        }
         for(const auto& frameObj : json["frames"])
         {
             const auto& t = frameObj["translation"];
-            const auto& r = frameObj["rotation"];
             const auto& s = frameObj["scale"];
             translation = glm::vec3{t[0].get<float>(), t[1].get<float>(), t[2].get<float>()};
-            rotation = glm::quat{r[0].get<float>(), r[1].get<float>(), r[2].get<float>(), r[3].get<float>()};
+            if(frameObj.contains("euler"))
+            {
+                const auto& r = frameObj["euler"];
+                rotation = glm::angleAxis(glm::radians(r[0].get<float>()), glm::vec3{1.0f, 0.0f, 0.0f})
+                    * glm::angleAxis(glm::radians(r[1].get<float>()), glm::vec3{0.0f, 1.0f, 0.0f})
+                    * glm::angleAxis(glm::radians(r[2].get<float>()), glm::vec3{0.0f, 0.0f, 1.0f});
+            }
+            else
+            {
+                const auto& r = frameObj["rotation"];
+                rotation = glm::quat{r[0].get<float>(), r[1].get<float>(), r[2].get<float>(), r[3].get<float>()};
+            }
             scale = glm::vec3{s[0].get<float>(), s[1].get<float>(), s[2].get<float>()};
             frames.emplace_back(translation, rotation, scale);
         }
-        app.createPolygon(points, frames, lix::Color::white, lix::Color::yellow);
+
+
+        std::string type{"polygon"};
+        if(json.contains("type"))
+        {
+            type = json.at("type").value();
+        }
+
+        if(type == "polygon")
+        {
+            for(const auto& p : json["points"])
+            {
+                points.emplace_back(p[0].get<float>(), p[1].get<float>(), p[2].get<float>());
+            }
+            app.createPolygon(points, frames, lix::Color::white, lix::Color::yellow);
+        }
+        else if(type == "sphere")
+        {
+            float radii = json["radii"].get<float>();
+            app.createSphere(operatorOperandus, frames, radii);
+            printf("creating sphere: %.2f\n", radii);
+        }
+        else if(type == "aabb")
+        {
+            const auto& maxObj = json["max"];
+            const auto& minObj = json["min"];
+
+            glm::vec3 max{maxObj[0].get<float>(), maxObj[1].get<float>(), maxObj[2].get<float>()};
+            glm::vec3 min{minObj[0].get<float>(), minObj[1].get<float>(), minObj[2].get<float>()};
+
+            app.createAABB(operatorOperandus, frames, min, max);
+        }
+        else if(type == "capsule")
+        {
+            const auto& aObj = json["a"];
+            const auto& bObj = json["b"];
+            float radii = json["radii"].get<float>();
+
+            bool caps{true};
+            if(json.contains("caps") && (json["caps"].value() == "false" || json["caps"].value() == "0"))
+            {
+                caps = false;
+            }
+
+            glm::vec3 a{aObj[0].get<float>(), aObj[1].get<float>(), aObj[2].get<float>()};
+            glm::vec3 b{bObj[0].get<float>(), bObj[1].get<float>(), bObj[2].get<float>()};
+            app.createCapsule(operatorOperandus, frames, a, b, radii, caps);
+        }
+        else
+        {
+            throw std::runtime_error("unkown type: " + type);
+        }
     }
     ifs.close();
 }
@@ -240,6 +362,11 @@ int main(int argc, char* argv[])
         for(size_t i{1}; i < argc; ++i)
         {
             const std::string fileName{argv[i]};
+            if(fileName == "+" || fileName == "-")
+            {
+                operatorOperandus = fileName[0];
+                continue;
+            }
             const std::string fileExt = fileName.substr(fileName.rfind('.'));
             if(fileExt == ".json")
             {
@@ -253,6 +380,7 @@ int main(int argc, char* argv[])
             {
                 printf("ERROR: unkown file format: %s", fileExt.c_str());
             }
+            operatorOperandus = '0';
         }
     }
     else
@@ -553,6 +681,48 @@ void App::init()
         }
     });
 
+    setOnKeyDown(SDLK_p, [this](auto, auto mods) {
+        std::vector<glm::vec3> pts;
+        lix::TRS trs;
+        static lix::AABB aabb{&trs, glm::vec3{-testRadii}, glm::vec3{testRadii}};
+        static lix::Sphere sphere{&trs, testRadii};
+        for(float z{-2.0f}; z <= 2.0f; z += 0.1f)
+        {
+            for(float y{-2.0f}; y <= 2.0f; y += 0.1f)
+            {
+                for(float x{-2.0f}; x <= 2.0f; x += 0.1f)
+                {
+                    glm::vec3 v{x, y, z};
+                    trs.setTranslation(v);
+
+                    lix::Shape* ptr = nullptr;
+                    if(mods & KMOD_SHIFT)
+                    {
+                        ptr = &sphere;
+                    }
+                    else
+                    {
+                        ptr = &aabb;
+                    }
+
+                    for(auto& shape : shapes)
+                    {
+                        if(shape->test(*ptr))
+                        {
+                            pts.push_back(v);
+                        }
+                    }
+                }
+            }
+        }
+        auto [vs, is] = lix::cubes_at_points(pts, testRadii);
+        cloudVAO.reset(new lix::VAO(
+            lix::Attributes{lix::Attribute::VEC3},
+            vs,
+            is
+        ));
+    });
+
     triangleTestVertices.insert(triangleTestVertices.end(), {
         {1.0f, 0.0f, 0.0f},
         {0.0f, 1.0f, 0.0f},
@@ -629,6 +799,13 @@ void App::draw()
     else
     {
         lix::renderNode(*objectShader, shapeC);
+    }
+    if(cloudVAO)
+    {
+        objectShader->setUniform("u_base_color", lix::Color::green.vec4());
+        objectShader->setUniform("u_model", glm::mat4{1.0f});
+        cloudVAO->bind();
+        cloudVAO->draw();
     }
     glEnable(GL_CULL_FACE);
     glDepthMask(GL_TRUE);

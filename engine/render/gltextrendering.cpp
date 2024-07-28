@@ -54,11 +54,11 @@ lix::TextRendering::TextRendering(const glm::vec2& resolution,
     {
         _shaderProgram.reset(new lix::ShaderProgram(vertexSrcSdfText, fragmentSrcSdfText));
     }
-    static auto projMat{glm::ortho(-resolution.x * 0.5f, resolution.x * 0.5f, -resolution.y * 0.5f, resolution.y * 0.5f, -10.0f, 10.0f)};
-    static auto viewMat{glm::lookAt(glm::vec3{0.0f, 0.0f, 1.0f}, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{0.0f, 1.0f, 0.0f})};
+    _projection = glm::ortho(-resolution.x * 0.5f, resolution.x * 0.5f, -resolution.y * 0.5f, resolution.y * 0.5f, -10.0f, 10.0f);
+    _view = glm::lookAt(glm::vec3{0.0f, 0.0f, 1.0f}, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{0.0f, 1.0f, 0.0f});
     _shaderProgram->bind();
-    _shaderProgram->setUniform("u_projection", projMat);
-    _shaderProgram->setUniform("u_view", viewMat);
+    _shaderProgram->setUniform("u_projection", _projection);
+    _shaderProgram->setUniform("u_view", _view);
 }
 
 void lix::TextRendering::render()

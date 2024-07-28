@@ -21,10 +21,14 @@ namespace lix
 
         std::map<std::string, std::shared_ptr<lix::SkinAnimation>>& animations();
 
+        std::map<std::string, std::shared_ptr<lix::SkinAnimation>>::iterator currentAnimation();
+        void setCurrentAnimation(std::map<std::string, std::shared_ptr<lix::SkinAnimation>>::iterator currentAnimation);
+
     private:
         std::vector<glm::mat4> _inverseBindMatrices;
         std::vector<lix::Node*> _joints;
         std::map<std::string, std::shared_ptr<lix::SkinAnimation>> _animations;
+        std::map<std::string, std::shared_ptr<lix::SkinAnimation>>::iterator _currentAnimation;
     };
 
     using SkinAnimationIterator = std::map<std::string, std::shared_ptr<lix::SkinAnimation>>::iterator;

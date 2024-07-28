@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include "primer.h"
 
+#include "capsule.h"
 #include "sphere.h"
 #include "polygon.h"
 
@@ -77,17 +78,67 @@ glm::vec3 lix::AABB::supportPoint(const glm::vec3& dir)
     return trs()->translation() + pts.at(index);
 }
 
+bool lix::AABB::intersects(lix::Capsule& capsule)
+{
+    updateMinMax();
+    glm::mat3 m = glm::mat3(capsule.trs()->modelMatrix());
+    const glm::vec3 A = capsule.trs()->translation() + m * capsule.a();
+    const glm::vec3 B = capsule.trs()->translation() + m * capsule.b();
+
+    glm::vec3 a = trs()->translation() + _min;
+    glm::vec3 b = trs()->translation() + _max;
+    const glm::vec3& C = (a + b) * 0.5f;
+
+    const glm::vec3 AB = B - A;
+    const glm::vec3 AC = C - A;
+
+    const float len = glm::length(AB);
+    assert(len > FLT_EPSILON);
+    const glm::vec3 n = AB / len;
+
+    float d = glm::dot(AC, n);
+
+    float r = capsule.radii() * capsule.trs()->scale().x;
+    if(capsule.caps())
+    {
+        if(d < -r || d > (len + r))
+        {
+            return false;
+        }
+        d = std::min(len, std::max(0.0f, d));
+    }
+    else
+    {
+        if(d < 0 || d > len)
+        {
+            return false;
+        }
+    }
+
+    const glm::vec3 p_line = A + n * d;
+    glm::vec3 delta = C - p_line;
+    float d2 = glm::dot(delta, delta);
+    if(d2 < (r * r))
+    {
+        return true;
+    }
+
+    const glm::vec3 p = p_line + glm::normalize(delta) * r;
+    return p.x > a.x && p.y > a.y && p.z > a.z
+        && p.x < b.x && p.y < b.y && p.z < b.z;
+}
+
 bool lix::AABB::intersects(Sphere& sphere)
 {
     updateMinMax();
     glm::vec3 delta = trs()->translation() - sphere.trs()->translation();
     float d2 = glm::dot(delta, delta);
-    float radii = sphere.radii() * sphere.trs()->scale().x;
-    if(d2 < (radii * radii))
+    float r = sphere.radii() * sphere.trs()->scale().x;
+    if(d2 < (r * r))
     {
         return true;
     }
-    glm::vec3 p = sphere.trs()->translation() + glm::normalize(delta) * radii;
+    glm::vec3 p = sphere.trs()->translation() + glm::normalize(delta) * r;
     glm::vec3 a = trs()->translation() + _min;
     glm::vec3 b = trs()->translation() + _max;
     return p.x > a.x && p.y > a.y && p.z > a.z
@@ -118,7 +169,7 @@ bool lix::AABB::intersects(Polygon& /*polygon*/)
     throw std::runtime_error("aabb-polygon collision not implemented");
 }
 
-bool lix::AABB::test(Shape& shape)
+bool lix::AABB::doTest(Shape& shape)
 {
     return shape.intersects(*this);
 }

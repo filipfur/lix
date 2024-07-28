@@ -23,7 +23,7 @@ lix::MeshPtr gltf::loadMesh(const gltf::Mesh& gltfMesh)
         //std::cout << "Already loaded: " << gltfMesh.name << std::endl;
         return it->second;
     }
-    lix::MeshPtr mesh = std::make_shared<lix::Mesh>();
+    lix::MeshPtr mesh = std::make_shared<lix::Mesh>(gltfMesh.name);
     loadedMeshes.emplace(&gltfMesh, mesh);
     
     for(size_t i{0}; i < gltfMesh.primitives_size; ++i)//const auto& primitive : gltfMesh.primitives)

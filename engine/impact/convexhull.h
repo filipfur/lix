@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <list>
+#include <optional>
 
 #include "halfedge.h"
 
@@ -43,7 +44,7 @@ namespace lix
             return _faces.end();
         }
 
-        std::list<Face>::const_iterator closestFace(const glm::vec3& p) const;
+        std::optional<glm::vec3> rayIntersect(const glm::vec3& p, const glm::vec3& d) const;
 
     private:
         void connect(Half_Edge* self,

@@ -42,7 +42,14 @@ void lix::SkinAnimation::update(float dt)
     float delta = _end - _time;
     if(delta < 0)
     {
-        _time = _start - delta;
+        if(_looping)
+        {
+            _time = _start - delta;
+        }
+        else
+        {
+            _time = _end;
+        }
     }
     for(const auto& channel : _channels)
     {
@@ -76,8 +83,18 @@ inline glm::vec3 interpolateVec3(const std::map<float, glm::vec3>& vec, float t)
     else
     {
         auto next = cur;
-        assert(cur != vec.begin());
-        --cur;
+        //assert(next != vec.begin());
+        if(next == vec.begin())
+        {
+            next = vec.end();
+            std::advance(next, -1);
+            cur = vec.end();
+            std::advance(cur, -2);
+        }
+        else
+        {
+            --cur;
+        }
         float a = t - cur->first;
         float b = next->first - t;
         float c = a + b;
