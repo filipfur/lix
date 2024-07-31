@@ -30,8 +30,10 @@
 #include "gen/fonts/josefin_sans.h"
 #include "gen/levels/level.h"
 
-static constexpr float WINDOW_X = 1920;
-static constexpr float WINDOW_Y = 1080;
+static constexpr float WINDOW_X = 1080;
+static constexpr float WINDOW_Y = 720;
+//static constexpr float WINDOW_X = 1920;
+//static constexpr float WINDOW_Y = 1080;
 static constexpr float NEAR = 0.01;
 static constexpr float FAR = 100;
 static constexpr float CAMERA_DISTANCE = 12.0f;
@@ -219,7 +221,39 @@ const char* skyboxVertSource = LIX_SHADER_VERSION R"(
 )";
 
 const char* skyboxFragSource = LIX_SHADER_VERSION R"(
+
     precision highp float;
+
+// Simplex 2D noise
+//
+vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
+
+float snoise(vec2 v){
+  const vec4 C = vec4(0.211324865405187, 0.366025403784439,
+           -0.577350269189626, 0.024390243902439);
+  vec2 i  = floor(v + dot(v, C.yy) );
+  vec2 x0 = v -   i + dot(i, C.xx);
+  vec2 i1;
+  i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+  vec4 x12 = x0.xyxy + C.xxzz;
+  x12.xy -= i1;
+  i = mod(i, 289.0);
+  vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
+  + i.x + vec3(0.0, i1.x, 1.0 ));
+  vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy),
+    dot(x12.zw,x12.zw)), 0.0);
+  m = m*m ;
+  m = m*m ;
+  vec3 x = 2.0 * fract(p * C.www) - 1.0;
+  vec3 h = abs(x) - 0.5;
+  vec3 ox = floor(x + 0.5);
+  vec3 a0 = x - ox;
+  m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+  vec3 g;
+  g.x  = a0.x  * x0.x  + h.x  * x0.y;
+  g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+  return 130.0 * dot(m, g);
+}
 
     in vec2 texCoords;
     in vec3 normal;
@@ -228,6 +262,7 @@ const char* skyboxFragSource = LIX_SHADER_VERSION R"(
 
     uniform sampler2D u_texture;
     uniform vec4 u_base_color;
+    uniform float u_time;
 
     const vec3 lightDir = vec3(0.0, -1.0, 0.0);
 
@@ -235,7 +270,8 @@ const char* skyboxFragSource = LIX_SHADER_VERSION R"(
     {
         //vec4 tex = texture(u_texture, texCoords);
         //fragColor = u_base_color * tex;
-        fragColor = vec4(mix(vec3(0.4f, 0.9f, 1.0f), vec3(0.0f, 0.4f, 0.9f),texCoords.y), 1.0);
+        fragColor = vec4(mix(vec3(0.5f, 0.95f, 1.0f), vec3(0.0f, 0.3f, 0.8f),texCoords.y), 1.0);
+        fragColor.rgb += max(0.0, snoise(vec2(sin(texCoords.x * 2.0 * 3.141592) * 0.5 + 0.5 + u_time * 0.02, texCoords.y) * vec2(2,2))) * 0.5;
     }
 )";
 
@@ -492,6 +528,7 @@ public:
     std::vector<lix::TextPtr> texts;
     bool showDialogue{false};
     std::vector<std::pair<glm::vec3, std::function<void()>>> interactionPoints;
+    float cameraHeight{3.0f};
 };
 
 int main(int argc, char* argv[])
@@ -533,7 +570,7 @@ void App::init()
 
     static auto font = std::make_shared<lix::Font>(assets::fonts::josefin_sans::create());
     auto text = texts.emplace_back(new lix::Text(font, lix::Text::PropBuilder().setTextColor(0x333344), ""));
-    text->setTranslation(glm::vec3{-520.0f, -WINDOW_Y * 0.5f + 250.0f, 0.0f});
+    text->setTranslation(glm::vec3{-WINDOW_X * 0.3f, -WINDOW_Y * 0.3f, 0.0f});
 
     textRendering.reset(new lix::TextRendering(
         glm::vec2{WINDOW_X, WINDOW_Y}, texts
@@ -565,7 +602,7 @@ void App::init()
     hudShader->setUniform("u_projection", textRendering->projection());
     hudShader->setUniform("u_view", textRendering->view());
 
-    emplaceHUDElement({0, -WINDOW_Y * 0.5f + 240}, {1100, 120})->mesh()->material()->setBaseColor(0xefefe0);
+    emplaceHUDElement({0, -WINDOW_Y * 0.3f}, {1100, 120})->mesh()->material()->setBaseColor(0xefefe0);
 
     gimbalArrows.insert(gimbalArrows.end(), {
         lix::arrow(lix::Color::red, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{1.0f, 0.0f, 0.0f}),
@@ -649,7 +686,7 @@ void App::init()
                 }
             });
         }
-        else if(obj.mesh->name == "Bridge")
+        else if(obj.mesh->name == "InfinityBridge")
         {
             auto node = gltf::loadNode(obj);
             objectNodes.push_back(node);
@@ -723,7 +760,7 @@ void App::tick(float dt)
         );
     }
 
-    static lix::Timer timerSeconds{lix::Time::fromSeconds(2)};
+    static lix::Timer timerSeconds{lix::Time::fromSeconds(0.2f)};
     if(!timerSeconds.elapsed())
     {
         return;
@@ -737,7 +774,7 @@ void App::tick(float dt)
     auto& playerCtrl = characterControllers.front();
     const glm::vec3 playerPos = playerCtrl->dynamicBody->shape->trs()->translation();
     camera().setTarget(playerPos + glm::vec3{0.0f, 1.0f, 0.0f});
-    camera().setTranslation(playerPos - glm::vec3{sinf(playerCtrl->yaw) * 6.0f, -3.0f, cosf(playerCtrl->yaw) * 6.0f});
+    camera().setTranslation(playerPos - glm::vec3{sinf(playerCtrl->yaw) * 6.0f, -cameraHeight, cosf(playerCtrl->yaw) * 6.0f});
     camera().refresh(dt);
 
     if(playerPos.y < -10.0f) // respawn
@@ -920,8 +957,9 @@ void App::tick(float dt)
 
     for(auto& obj : objectNodes)
     {
-        if(obj->mesh()->name() == "Bridge")
+        if(obj->mesh()->name() == "InfinityBridge")
         {
+            obj->applyTranslation({0.0f, sinf(lix::Time::seconds() * 4.0f) * 0.2f * dt, 0.0f});
             obj->applyRotation(glm::angleAxis(glm::radians(dt * -15.0f), glm::vec3{1.0f, 0.0f, 0.0f}));
         }
     }
@@ -976,7 +1014,14 @@ void App::draw()
 
     static auto tex = lix::Texture::Basic();
     tex->bind();
+
+    /*objectShader->bind();
+    glDisable(GL_CULL_FACE);
+    lix::renderNode(*objectShader, *sphereNode);
+    glEnable(GL_CULL_FACE);*/
+
     skyboxShader->bind();
+    skyboxShader->setUniform("u_time", lix::Time::seconds());
     glFrontFace(GL_CW);
     lix::renderNode(*skyboxShader, *sphereNode);
     glFrontFace(GL_CCW);
@@ -1087,4 +1132,6 @@ void App::onMouseMove(float x, float y, float xrel, float yrel)
     //characterControllers.front()->yaw += (prevX - x) / WINDOW_X * 4.0f;
     //prevX = x;
     characterControllers.front()->rotate(-xrel / WINDOW_X * 4.0f);
+    cameraHeight += yrel / WINDOW_Y * 4.0f;
+    cameraHeight = std::max(-6.0f, std::min(6.0f, cameraHeight));
 }

@@ -16,7 +16,7 @@
 	"nodes":[
 		{
 			"mesh":0,
-			"name":"Bridge"
+			"name":"InfinityBridge"
 		},
 		{
 			"mesh":1,
@@ -38,7 +38,7 @@
 	],
 	"meshes":[
 		{
-			"name":"Bridge",
+			"name":"InfinityBridge",
 			"primitives":[
 				{
 					"attributes":{
@@ -52,7 +52,7 @@
 			]
 		},
 		{
-			"name":"Cube.004",
+			"name":"FlatBridge",
 			"primitives":[
 				{
 					"attributes":{
@@ -85,14 +85,14 @@
 			"componentType":5126,
 			"count":6986,
 			"max":[
-				0.7315284609794617,
-				1.3302826881408691,
-				1.3312286138534546
+				0.877834141254425,
+				1.596339225769043,
+				1.5974743366241455
 			],
 			"min":[
-				-0.7315284609794617,
-				-1.3313158750534058,
-				-1.3308079242706299
+				-0.877834141254425,
+				-1.597579002380371,
+				-1.596969485282898
 			],
 			"type":"VEC3"
 		},
@@ -117,35 +117,35 @@
 		{
 			"bufferView":4,
 			"componentType":5126,
-			"count":2164,
+			"count":1720,
 			"max":[
-				0.7315284013748169,
-				0.1975308358669281,
-				0.98000168800354
+				1.0972926616668701,
+				0.29629623889923096,
+				1.47000253200531
 			],
 			"min":[
-				-0.7315281629562378,
-				-0.20398911833763123,
-				-0.9699982404708862
+				-1.097292184829712,
+				-0.30598366260528564,
+				-1.4549973011016846
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":5,
 			"componentType":5126,
-			"count":2164,
+			"count":1720,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":6,
 			"componentType":5126,
-			"count":2164,
+			"count":1720,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":7,
 			"componentType":5123,
-			"count":5040,
+			"count":4224,
 			"type":"SCALAR"
 		}
 	],
@@ -176,26 +176,26 @@
 		},
 		{
 			"buffer":0,
-			"byteLength":25968,
+			"byteLength":20640,
 			"byteOffset":254728,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":25968,
-			"byteOffset":280696,
+			"byteLength":20640,
+			"byteOffset":275368,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":17312,
-			"byteOffset":306664,
+			"byteLength":13760,
+			"byteOffset":296008,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":10080,
-			"byteOffset":323976,
+			"byteLength":8448,
+			"byteOffset":309768,
 			"target":34963
 		}
 	],
@@ -207,7 +207,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":334056,
+			"byteLength":318216,
 			"uri":"bridge.bin"
 		}
 	]

@@ -85,39 +85,33 @@ std::pair<std::vector<float>, std::vector<unsigned int>> lix::sphere(unsigned in
     std::vector<float> vs;
     std::vector<unsigned int> is;
     float y{-1.0f};
-    vs.insert(vs.end(), {0.0f, y, 0.0f,     0.0f, -1.0f, 0.0f,   0.5f, 0.0f});
     float dh = 2.0f / static_cast<float>(discs);
-    y += dh;
     float s = 1.0f / static_cast<float>(segments);
-    for(unsigned int i{1}; i <= segments; ++i)
-    {
-        float a = 2 * M_PI * (i - 1) / segments;
-        float r = sqrtf(1.0 - y * y);
-        glm::vec3 v{sinf(a) * r, y, cosf(a) * r};
-        vs.insert(vs.end(), {v.x, v.y, v.z,     1.0f, 0.0f, 0.0f,   (i - 1) * s, y * 0.5f + 0.5f});
-        is.insert(is.end(), {0, (i % segments) + 1, i});
-    }
-    for(unsigned int j{1}; j < discs - 1; ++j)
-    {
-        y += dh;
-        float r = sqrtf(1.0 - y * y);
-        for(unsigned int i{1}; i <= segments; ++i)
-        {
-            float a = 2 * M_PI * (i - 1) / segments;
-            glm::vec3 v{sinf(a) * r, y, cosf(a) * r};
-            vs.insert(vs.end(), {v.x, v.y, v.z,     1.0f, 0.0f, 0.0f,   (i - 1) * s, y * 0.5f + 0.5f});
-            is.insert(is.end(), {(j - 1) * segments + i, j * segments + (i % segments) + 1, j * segments + i,
-                j * segments + (i % segments) + 1, (j - 1) * segments + i, (j - 1) * segments + (i % segments) + 1});
-        }
-    }
-    y += dh;
 
-    vs.insert(vs.end(), {0.0f, 1.0f, 0.0f,     0.0f, 1.0f, 0.0f,   0.5f, 1.0f});
-    for(unsigned int i{1}; i <= segments; ++i)
+    for(unsigned int j{0}; j <= discs; ++j)
     {
-        auto last = static_cast<unsigned int>((discs - 1) * segments + 1);
-        auto li = last - segments;
-        is.insert(is.end(), {last, li + i % segments, li + (i + 1) % segments});
+        float f = 1.0 - y * y;
+        float r = f < FLT_EPSILON ? 0.0f : sqrtf(f);
+        for(unsigned int i{0}; i <= segments; ++i)
+        {
+            //auto ii = (i % segments);
+            float a = 2.0f * M_PI * i * s;
+            glm::vec3 v{sinf(a) * r, y, cosf(a) * r};
+            vs.insert(vs.end(), {v.x, v.y, v.z,     v.x, v.y, v.z,   i * s, y * 0.5f + 0.5f});
+            is.insert(is.end(), {
+                (j - 1) * segments + i, j * segments + i + 1, j * segments + i,
+                j * segments + i + 1, (j - 1) * segments + i, (j - 1) * segments + i + 1
+            });
+        }
+        y += dh;
+    }
+    int j = discs + 1;
+    for(unsigned int i{0}; i <= segments / 2; ++i)
+    {
+        is.insert(is.end(), {
+            (j - 1) * segments + i, j * segments + i + 1, j * segments + i,
+            j * segments + i + 1, (j - 1) * segments + i, (j - 1) * segments + i + 1
+        });
     }
 
     return {vs, is};

@@ -191,13 +191,15 @@ lix::gjk_state triangleCase(lix::Shape &shapeA, lix::Shape &shapeB, std::vector<
         return lix::gjk_state::INCREMENTING;
     }
 
-    if (glm::dot(ABC, -A) > 0) // Triangle above the origin
+    float dist = glm::dot(ABC, -A);
+    assert(dist != 0.0f);
+    if (dist > 0) // Triangle above the origin
     {
         simplex.push_back(minkowskiSupportPoint(shapeA, shapeB, ABC));
         std::swap(simplex[0], simplex[1]); // B <-> C
         // return -1;
     }
-    else
+    else if(dist < 0)
     {
         simplex.push_back(minkowskiSupportPoint(shapeA, shapeB, -ABC));
         // std::swap(simplex[0], simplex[1]); // B <-> C

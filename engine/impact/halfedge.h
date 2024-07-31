@@ -7,61 +7,6 @@
 
 namespace lix
 {
-    /*struct Vertex
-    {
-        Vertex(uint32_t id_, glm::vec3 position_)
-            : id{id_}, position{position_}
-        {
-        }
-
-        explicit Vertex(glm::vec3 position_)
-            : Vertex{0, position_}
-        {
-
-        }
-
-        Vertex()
-            : Vertex{0, {}}
-        {
-
-        }
-
-        Vertex(const Vertex& other)
-            : Vertex{other.id, other.position}
-        {
-
-        }
-
-        Vertex(Vertex&& other) noexcept
-        {
-            printf("move: %d\n", other.id);
-            id = other.id;
-            position = other.position;
-        }
-
-        Vertex& operator=(const Vertex& other)
-        {
-            id = other.id;
-            position = other.position;
-            return *this;
-        }
-
-        Vertex& operator=(Vertex&& other) noexcept
-        {
-            id = other.id;
-            position = other.position;
-            return *this;
-        }
-
-        ~Vertex() noexcept
-        {
-
-        }
-
-        uint32_t id;
-        glm::vec3 position;
-    };*/
-
     struct Half_Edge
     {
         Half_Edge(const glm::vec3& vertex_, struct Face* face_) : vertex{vertex_}, face{face_}
@@ -82,6 +27,7 @@ namespace lix
     {
         Face(const glm::vec3& normal_) : normal{normal_}
         {
+            assert(!std::isnan(normal.x));
             static uint32_t nextId{0};
             id = nextId++;
         }

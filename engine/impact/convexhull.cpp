@@ -39,7 +39,7 @@ bool popAlongDirection(std::vector<glm::vec3>& s, const glm::vec3& D, glm::vec3&
 void checkFace(std::set<lix::Face*>& visible, lix::Face* face, const glm::vec3& p)
 {
     //if((glm::dot(face->normal, p) + face->D) > 0)
-    if(glm::dot(face->normal, p - face->half_edge->vertex) > 0)
+    if(glm::dot(face->normal, p - face->half_edge->vertex) > -FLT_EPSILON)
     {
         if(visible.emplace(face).second)
         {
@@ -240,9 +240,10 @@ bool lix::ConvexHull::addPoint(const glm::vec3& p, lix::Face* face, std::list<Fa
             
             const glm::vec3 UV = V - U;
             const glm::vec3 UW = W - U;
-            const glm::vec3 UVW = glm::normalize(glm::cross(UV, UW));
+            const glm::vec3 UVW = glm::cross(UV, UW);
+            const glm::vec3 UVW_norm = glm::normalize(UVW);
 
-            auto& uvw = _faces.emplace_back(glm::normalize(UVW));
+            auto& uvw = _faces.emplace_back(glm::normalize(UVW_norm));
 
             auto uv = new Half_Edge(U, &uvw);
             auto vw = new Half_Edge(V, &uvw);
@@ -294,7 +295,11 @@ void lix::ConvexHull::addPoints(std::vector<glm::vec3>& P)
         Q.erase(Q.begin());
 
         glm::vec3 p;
-        assert(popAlongDirection(P, face->normal, p));
+        if(!popAlongDirection(P, face->normal, p))
+        {
+            continue;
+        }
+        //assert(popAlongDirection(P, face->normal, p));
         addPoint(p, face, &Q);
     }
 }
