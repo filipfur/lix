@@ -26,6 +26,7 @@ public:
             sizeof(CameraBlock), (void*)&_block, "CameraBlock", 0, GL_STATIC_DRAW
         ));
         _ubo->bindShaders(shaders);
+        _ubo->unbind();
     }
 
     void refresh(float dt)

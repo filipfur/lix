@@ -7,6 +7,7 @@ namespace lix
     class Color
     {
     public:
+        Color(const std::string& hexstr);
         Color(uint32_t hex, float alpha=1.0f);
         Color(float r, float g, float b);
         Color(float r, float g, float b, float a);
@@ -24,7 +25,19 @@ namespace lix
 
         operator glm::vec4() const;
 
+        glm::vec3 vec3() const;
+
         const glm::vec4& vec4() const;
+        glm::vec4& vec4();
+
+        glm::vec3 hsv() const;
+        lix::Color& setHSV(float h, float s, float v);
+
+        void hueShift(float rad);
+        void saturate(float S);
+        void valueScale(float S);
+
+        std::string hexString() const;
 
         static const Color white;
         static const Color red;

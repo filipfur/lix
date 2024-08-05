@@ -144,12 +144,12 @@ public:
 
     virtual void draw() override;
 
-    virtual void onKeyDown(lix::KeySym key, lix::KeyMod mod) override;
-    virtual void onKeyUp(lix::KeySym key, lix::KeyMod mod) override;
-    virtual void onMouseDown(lix::KeySym key, lix::KeyMod mod) override;
-    virtual void onMouseUp(lix::KeySym key, lix::KeyMod mod) override;
-    virtual void onMouseMove(float x, float y, float xrel, float yrel) override;
-    virtual void onMouseWheel(float x, float y) override;
+    virtual bool onKeyDown(lix::KeySym key, lix::KeyMod mod) override;
+    virtual bool onKeyUp(lix::KeySym key, lix::KeyMod mod) override;
+    virtual bool onMouseDown(lix::KeySym key, lix::KeyMod mod) override;
+    virtual bool onMouseUp(lix::KeySym key, lix::KeyMod mod) override;
+    virtual bool onMouseMove(float x, float y, float xrel, float yrel) override;
+    virtual bool onMouseWheel(float x, float y) override;
 
 private:
     void renderModels();
@@ -772,32 +772,32 @@ void App::draw()
     renderText();
 }
 
-void App::onKeyDown(lix::KeySym /*key*/, lix::KeyMod /*mod*/)
+bool App::onKeyDown(lix::KeySym /*key*/, lix::KeyMod /*mod*/)
 {
-
+    return false;
 }
 
-void App::onKeyUp(lix::KeySym /*key*/, lix::KeyMod /*mod*/)
+bool App::onKeyUp(lix::KeySym /*key*/, lix::KeyMod /*mod*/)
 {
-    
+    return false;
 }
 
-void App::onMouseDown(lix::KeySym /*key*/, lix::KeyMod /*mod*/)
+bool App::onMouseDown(lix::KeySym /*key*/, lix::KeyMod /*mod*/)
 {
-    
+    return false;
 }
 
-void App::onMouseUp(lix::KeySym /*key*/, lix::KeyMod /*mod*/)
+bool App::onMouseUp(lix::KeySym /*key*/, lix::KeyMod /*mod*/)
 {
-    
+    return false;
 }
 
-void App::onMouseMove(float /*x*/, float /*y*/, float, float)
+bool App::onMouseMove(float /*x*/, float /*y*/, float, float)
 {
-    
+    return false;
 }
 
-void App::onMouseWheel(float, float)
+bool App::onMouseWheel(float, float)
 {
-    
+    return false;
 }

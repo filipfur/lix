@@ -136,6 +136,16 @@ void lix::Node::forEachChildRecursive(const std::function<void(lix::Node&)>& cal
     _forEachChild(*this, callback, true);
 }
 
+void lix::Node::setVisible(bool visible)
+{
+    _visible = visible;
+}
+
+bool lix::Node::visible() const
+{
+    return _visible;
+}
+
 bool lix::Node::updateModelMatrix()
 {
     if(TRS::updateModelMatrix())

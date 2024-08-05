@@ -75,15 +75,15 @@
 	"images":[
 		{
 			"mimeType":"image/png",
-			"name":"bridge_diffuse",
-			"uri":"bridge_diffuse.png"
+			"name":"palette",
+			"uri":"palette.png"
 		}
 	],
 	"accessors":[
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":6986,
+			"count":6586,
 			"max":[
 				0.877834141254425,
 				1.596339225769043,
@@ -99,13 +99,13 @@
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":6986,
+			"count":6586,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":6986,
+			"count":6586,
 			"type":"VEC2"
 		},
 		{
@@ -117,7 +117,7 @@
 		{
 			"bufferView":4,
 			"componentType":5126,
-			"count":1720,
+			"count":1608,
 			"max":[
 				1.0972926616668701,
 				0.29629623889923096,
@@ -133,13 +133,13 @@
 		{
 			"bufferView":5,
 			"componentType":5126,
-			"count":1720,
+			"count":1608,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":6,
 			"componentType":5126,
-			"count":1720,
+			"count":1608,
 			"type":"VEC2"
 		},
 		{
@@ -152,62 +152,62 @@
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":83832,
+			"byteLength":79032,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":83832,
-			"byteOffset":83832,
+			"byteLength":79032,
+			"byteOffset":79032,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":55888,
-			"byteOffset":167664,
+			"byteLength":52688,
+			"byteOffset":158064,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":31176,
-			"byteOffset":223552,
+			"byteOffset":210752,
 			"target":34963
 		},
 		{
 			"buffer":0,
-			"byteLength":20640,
-			"byteOffset":254728,
+			"byteLength":19296,
+			"byteOffset":241928,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":20640,
-			"byteOffset":275368,
+			"byteLength":19296,
+			"byteOffset":261224,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":13760,
-			"byteOffset":296008,
+			"byteLength":12864,
+			"byteOffset":280520,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":8448,
-			"byteOffset":309768,
+			"byteOffset":293384,
 			"target":34963
 		}
 	],
 	"samplers":[
 		{
-			"magFilter":9729,
-			"minFilter":9987
+			"magFilter":9728,
+			"minFilter":9984
 		}
 	],
 	"buffers":[
 		{
-			"byteLength":318216,
+			"byteLength":301832,
 			"uri":"bridge.bin"
 		}
 	]

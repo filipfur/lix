@@ -14,6 +14,7 @@ file(GLOB GEN_SOURCES
     ../gen/objects/rat.cpp
     ../gen/objects/donut.cpp
     ../gen/objects/bridge.cpp
+    ../gen/objects/level.cpp
     ../gen/objects/platform.cpp
     ../gen/fonts/josefin_sans.cpp
     ../gen/shaders/object_vert.cpp

@@ -8,7 +8,7 @@ lix::Editor::Editor(const glm::mat4& perspective, const glm::vec2& resolution_, 
     
 }
 
-void lix::Editor::onMouseDown(lix::KeySym key, lix::KeyMod /*mod*/)
+bool lix::Editor::onMouseDown(lix::KeySym key, lix::KeyMod /*mod*/)
 {
     if(_subjectNode && _editMode != EDIT_NONE)
     {
@@ -20,21 +20,23 @@ void lix::Editor::onMouseDown(lix::KeySym key, lix::KeyMod /*mod*/)
     {
     case SDL_BUTTON_LEFT:
         _lmb = true;
-        break;
+        return true;
     }
+    return false;
 }
 
-void lix::Editor::onMouseUp(lix::KeySym key, lix::KeyMod /*mod*/)
+bool lix::Editor::onMouseUp(lix::KeySym key, lix::KeyMod /*mod*/)
 {
     switch(key)
     {
     case SDL_BUTTON_LEFT:
         _lmb = false;
-        break;
+        return true;
     }
+    return false;
 }
 
-void lix::Editor::onMouseMove(float x, float y, float /*xrel*/, float /*yrel*/)
+bool lix::Editor::onMouseMove(float x, float y, float /*xrel*/, float /*yrel*/)
 {
     static auto prevDragPos = glm::vec2{x, y} / _resolution;
     auto dragPos = glm::vec2{x, y} / _resolution;
@@ -84,9 +86,10 @@ void lix::Editor::onMouseMove(float x, float y, float /*xrel*/, float /*yrel*/)
         break;
     }
     prevDragPos = dragPos;
+    return true;
 }
 
-void lix::Editor::onMouseWheel(float x, float y)
+bool lix::Editor::onMouseWheel(float x, float y)
 {
     auto mod = SDL_GetModState();
 
@@ -98,7 +101,7 @@ void lix::Editor::onMouseWheel(float x, float y)
 
     _cameraDistance += d_xy.y;
 
-    return; /// !!!
+    return false; /// !!!
 
     if(mod & KMOD_SHIFT)
     {
@@ -111,9 +114,10 @@ void lix::Editor::onMouseWheel(float x, float y)
         _cameraYaw -= d_xy.x;
         _cameraPitch -= d_xy.y;
     }
+    return false;
 }
 
-void lix::Editor::onKeyDown(lix::KeySym key, lix::KeyMod /*mod*/)
+bool lix::Editor::onKeyDown(lix::KeySym key, lix::KeyMod /*mod*/)
 {
     switch(key)
     {
@@ -123,19 +127,19 @@ void lix::Editor::onKeyDown(lix::KeySym key, lix::KeyMod /*mod*/)
             _prevPos = _subjectNode->translation();
             setEditMode(EDIT_TRANS);
         }
-        break;
+        return true;
     case SDLK_r:
         setEditMode(EDIT_ROT);
-        break;
+        return true;
     case SDLK_x:
         setTranslationMode(TRANS_X);
-        break;
+        return true;
     case SDLK_y:
         setTranslationMode(TRANS_Y);
-        break;
+        return true;
     case SDLK_z:
         setTranslationMode(TRANS_Z);
-        break;
+        return true;
     case SDLK_ESCAPE:
         if(_editMode != EDIT_NONE)
         {
@@ -150,15 +154,16 @@ void lix::Editor::onKeyDown(lix::KeySym key, lix::KeyMod /*mod*/)
         {
             exit(0);
         }
-        break;
+        return true;
     default:
         break;
     }
+    return false;
 }
 
-void lix::Editor::onKeyUp(lix::KeySym /*key*/, lix::KeyMod /*mod*/)
+bool lix::Editor::onKeyUp(lix::KeySym /*key*/, lix::KeyMod /*mod*/)
 {
-
+    return false;
 }
 
 void lix::Editor::refresh(float dt)

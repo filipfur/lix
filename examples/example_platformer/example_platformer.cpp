@@ -20,6 +20,8 @@
 #include "convexhull.h"
 #include "glarrow.h"
 #include "gltextrendering.h"
+#include "glconsole.h"
+#include "infinite_iterator.h"
 
 #include "gen/objects/cube.h"
 #include "gen/objects/platform.h"
@@ -30,10 +32,14 @@
 #include "gen/fonts/josefin_sans.h"
 #include "gen/levels/level.h"
 
+#define LIX_LORES
+#ifdef LIX_LORES
 static constexpr float WINDOW_X = 1080;
 static constexpr float WINDOW_Y = 720;
-//static constexpr float WINDOW_X = 1920;
-//static constexpr float WINDOW_Y = 1080;
+#else
+static constexpr float WINDOW_X = 1920;
+static constexpr float WINDOW_Y = 1080;
+#endif
 static constexpr float NEAR = 0.01;
 static constexpr float FAR = 100;
 static constexpr float CAMERA_DISTANCE = 12.0f;
@@ -116,6 +122,7 @@ const char* vertexSource = LIX_SHADER_VERSION R"(
         mat4 u_projection;
         mat4 u_view;
         vec3 u_eye_pos;
+        float padding;
     };
     uniform mat4 u_model;
 
@@ -144,6 +151,7 @@ const char* vertexSkinSource = LIX_SHADER_VERSION R"(
         mat4 u_projection;
         mat4 u_view;
         vec3 u_eye_pos;
+        float padding;
     };
     layout (std140) uniform JointBlock
     {
@@ -172,6 +180,13 @@ const char* vertexSkinSource = LIX_SHADER_VERSION R"(
 const char* fragmentSource = LIX_SHADER_VERSION R"(
     precision highp float;
 
+    layout (std140) uniform LightBlock
+    {
+        vec4 u_light_color;
+        vec4 u_shadow_color;
+        vec4 u_shine_color;
+    };
+
     in vec2 texCoords;
     in vec3 normal;
 
@@ -185,10 +200,13 @@ const char* fragmentSource = LIX_SHADER_VERSION R"(
     void main()
     {
         vec4 tex = texture(u_texture, texCoords);
-        fragColor = u_base_color * tex;
-        fragColor.rgb = mix(fragColor.rgb, fragColor.rgb * vec3(0.0, 0.0, 0.2), (step(-0.5, dot(lightDir, normal)) + step(0.5, dot(lightDir, normal))) * 0.2 );
+        fragColor = u_base_color * tex * u_light_color;
+        fragColor.rgb *= u_light_color.rgb;
+        float emission = dot(-lightDir, normal);
+        //fragColor.rgb = vec3(0.0, 0.0, 0.0);
+        fragColor.rgb = mix(fragColor.rgb, fragColor.rgb + u_shine_color.rgb, step(0.5, emission) * 0.2);
+        //fragColor.rgb = mix(fragColor.rgb, fragColor.rgb * 0.5 * u_shadow_color.rgb, step(0.5, -emission) * 0.2);
         fragColor.rgb = pow(fragColor.rgb, vec3(1.0 / 2.2));
-        //fragColor.rgb = vec3(texCoords.x);
     }
 )";
 
@@ -221,9 +239,7 @@ const char* skyboxVertSource = LIX_SHADER_VERSION R"(
 )";
 
 const char* skyboxFragSource = LIX_SHADER_VERSION R"(
-
-    precision highp float;
-
+precision highp float;
 // Simplex 2D noise
 //
 vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
@@ -260,17 +276,16 @@ float snoise(vec2 v){
 
     out vec4 fragColor;
 
-    uniform sampler2D u_texture;
-    uniform vec4 u_base_color;
     uniform float u_time;
+
+    uniform vec3 u_color_lo;
+    uniform vec3 u_color_hi;
 
     const vec3 lightDir = vec3(0.0, -1.0, 0.0);
 
     void main()
     {
-        //vec4 tex = texture(u_texture, texCoords);
-        //fragColor = u_base_color * tex;
-        fragColor = vec4(mix(vec3(0.5f, 0.95f, 1.0f), vec3(0.0f, 0.3f, 0.8f),texCoords.y), 1.0);
+        fragColor = vec4(mix(u_color_lo, u_color_hi, texCoords.y), 1.0);
         fragColor.rgb += max(0.0, snoise(vec2(sin(texCoords.x * 2.0 * 3.141592) * 0.5 + 0.5 + u_time * 0.02, texCoords.y) * vec2(2,2))) * 0.5;
     }
 )";
@@ -360,6 +375,15 @@ void dumpBinary(const std::filesystem::path& path, const lix::Polygon& polygon, 
     ofs.close();
 }
 
+struct Sky
+{
+    lix::Color light;
+    lix::Color shadow;
+    lix::Color shine;
+    lix::Color low;
+    lix::Color high;
+};
+
 struct Entity
 {
     std::shared_ptr<lix::Node> node;
@@ -394,9 +418,9 @@ public:
     virtual void tick(float dt) override;
     virtual void draw() override;
 
-    virtual void onKeyDown(lix::KeySym key, lix::KeyMod mod) override;
-    virtual void onKeyUp(lix::KeySym key, lix::KeyMod mod) override;
-    virtual void onMouseMove(float x, float y, float xrel, float yrel) override;
+    virtual bool onKeyDown(lix::KeySym key, lix::KeyMod mod) override;
+    virtual bool onKeyUp(lix::KeySym key, lix::KeyMod mod) override;
+    virtual bool onMouseMove(float x, float y, float xrel, float yrel) override;
 
     virtual void onSubjectTransformed(lix::Node* subject, Transformation transformation) override;
 
@@ -529,6 +553,43 @@ public:
     bool showDialogue{false};
     std::vector<std::pair<glm::vec3, std::function<void()>>> interactionPoints;
     float cameraHeight{3.0f};
+    std::array<Sky, 4> skies = {
+        Sky{
+            {0xffffff},
+            {0x000033},
+            {0x991900},
+            lix::Color(0.5f, 0.95f, 1.0f),
+            lix::Color(0.0f, 0.3f, 0.8f)
+        },
+        Sky{
+            {0xffcccc},
+            {0x000033},
+            {0x991900},
+            {0x000000},
+            {0xffffff}
+        },
+        Sky{{0xffcccc},
+            {0x000033},
+            {0x991900},
+            {0xff6b75},
+            {0x004ccc}
+        },
+        Sky{{0xffcccc},
+            {0x000033},
+            {0x991900},
+            {0xDFFF00},
+            {0xffffff}
+        }
+    };
+    //std::array<Sky, 1>::const_iterator currentSky = skies.begin();
+    infinite_iterator<std::array<Sky, 4>> currentSky{skies, skies.begin()};
+    struct LightBlock {
+        glm::vec4 lightColor;
+        glm::vec4 shadowColor;
+        glm::vec4 shineColor;
+    } lightBlock;
+    std::shared_ptr<lix::UniformBuffer> lightUBO;
+    std::shared_ptr<lix::Console> console;
 };
 
 int main(int argc, char* argv[])
@@ -572,6 +633,26 @@ void App::init()
     auto text = texts.emplace_back(new lix::Text(font, lix::Text::PropBuilder().setTextColor(0x333344), ""));
     text->setTranslation(glm::vec3{-WINDOW_X * 0.3f, -WINDOW_Y * 0.3f, 0.0f});
 
+    console = std::make_shared<lix::Console>("cmd>", texts.emplace_back(new lix::Text(font, lix::Text::PropBuilder().setTextColor(0x333344), "")));
+    console->textNode->setTranslation(glm::vec3{-WINDOW_X * 0.4f, -WINDOW_Y * 0.4f, 0.0f});
+    console->textNode->setVisible(false);
+
+    console->commands.emplace_back(new lix::custom_command("print.colors", [](lix::Console& console, const std::string& cmd){
+        for(const auto& c : console.commands) {
+            if(auto colorcmd = dynamic_cast<lix::color_command*>(c.get())) {
+                printf("%s=%s\n", colorcmd->shortname, colorcmd->color().hexString().c_str());
+            }
+        }
+        return true;
+    }));
+
+    console->commands.emplace_back(new lix::color_command("sky.light", [this]() -> lix::Color& { return currentSky->light; }));
+    console->commands.emplace_back(new lix::color_command("sky.shadow", [this]() -> lix::Color& { return currentSky->shadow; }));
+    console->commands.emplace_back(new lix::color_command("sky.shine", [this]() -> lix::Color& { return currentSky->shine; }));
+    console->commands.emplace_back(new lix::color_command("sky.high", [this]() -> lix::Color& { return currentSky->high; }));
+    console->commands.emplace_back(new lix::color_command("sky.low", [this]() -> lix::Color& { return currentSky->low; }));
+    console->commands.emplace_back(new lix::iterate_command("sky", currentSky));
+
     textRendering.reset(new lix::TextRendering(
         glm::vec2{WINDOW_X, WINDOW_Y}, texts
     ));
@@ -593,6 +674,11 @@ void App::init()
         skinnedShader.get(),
         skyboxShader.get()
     });
+    lightUBO.reset(new lix::UniformBuffer(
+        sizeof(LightBlock), (void*)&lightBlock, "LightBlock", 2, GL_STATIC_DRAW
+    ));
+    lightUBO->bindShaders({objectShader.get(),
+        skinnedShader.get()});
 
     hudShader.reset(new lix::ShaderProgram(
         vertexHUD,
@@ -706,6 +792,12 @@ void App::tick(float dt)
 {
     //refresh(dt);
     float t = lix::Time::seconds();
+
+    //lightUBO->bufferSubData(0, sizeof(glm::vec4));
+    lightBlock.lightColor = currentSky->light;
+    lightBlock.shadowColor = currentSky->low;
+    lightBlock.shineColor = currentSky->high;
+    lightUBO->bufferData();
 
     if(entities.size() > 1)
     {
@@ -1022,6 +1114,8 @@ void App::draw()
 
     skyboxShader->bind();
     skyboxShader->setUniform("u_time", lix::Time::seconds());
+    skyboxShader->setUniform("u_color_lo", currentSky->low.vec3());
+    skyboxShader->setUniform("u_color_hi", currentSky->high.vec3());
     glFrontFace(GL_CW);
     lix::renderNode(*skyboxShader, *sphereNode);
     glFrontFace(GL_CCW);
@@ -1065,8 +1159,9 @@ void App::draw()
         {
             lix::renderNode(*hudShader, *node);
         }
-        textRendering->render();
     }
+    textRendering->render();
+
 }
 
 void App::onSubjectTransformed(lix::Node* subject, lix::Editor::Transformation transformation)
@@ -1074,59 +1169,75 @@ void App::onSubjectTransformed(lix::Node* subject, lix::Editor::Transformation t
 
 }
 
-void App::onKeyDown(lix::KeySym key, lix::KeyMod mod)
+bool App::onKeyDown(lix::KeySym key, lix::KeyMod mod)
 {
+    if(console->onKeyDown(key, mod))
+    {
+        return false;
+    }
+
     lix::Editor::onKeyDown(key, mod);
+
     auto& player = characterControllers.front();
     switch(key)
     {
         case SDLK_SPACE:
             player->jump();
-            break;
+            return true;
         case SDLK_w:
             player->moveForward();
-            break;
+            return true;
         case SDLK_a:
             player->moveLeft();
-            break;
+            return true;
         case SDLK_s:
             player->moveBackward();
-            break;
+            return true;
         case SDLK_d:
             player->moveRight();
-            break;
+            return true;
         case SDLK_x:
             xrayMode = !xrayMode;
-            break;
+            return true;
     }
+    return false;
 }
 
-void App::onKeyUp(lix::KeySym key, lix::KeyMod mod)
+bool App::onKeyUp(lix::KeySym key, lix::KeyMod mod)
 {
+    if(console->onKeyUp(key, mod))
+    {
+        return false;
+    }
     lix::Editor::onKeyUp(key, mod);
     auto& player = characterControllers.front();
     switch(key)
     {
         case SDLK_SPACE:
             player->stopJump();
-            break;
+            return true;
         case SDLK_w:
             player->stopForward();
-            break;
+            return true;
         case SDLK_a:
             player->stopLeft();
-            break;
+            return true;
         case SDLK_s:
             player->stopBackward();
-            break;
+            return true;
         case SDLK_d:
             player->stopRight();
-            break;
+            return true;
     }
+    return false;
 }
 
-void App::onMouseMove(float x, float y, float xrel, float yrel)
+bool App::onMouseMove(float x, float y, float xrel, float yrel)
 {
+    if(console->onMouseMove(x, y, xrel, yrel))
+    {
+        return false;
+    }
     lix::Editor::onMouseMove(x, y, xrel, yrel);
     //static float prevX = x;
     //characterControllers.front()->yaw += (prevX - x) / WINDOW_X * 4.0f;
@@ -1134,4 +1245,5 @@ void App::onMouseMove(float x, float y, float xrel, float yrel)
     characterControllers.front()->rotate(-xrel / WINDOW_X * 4.0f);
     cameraHeight += yrel / WINDOW_Y * 4.0f;
     cameraHeight = std::max(-6.0f, std::min(6.0f, cameraHeight));
+    return false;
 }

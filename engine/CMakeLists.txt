@@ -42,6 +42,7 @@ target_include_directories(${LIX_ENGINE} PUBLIC
     format
     impact
     feature
+    utility
     ${GLM_HOME}
     ${ASPROC_HOME}/public
 )

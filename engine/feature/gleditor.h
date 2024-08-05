@@ -12,12 +12,12 @@ namespace lix
     public:
         Editor(const glm::mat4& perspective, const glm::vec2& resolution, float cameraDistance=4.0f);
 
-        virtual void onMouseDown(lix::KeySym key, lix::KeyMod mod) override;
-        virtual void onMouseUp(lix::KeySym key, lix::KeyMod mod) override;
-        virtual void onMouseMove(float x, float y, float xrel, float yrel) override;
-        virtual void onMouseWheel(float x, float y) override;
-        virtual void onKeyDown(lix::KeySym key, lix::KeyMod mod) override;
-        virtual void onKeyUp(lix::KeySym key, lix::KeyMod mod) override;
+        virtual bool onMouseDown(lix::KeySym key, lix::KeyMod mod) override;
+        virtual bool onMouseUp(lix::KeySym key, lix::KeyMod mod) override;
+        virtual bool onMouseMove(float x, float y, float xrel, float yrel) override;
+        virtual bool onMouseWheel(float x, float y) override;
+        virtual bool onKeyDown(lix::KeySym key, lix::KeyMod mod) override;
+        virtual bool onKeyUp(lix::KeySym key, lix::KeyMod mod) override;
 
         void setSubjectNode(lix::Node* subjectNode_)
         {

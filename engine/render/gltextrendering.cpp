@@ -67,7 +67,10 @@ void lix::TextRendering::render()
     _shaderProgram->bind();
     for(auto& text : _texts)
     {
-        _renderText(*text);
+        if(text->visible())
+        {
+            _renderText(*text);
+        }
     }
     glEnable(GL_DEPTH_TEST);
 }

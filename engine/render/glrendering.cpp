@@ -68,6 +68,10 @@ void lix::renderMesh(lix::ShaderProgram& shaderProgram, lix::Mesh& mesh, const g
 
 void lix::renderNode(lix::ShaderProgram& shaderProgram, lix::Node& node, bool recursive, bool globalMatrices)
 {
+    if(!node.visible())
+    {
+        return;
+    }
     if(node.mesh())
     {
         auto parent = node.parent();

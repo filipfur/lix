@@ -7,10 +7,16 @@ def generate_header_file():
     
     linkedObjects = {}
     collectionNodes = []
-    
+
+    fname = fileNameOnly(bpy.data.filepath)
     for obj in bpy.data.objects:
         icol = obj.instance_collection
-        if not icol is None:
+        if icol is None:
+            if obj.data.library is None:
+                collectionNodes.append((obj, bpy.data.filepath, obj))
+                linkedObjects[bpy.data.filepath] = obj
+                #print("REGULAR: " + obj.name + " " + obj.type + " " + str(obj.location))
+        else:
             found = None
             for o in icol.objects:
                 if o.type == "MESH":
@@ -22,7 +28,6 @@ def generate_header_file():
                 print(f"NONE FOUND: {icol.name}")
                 exit(1)
     
-    fname = fileNameOnly(bpy.data.filepath)
     with open(bpy.path.abspath(f"//{fname}.h"), "w") as f:
         f.write("#pragma once\n")
         for fn in [ fileNameOnly(pth) for pth in linkedObjects ]:

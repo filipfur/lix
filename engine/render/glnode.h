@@ -69,6 +69,9 @@ namespace lix
         void forEachChild(const std::function<void(lix::Node&)>& callback);
         void forEachChildRecursive(const std::function<void(lix::Node&)>& callback);
 
+        void setVisible(bool visible);
+        bool visible() const;
+
     protected:
         virtual bool updateModelMatrix() override;
 
@@ -87,5 +90,6 @@ namespace lix
         bool _fresch{false}; // is global matrix fresch?
         std::shared_ptr<Skin> _skin{nullptr};
         std::shared_ptr<lix::Shape> _shape;
+        bool _visible{true};
     };
 }
