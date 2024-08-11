@@ -384,7 +384,7 @@
 		},
 		{
 			"mesh":0,
-			"name":"Rat",
+			"name":"RatMesh",
 			"skin":0
 		},
 		{
@@ -392,7 +392,7 @@
 				18,
 				17
 			],
-			"name":"Armature"
+			"name":"Rat"
 		}
 	],
 	"animations":[
@@ -2429,7 +2429,7 @@
 				6,
 				5
 			],
-			"name":"Armature"
+			"name":"Rat"
 		}
 	],
 	"accessors":[

@@ -115,7 +115,7 @@ void lix::quickHull(const std::vector<glm::vec3>& s, std::vector<glm::vec3>& ch)
 
 glm::vec3 popAlongDirection(std::vector<glm::vec3>& s, const glm::vec3& D)
 {
-    auto i = lix::indexAlongDirection(s, D);
+    auto [i, distance] = lix::indexAlongDirection(s, D);
     glm::vec3 rval = s[i];
     s.erase(s.begin() + i);
     return rval;

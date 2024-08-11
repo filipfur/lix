@@ -23,6 +23,7 @@ namespace lix
         std::pair<std::vector<glm::vec3>, std::vector<unsigned int>> meshData() const;
 
         std::vector<glm::vec3> points() const;
+        std::vector<glm::vec3> uniquePoints() const;
 
         std::list<Face>::iterator begin()
         {

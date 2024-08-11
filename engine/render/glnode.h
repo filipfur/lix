@@ -19,9 +19,8 @@ namespace lix
     {
     public:
         Node();
-
+        Node(const std::string& name);
         Node(const std::initializer_list<lix::NodePtr>& nodes);
-
         Node(const glm::vec3& position, const glm::quat& rotation=glm::quat{1.0f, 0.0f, 0.0f, 0.0f}, const glm::vec3& scale=glm::vec3{1.0f});
 
         virtual ~Node() noexcept;
@@ -54,8 +53,6 @@ namespace lix
 
         std::shared_ptr<Skin> skin();
 
-        void setName(const std::string& name);
-
         const std::string& name() const;
 
         MeshPtr mesh() const;
@@ -82,7 +79,7 @@ namespace lix
     private:
         Node(const Node& other);
 
-        std::string _name;
+        const std::string& _name;
         std::vector<NodePtr> _children;
         Node* _parent{nullptr};
         MeshPtr _mesh{nullptr};

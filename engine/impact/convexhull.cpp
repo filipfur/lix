@@ -10,22 +10,11 @@
 
 #include "primer.h"
 
+#define print_vec(v) printf("%s: [%.2f %.2f %.2f]\n", #v, v.x, v.y, v.z)
+
 bool popAlongDirection(std::vector<glm::vec3>& s, const glm::vec3& D, glm::vec3& rval)
 {
-    int index{-1};
-    float maxValue{-FLT_MAX}; //glm::dot(s[0], D)};
-
-    assert(s.size() != 0);
-
-    for(size_t i{0}; i < s.size(); ++i)
-    {
-        float value = glm::dot(s[i], D);
-        if(value > maxValue)
-        {
-            index = static_cast<int>(i);
-            maxValue = value;
-        }
-    }
+    auto [index, distance] = lix::indexAlongDirection(s, D);
 
     if(index < 0)
     {
@@ -38,8 +27,8 @@ bool popAlongDirection(std::vector<glm::vec3>& s, const glm::vec3& D, glm::vec3&
 
 void checkFace(std::set<lix::Face*>& visible, lix::Face* face, const glm::vec3& p)
 {
-    //if((glm::dot(face->normal, p) + face->D) > 0)
-    if(glm::dot(face->normal, p - face->half_edge->vertex) > -FLT_EPSILON)
+    //if((glm::dot(face->normal, p) + face->D) > FLT_EPSILON)
+    if(glm::dot(face->normal, p - face->half_edge->vertex) > FLT_EPSILON)
     {
         if(visible.emplace(face).second)
         {
@@ -99,7 +88,7 @@ lix::ConvexHull::ConvexHull(const std::vector<glm::vec3>& points)
     float t = -(glm::dot(AB, A) / glm::dot(AB, AB));
     glm::vec3 r = A + AB * t;
 
-    assert(glm::dot(r, r) > 0);
+    assert(glm::dot(r, r) >= 0);
 
     glm::vec3 C;
     assert(popAlongDirection(P, r, C));
@@ -116,6 +105,8 @@ lix::ConvexHull::ConvexHull(const std::vector<glm::vec3>& points)
 
     glm::vec3 D;
     assert(popAlongDirection(P, -ABC, D));
+
+    assert(!lix::isSameVertex(A, D) && !lix::isSameVertex(B, D) && !lix::isSameVertex(C, D));
 
     auto& abc = _faces.emplace_back(glm::normalize(ABC));
     auto& acd = _faces.emplace_back(glm::normalize(glm::cross(C - A, D - A)));
@@ -138,7 +129,7 @@ lix::ConvexHull::ConvexHull(const std::vector<glm::vec3>& points)
     auto dc = new Half_Edge(D, &bdc);
     auto cb = new Half_Edge(C, &bdc);
 
-    connect(ab, bc, ba, &abc);
+    connect(ab, bc, ba, &abc);  
     connect(bc, ca, cb, &abc);
     connect(ca, ab, ac, &abc);
 
@@ -172,7 +163,8 @@ bool lix::ConvexHull::addPoint(const glm::vec3& p, lix::Face* face, std::list<Fa
     {
         for(lix::Face& f : _faces)
         {
-            if((glm::dot(f.normal, p) + f.D) > 0)
+            if(glm::dot(f.normal, p - f.half_edge->vertex) > FLT_EPSILON)
+            //if((glm::dot(f.normal, p) + f.D) > FLT_EPSILON)
             {
                 face = &f;
                 break;
@@ -185,6 +177,7 @@ bool lix::ConvexHull::addPoint(const glm::vec3& p, lix::Face* face, std::list<Fa
     checkFace(visible, face, p);
     if(visible.size() < 1)
     {
+        //printf("no visibles!\n");
         return false;
     }
 
@@ -200,7 +193,6 @@ bool lix::ConvexHull::addPoint(const glm::vec3& p, lix::Face* face, std::list<Fa
             return f->id == face.id;
         });
         
-
         fIt = visible.erase(fIt);
     }
 
@@ -299,8 +291,10 @@ void lix::ConvexHull::addPoints(std::vector<glm::vec3>& P)
         {
             continue;
         }
-        //assert(popAlongDirection(P, face->normal, p));
-        addPoint(p, face, &Q);
+        if(!addPoint(p, face, &Q))
+        {
+           P.push_back(p); // hey, it works.
+        }
     }
 }
 
@@ -328,6 +322,14 @@ std::pair<std::vector<glm::vec3>, std::vector<unsigned int>> lix::ConvexHull::me
     return {points, indices};
 }
 
+struct Vec3Comparator {
+    bool operator()(const glm::vec3& lhs, const glm::vec3& rhs) const {
+        if (lhs.x != rhs.x) return lhs.x < rhs.x;
+        if (lhs.y != rhs.y) return lhs.y < rhs.y;
+        return lhs.z < rhs.z;
+    }
+};
+
 std::vector<glm::vec3> lix::ConvexHull::points() const
 {
     std::vector<glm::vec3> rval;
@@ -342,6 +344,25 @@ std::vector<glm::vec3> lix::ConvexHull::points() const
     }
 
     return rval;
+}
+
+std::vector<glm::vec3> lix::ConvexHull::uniquePoints() const
+{
+    std::set<glm::vec3, Vec3Comparator> rval;
+
+    for(const auto& face : _faces)
+    {
+        /*rval.insert(rval.end(), {
+            face.half_edge->vertex,
+            face.half_edge->next->vertex,
+            face.half_edge->next->next->vertex
+        });*/
+        rval.emplace(face.half_edge->vertex);
+        rval.emplace(face.half_edge->next->vertex);
+        rval.emplace(face.half_edge->next->next->vertex);
+    }
+
+    return {rval.begin(), rval.end()};
 }
 
 void lix::ConvexHull::connect(Half_Edge* self, Half_Edge* next, Half_Edge* opposite, Face* face)

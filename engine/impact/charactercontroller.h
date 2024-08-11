@@ -72,11 +72,11 @@ namespace lix
         void updateMovementState()
         {
             auto& v = dynamicBody->velocity;
-            if(v.y > lix::EPSILON)
+            if(v.y > FLT_EPSILON)
             {
                 movementState = MovementState::JUMPING;
             }
-            else if(v.y < -lix::EPSILON)
+            else if(v.y < -FLT_EPSILON)
             {
                 movementState = MovementState::FALLING;
             }

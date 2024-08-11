@@ -119,7 +119,7 @@ std::vector<glm::vec3> lix::minimumBoundingBox(const glm::vec3& min, const glm::
     return lix::cube_corner_points(min, max);
 }
 
-int lix::indexAlongDirection(const std::vector<glm::vec3>& s, const glm::vec3& D)
+std::pair<int, float> lix::indexAlongDirection(const std::vector<glm::vec3>& s, const glm::vec3& D)
 {
     int index{-1};
     float maxValue{-FLT_MAX}; //glm::dot(s[0], D)};
@@ -133,7 +133,7 @@ int lix::indexAlongDirection(const std::vector<glm::vec3>& s, const glm::vec3& D
             maxValue = value;
         }
     }
-    return index;
+    return {index, maxValue};
 }
 
 bool lix::isAdjacent(const unsigned int* a, const unsigned int* b, lix::Edge& edge)

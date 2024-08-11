@@ -45,7 +45,7 @@ def generate_header_file():
             
             f.write(delim + f"""
         {{
-            \"\",
+            \"{o.name}\",
             &assets::objects::{fname}::{meshName}_mesh,
             {{{t.x}f, {t.z}f, {-t.y}f}},
             {{{r.w}f, {r.x}f, {r.z}f, {-r.y}f}},

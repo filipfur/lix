@@ -375,7 +375,7 @@
 		},
 		{
 			"mesh":0,
-			"name":"Cube",
+			"name":"MacmanMesh",
 			"skin":0
 		},
 		{
@@ -387,7 +387,7 @@
 				14,
 				19
 			],
-			"name":"Armature"
+			"name":"Macman"
 		}
 	],
 	"animations":[
@@ -4823,7 +4823,7 @@
 				18,
 				17
 			],
-			"name":"Armature"
+			"name":"Macman"
 		}
 	],
 	"accessors":[

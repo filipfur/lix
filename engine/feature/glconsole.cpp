@@ -245,7 +245,7 @@ bool lix::Console::onKeyDown(KeySym key, KeyMod mod) {
     int numcode = key - SDLK_0;
     if(charcode >= 0 && charcode <= max)
     {
-        text += char('a' + charcode);
+        text += char((mod & KMOD_SHIFT ? 'A' : 'a') + charcode);
     }
     else if(numcode >= 0 && numcode <= 9)
     {

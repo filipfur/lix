@@ -28,6 +28,7 @@ namespace lix
         Face(const glm::vec3& normal_) : normal{normal_}
         {
             assert(!std::isnan(normal.x));
+            assert(glm::dot(normal, normal) > FLT_EPSILON);
             static uint32_t nextId{0};
             id = nextId++;
         }
@@ -51,6 +52,10 @@ namespace lix
                 he = next;
             } while(he != this->half_edge);
             this->half_edge = nullptr;
+        }
+
+        glm::vec3 center() {
+            return (half_edge->vertex + half_edge->next->vertex + half_edge->next->next->vertex) * 0.333333f;
         }
 
         uint32_t id;

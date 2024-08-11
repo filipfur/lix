@@ -29,7 +29,7 @@ namespace lix
     std::pair<glm::vec3, glm::vec3> extremePoints(const std::vector<glm::vec3>& s);
     std::vector<glm::vec3> minimumBoundingBox(const glm::vec3& min, const glm::vec3& max);
 
-    int indexAlongDirection(const std::vector<glm::vec3>& s, const glm::vec3& D);
+    std::pair<int,float> indexAlongDirection(const std::vector<glm::vec3>& s, const glm::vec3& D);
 
     bool isAdjacent(const unsigned int* a, const unsigned int* b, Edge& edge);
 

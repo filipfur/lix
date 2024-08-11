@@ -1,12 +1,18 @@
 #include "glnode.h"
 
+inline static const std::string noName{""};
 
-lix::Node::Node() : TRS()
+lix::Node::Node() : TRS(), _name{noName}
 {
     
 }
 
-lix::Node::Node(const std::initializer_list<lix::NodePtr>& children) : TRS()
+lix::Node::Node(const std::string& name) : TRS(), _name{name}
+{
+    
+}
+
+lix::Node::Node(const std::initializer_list<lix::NodePtr>& children) : TRS(), _name{noName}
 {
     for(const auto& child : children)
     {
@@ -15,7 +21,7 @@ lix::Node::Node(const std::initializer_list<lix::NodePtr>& children) : TRS()
 }
 
 lix::Node::Node(const glm::vec3& position, const glm::quat& rotation, const glm::vec3& scale)
-    : TRS{position, rotation, scale}
+    : TRS{position, rotation, scale}, _name{noName}
 {
 
 }
@@ -26,7 +32,7 @@ lix::Node::~Node() noexcept
     _parent = nullptr;
 }
 
-lix::Node::Node(const lix::TRS& other) : TRS{other}
+lix::Node::Node(const lix::TRS& other) : TRS{other}, _name{noName}
 {
 
 }
@@ -74,8 +80,6 @@ std::shared_ptr<lix::Skin> lix::Node::skin()
 {
     return _skin;
 }
-
-void lix::Node::setName(const std::string& name) { _name = name; }
 
 const std::string& lix::Node::name() const { return _name; }
 

@@ -137,8 +137,8 @@ lix::MeshPtr gltf::loadMesh(const gltf::Mesh& gltfMesh)
 
 lix::NodePtr gltf::loadNode(const gltf::Node& gltfNode)
 {
-    lix::NodePtr node = std::make_shared<lix::Node>();
-    node->setName(gltfNode.name);
+    lix::NodePtr node = std::make_shared<lix::Node>(gltfNode.name);
+    printf("loading: %s\n", gltfNode.name.c_str());
     node->setTranslation(gltfNode.translation);
     node->setRotation(gltfNode.rotation);
     node->setScale(gltfNode.scale);
@@ -288,7 +288,9 @@ std::shared_ptr<lix::Polygon> gltf::loadMeshCollider(const gltf::Mesh& gltfMesh,
             lix::ConvexHull convexHull{loadedMeshVertices[addr]};
             auto pts = convexHull.points();
             convexHullVertices.emplace(addr, pts);
+            printf("pts: %s uniuque=#%zu pts=#%zu\n", gltfMesh.name.c_str(), loadedMeshVertices[addr].size(), pts.size());
         }
+
         return std::make_shared<lix::Polygon>(nullptr, convexHullVertices[addr]);
     }
     else

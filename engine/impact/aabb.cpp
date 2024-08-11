@@ -74,7 +74,7 @@ glm::vec3 lix::AABB::supportPoint(const glm::vec3& dir)
     glm::vec3 a = glm::vec3(m * glm::vec4{_min, 1.0f});
     glm::vec3 b = glm::vec3(m * glm::vec4{_max, 1.0f});*/
     auto pts = boundingBox();
-    auto index = lix::indexAlongDirection(pts, dir);
+    auto [index, distance] = lix::indexAlongDirection(pts, dir);
     return trs()->translation() + pts.at(index);
 }
 

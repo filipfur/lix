@@ -350,7 +350,7 @@ void App::draw()
     minkowskiVAO->bind();
     minkowskiVAO->draw();
 #endif
-    debugShader->setUniform("u_model", glm::translate(glm::mat4{16.0f}, glm::vec3{0.0f, 0.25f, 0.0f}));
+    debugShader->setUniform("u_model", glm::translate(glm::mat4{16.0f}, glm::vec3{0.0f, 0.0f, 0.0f}));
     convexBunny->bind();
     convexBunny->draw();
     if (simplexHullVAO)
@@ -390,7 +390,7 @@ void App::draw()
 #endif
 
     // debugShader->setUniform("u_model", glm::scale(glm::translate(glm::mat4{1.0f}, glm::vec3{0.0f, 1.0f, 0.0f}), glm::vec3{16.0f}));
-    debugShader->setUniform("u_model", glm::translate(glm::mat4{16.0f}, glm::vec3{0.0f, 0.25f, 0.0f}));
+    debugShader->setUniform("u_model", glm::translate(glm::mat4{16.0f}, glm::vec3{0.0f, 0.0f, 0.0f}));
     bunny->draw();
 
     // debugShader->setUniform("u_model", glm::mat4{16.0f});
