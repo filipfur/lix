@@ -26,4 +26,6 @@ namespace lix
         const std::string _label;
         const GLuint _bindingPoint;
     };
+
+    using UBO = lix::UniformBuffer;
 }

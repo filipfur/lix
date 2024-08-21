@@ -2,22 +2,20 @@
 
 #include "glrendering.h"
 
-namespace
-{
-    const char* blurVertSrc = LIX_SHADER_VERSION R"(
-layout(location=0) in vec2 aPos;
-layout(location=1) in vec2 aTexCoords;
+namespace {
+const char *blurVertSrc = LIX_SHADER_VERSION R"(
+layout(location=0) in vec4 aVertex;
 
 out vec2 texCoords;
 
 void main()
 {
-  texCoords = aTexCoords;
-  gl_Position = vec4(aPos, 0.0, 1.0);
+  texCoords = aVertex.zw;
+  gl_Position = vec4(aVertex.xy, 0.0, 1.0);
 }
     )";
 
-    const char* blurFragSrc = LIX_SHADER_VERSION R"(
+const char *blurFragSrc = LIX_SHADER_VERSION R"(
 precision highp float;
 
 in vec2 texCoords;
@@ -52,50 +50,42 @@ void main()
 }
     )";
 
-    std::shared_ptr<lix::ShaderProgram> sharedShader()
-    {
-        static auto shader = std::make_shared<lix::ShaderProgram>(
-            blurVertSrc, blurFragSrc
-        );
-        return shader;
-    }
-
+std::shared_ptr<lix::ShaderProgram> sharedShader() {
+    static auto shader =
+        std::make_shared<lix::ShaderProgram>(blurVertSrc, blurFragSrc);
+    return shader;
 }
 
-lix::BlurPass::BlurPass(const glm::ivec2& resolution) : BlurPass{resolution, sharedShader()}
-{
+} // namespace
 
-}
+lix::BlurPass::BlurPass(const glm::ivec2 &resolution)
+    : BlurPass{resolution, sharedShader()} {}
 
-lix::BlurPass::BlurPass(const glm::ivec2& resolution,
-    std::shared_ptr<lix::ShaderProgram> shaderProgram)
-    : _blurFBO{{resolution}, {resolution}}, _shaderProgram{shaderProgram ? shaderProgram : sharedShader()}
-{
-    for(int i{0}; i < 2; ++i)
-    {
+lix::BlurPass::BlurPass(const glm::ivec2 &resolution,
+                        std::shared_ptr<lix::ShaderProgram> shaderProgram)
+    : _blurFBO{{resolution}, {resolution}},
+      _shaderProgram{shaderProgram ? shaderProgram : sharedShader()} {
+    for (int i{0}; i < 2; ++i) {
         _blurFBO[i].bind();
-        _blurFBO[i].createTexture(GL_COLOR_ATTACHMENT0, GL_RGBA16F, GL_RGBA, GL_FLOAT);
+        _blurFBO[i].createTexture(GL_COLOR_ATTACHMENT0, GL_RGBA16F, GL_RGBA,
+                                  GL_FLOAT);
         _blurFBO[i].unbind();
-    }   
+    }
 }
 
-void lix::BlurPass::blur(std::shared_ptr<lix::Texture> inputTexture)
-{
+void lix::BlurPass::blur(std::shared_ptr<lix::Texture> inputTexture) {
     _shaderProgram->bind();
     size_t amount = 10;
     bool horizontal = true, first_iteration = true;
-    for (size_t i = 0; i < amount; i++)
-    {
+    for (size_t i = 0; i < amount; i++) {
         _blurFBO[horizontal].bind();
         _shaderProgram->setUniform("horizontal", horizontal);
-        if(first_iteration)
-        {
+        if (first_iteration) {
             inputTexture->bind(GL_TEXTURE0);
             first_iteration = false;
-        }
-        else
-        {
-            _blurFBO[!horizontal].bindTexture(GL_COLOR_ATTACHMENT0, GL_TEXTURE0);
+        } else {
+            _blurFBO[!horizontal].bindTexture(GL_COLOR_ATTACHMENT0,
+                                              GL_TEXTURE0);
         }
         lix::renderScreen();
         horizontal = !horizontal;

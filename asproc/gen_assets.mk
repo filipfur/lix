@@ -35,6 +35,9 @@ gen/shaders/%_glsl.cpp : assets/shaders/%.glsl
 gen/images/%_png.cpp : assets/images/%.png
 	@$(ASPROC_BIN) --flip-y --convert-to-srgb -i $^ gen/images
 
+gen/images/%_jpg.cpp : assets/images/%.jpg
+	@$(ASPROC_BIN) --flip-y --convert-to-srgb -i $^ gen/images
+
 gen/fonts/%.cpp : assets/fonts/%.json
 	@$(ASPROC_BIN) -f $^ gen/fonts
 
