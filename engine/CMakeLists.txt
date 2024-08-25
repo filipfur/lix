@@ -56,14 +56,30 @@ set_target_properties(${LIX_ENGINE} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 include(GNUInstallDirs)
-
-if(APPLE)
+if(EMSCRIPTEN)
+    message(INFO "CONFIGURATION: EMSCRIPTEN")
+    target_compile_options(${LIX_ENGINE} PUBLIC
+        -Wall
+        -Wextra
+        -O3
+    )
+    target_link_options(${LIX_ENGINE} PUBLIC
+        "-s FULL_ES3=1"
+        "-s USE_WEBGL2=1"
+        "-s MIN_WEBGL_VERSION=2"
+        "-s USE_SDL=2"
+        "-s ALLOW_MEMORY_GROWTH=1"
+        "-s INITIAL_MEMORY=33554432 -s STACK_SIZE=16777216"
+    )
+elseif(APPLE)
+    message(INFO "CONFIGURATION: APPLE")
     find_package(GLEW REQUIRED HINTS $ENV{GLEW_HOME})
     find_package(SDL2 REQUIRED HINTS $ENV{SDL2_HOME})
     target_compile_options(${LIX_ENGINE} PRIVATE -Wall -Wextra -Wpedantic -Werror)
     target_link_libraries(${LIX_ENGINE} PUBLIC json GLEW::GLEW SDL2::SDL2
         "-framework OpenGL")
 elseif(MSVC)
+    message(INFO "CONFIGURATION: MSVC")
     SET(GLEW_DLL "${GLEW_HOME}/bin/glew32.dll" CACHE INTERNAL "GLEW_DLL")
     SET(SDL2_DLL "${SDL2_HOME}/bin/SDL2.dll" CACHE INTERNAL "SDL2_DLL")
     function(copy_ext_dll target_name)
@@ -79,6 +95,7 @@ elseif(MSVC)
     target_compile_options(${LIX_ENGINE} PRIVATE /W4 /WX)
     target_link_libraries(${LIX_ENGINE} PUBLIC json glew32s SDL2Main SDL2 opengl32)
 else() # linux
+    message(INFO "CONFIGURATION: OTHER")
     target_link_libraries(${LIX_ENGINE} PUBLIC json glew32 SDL2Main SDL2 opengl32)
 endif()
 
