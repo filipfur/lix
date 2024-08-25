@@ -1,31 +1,30 @@
 #pragma once
 
-#include <string>
 #include "glbuffer.h"
+#include <string>
 
-namespace lix
-{
-    class UniformBuffer : public Buffer
-    {
-    public:
-        UniformBuffer(GLuint size, void* data, const std::string& label, GLuint bindingPoint, GLuint usage=GL_STATIC_DRAW);
+namespace lix {
+class UniformBuffer : public Buffer {
+  public:
+    UniformBuffer(GLuint size, void *data, const std::string &label,
+                  GLuint bindingPoint, GLuint usage = GL_STATIC_DRAW);
 
-        void uniformBlockBinding(lix::Element* shader);
+    void uniformBlockBinding(lix::Element *shader);
 
-        void bindBufferBase();
+    void bindBufferBase();
 
-        void bindShaders(const std::vector<lix::Element*>& shaders);
+    void bindShaders(const std::vector<lix::Element *> &shaders);
 
-        void bufferData();
+    void bufferData();
 
-        void bufferSubData(GLintptr offset, GLsizeiptr size);
+    void bufferSubData(GLintptr offset, GLsizeiptr size);
 
-    private:
-        const GLuint _size;
-        void* _data{nullptr};
-        const std::string _label;
-        const GLuint _bindingPoint;
-    };
+  private:
+    const GLuint _size;
+    void *_data{nullptr};
+    const std::string _label;
+    const GLuint _bindingPoint;
+};
 
-    using UBO = lix::UniformBuffer;
-}
+using UBO = lix::UniformBuffer;
+} // namespace lix

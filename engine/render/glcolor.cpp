@@ -1,11 +1,11 @@
-#include <utility>
-#include <string>
-#include <sstream>
 #include <iomanip>
+#include <sstream>
+#include <string>
+#include <utility>
 
 #include "glcolor.h"
 
-static glm::vec3 rgbToHsv(const glm::vec3& rgb) {
+static glm::vec3 rgbToHsv(const glm::vec3 &rgb) {
     float r = rgb.r, g = rgb.g, b = rgb.b;
     float max = std::max({r, g, b});
     float min = std::min({r, g, b});
@@ -42,113 +42,96 @@ static glm::vec3 hsvToRgb(float h, float s, float v) {
     float t = v * (1.0f - (1.0f - f) * s);
 
     switch (i) {
-        case 0: r = v; g = t; b = p; break;
-        case 1: r = q; g = v; b = p; break;
-        case 2: r = p; g = v; b = t; break;
-        case 3: r = p; g = q; b = v; break;
-        case 4: r = t; g = p; b = v; break;
-        case 5: r = v; g = p; b = q; break;
+    case 0:
+        r = v;
+        g = t;
+        b = p;
+        break;
+    case 1:
+        r = q;
+        g = v;
+        b = p;
+        break;
+    case 2:
+        r = p;
+        g = v;
+        b = t;
+        break;
+    case 3:
+        r = p;
+        g = q;
+        b = v;
+        break;
+    case 4:
+        r = t;
+        g = p;
+        b = v;
+        break;
+    case 5:
+        r = v;
+        g = p;
+        b = q;
+        break;
     }
 
     return {r, g, b};
 }
 
-float byteToDecimal(uint32_t hex, unsigned int pos)
-{
+float byteToDecimal(uint32_t hex, unsigned int pos) {
     static constexpr float factor{1.0f / 255.0f};
     return static_cast<float>((hex >> pos) & 0xFF) * factor;
 }
 
-lix::Color::Color(const std::string& hexstr)
-    : lix::Color{static_cast<uint32_t>(std::stoi(hexstr, 0, 16))}
-{
-}
+lix::Color::Color(const std::string &hexstr)
+    : lix::Color{static_cast<uint32_t>(std::stoi(hexstr, 0, 16))} {}
 
 lix::Color::Color(uint32_t hex, float alpha)
-    : _rgba{byteToDecimal(hex, 16), byteToDecimal(hex, 8), byteToDecimal(hex, 0), alpha}
-{
+    : _rgba{byteToDecimal(hex, 16), byteToDecimal(hex, 8),
+            byteToDecimal(hex, 0), alpha} {}
 
-}
+lix::Color::Color(float r, float g, float b) : _rgba{r, g, b, 1.0f} {}
 
-lix::Color::Color(float r, float g, float b) : _rgba{r, g, b, 1.0f}
-{
+lix::Color::Color(float r, float g, float b, float a) : _rgba{r, g, b, a} {}
 
-}
+lix::Color::Color(const Color &other) : _rgba{other._rgba} {}
 
-lix::Color::Color(float r, float g, float b, float a) : _rgba{r, g, b, a}
-{
-    
-}
+lix::Color::Color(Color &&other) : _rgba{std::move(other._rgba)} {}
 
-lix::Color::Color(const Color& other) : _rgba{other._rgba}
-{
-    
-}
+lix::Color::Color(const glm::vec4 &rgba) : _rgba{rgba} {}
 
-lix::Color::Color(Color&& other) : _rgba{std::move(other._rgba)}
-{
-    
-}
+lix::Color::Color(const glm::vec3 &rgb) : _rgba{rgb.x, rgb.y, rgb.z, 1.0f} {}
 
-lix::Color::Color(const glm::vec4& rgba) : _rgba{rgba}
-{
-
-}
-
-lix::Color::Color(const glm::vec3& rgb) : _rgba{rgb.x, rgb.y, rgb.z, 1.0f}
-{
-
-}
-
-lix::Color lix::Color::opacity(float val)
-{
+lix::Color lix::Color::opacity(float val) {
     return lix::Color{1.0f, 1.0f, 1.0f, val};
 }
 
-lix::Color& lix::Color::operator=(const lix::Color& other)
-{
+lix::Color &lix::Color::operator=(const lix::Color &other) {
     _rgba = other._rgba;
     return *this;
 }
 
-lix::Color& lix::Color::operator=(lix::Color&& other)
-{
+lix::Color &lix::Color::operator=(lix::Color &&other) {
     _rgba = std::move(other._rgba);
     return *this;
 }
 
-lix::Color lix::Color::operator*(const lix::Color& other) const
-{
+lix::Color lix::Color::operator*(const lix::Color &other) const {
     return {this->vec4() * other.vec4()};
 }
 
-lix::Color::operator glm::vec4() const
-{
-    return _rgba;
-}
+lix::Color::operator glm::vec4() const { return _rgba; }
 
-glm::vec3 lix::Color::vec3() const
-{
-    return {_rgba};
-}
+glm::vec3 lix::Color::vec3() const { return {_rgba}; }
 
-const glm::vec4& lix::Color::vec4() const
-{
-    return _rgba;
-}
+const glm::vec4 &lix::Color::vec4() const { return _rgba; }
 
-glm::vec4& lix::Color::vec4()
-{
-    return _rgba;
-}
+glm::vec4 &lix::Color::vec4() { return _rgba; }
 
-glm::vec3 lix::Color::hsv() const
-{
+glm::vec3 lix::Color::hsv() const {
     return rgbToHsv(glm::vec3{_rgba.r, _rgba.g, _rgba.b});
 }
 
-lix::Color& lix::Color::setHSV(float h, float s, float v)
-{
+lix::Color &lix::Color::setHSV(float h, float s, float v) {
     glm::vec3 rgb = hsvToRgb(h, s, v);
     _rgba.r = rgb.r;
     _rgba.g = rgb.g;
@@ -156,13 +139,15 @@ lix::Color& lix::Color::setHSV(float h, float s, float v)
     return *this;
 }
 
-void lix::Color::hueShift(float rad)
-{
+void lix::Color::hueShift(float rad) {
     float U = cosf(rad);
     float W = sinf(rad);
-    static constexpr glm::mat3 yiqMatrix{0.299f, 0.596f, 0.211f, 0.587f, -0.274f, -0.523f, 0.114f, -0.321f, 0.311f};
+    static constexpr glm::mat3 yiqMatrix{0.299f, 0.596f,  0.211f,
+                                         0.587f, -0.274f, -0.523f,
+                                         0.114f, -0.321f, 0.311f};
     glm::mat3 hueMatrix{1.0f, 0.0f, 0.0f, 0.0f, U, W, 0.0f, -W, U};
-    static constexpr glm::mat3 rgbMatrix{1.0f, 1.0f, 1.0f, 0.956f, -0.272f, -1.107f, 0.621f, -0.647f, 1.705f};
+    static constexpr glm::mat3 rgbMatrix{
+        1.0f, 1.0f, 1.0f, 0.956f, -0.272f, -1.107f, 0.621f, -0.647f, 1.705f};
     glm::mat3 T = rgbMatrix * hueMatrix * yiqMatrix;
     glm::vec3 rgb = T * vec3();
     _rgba.r = std::max(0.0f, std::min(1.0f, rgb.r));
@@ -170,11 +155,13 @@ void lix::Color::hueShift(float rad)
     _rgba.b = std::max(0.0f, std::min(1.0f, rgb.b));
 }
 
-void lix::Color::saturate(float S)
-{
-    static constexpr glm::mat3 yiqMatrix{0.299f, 0.596f, 0.211f, 0.587f, -0.274f, -0.523f, 0.114f, -0.321f, 0.311f};
+void lix::Color::saturate(float S) {
+    static constexpr glm::mat3 yiqMatrix{0.299f, 0.596f,  0.211f,
+                                         0.587f, -0.274f, -0.523f,
+                                         0.114f, -0.321f, 0.311f};
     glm::mat3 satMatrix{1.0f, 0.0f, 0.0f, 0.0f, S, 0.0f, 0.0f, 0.0f, S};
-    static constexpr glm::mat3 rgbMatrix{1.0f, 1.0f, 1.0f, 0.956f, -0.272f, -1.107f, 0.621f, -0.647f, 1.705f};
+    static constexpr glm::mat3 rgbMatrix{
+        1.0f, 1.0f, 1.0f, 0.956f, -0.272f, -1.107f, 0.621f, -0.647f, 1.705f};
     glm::mat3 T = rgbMatrix * satMatrix * yiqMatrix;
     glm::vec3 rgb = T * vec3();
     _rgba.r = std::max(0.0f, std::min(1.0f, rgb.r));
@@ -182,11 +169,13 @@ void lix::Color::saturate(float S)
     _rgba.b = std::max(0.0f, std::min(1.0f, rgb.b));
 }
 
-void lix::Color::valueScale(float V)
-{
-    static constexpr glm::mat3 yiqMatrix{0.299f, 0.596f, 0.211f, 0.587f, -0.274f, -0.523f, 0.114f, -0.321f, 0.311f};
+void lix::Color::valueScale(float V) {
+    static constexpr glm::mat3 yiqMatrix{0.299f, 0.596f,  0.211f,
+                                         0.587f, -0.274f, -0.523f,
+                                         0.114f, -0.321f, 0.311f};
     glm::mat3 valMatrix{V, 0.0f, 0.0f, 0.0f, V, 0.0f, 0.0f, 0.0f, V};
-    static constexpr glm::mat3 rgbMatrix{1.0f, 1.0f, 1.0f, 0.956f, -0.272f, -1.107f, 0.621f, -0.647f, 1.705f};
+    static constexpr glm::mat3 rgbMatrix{
+        1.0f, 1.0f, 1.0f, 0.956f, -0.272f, -1.107f, 0.621f, -0.647f, 1.705f};
     glm::mat3 T = rgbMatrix * valMatrix * yiqMatrix;
     glm::vec3 rgb = T * vec3();
     _rgba.r = std::max(0.0f, std::min(1.0f, rgb.r));
@@ -194,8 +183,7 @@ void lix::Color::valueScale(float V)
     _rgba.b = std::max(0.0f, std::min(1.0f, rgb.b));
 }
 
-std::string lix::Color::hexString() const
-{
+std::string lix::Color::hexString() const {
     int ri = static_cast<int>(_rgba.r * 255);
     int gi = static_cast<int>(_rgba.g * 255);
     int bi = static_cast<int>(_rgba.b * 255);
@@ -203,8 +191,8 @@ std::string lix::Color::hexString() const
     // Use a stringstream to format as hex
     std::stringstream ss;
     ss << std::hex << std::setfill('0') << std::setw(2) << ri
-       << std::setfill('0') << std::setw(2) << gi
-       << std::setfill('0') << std::setw(2) << bi;
+       << std::setfill('0') << std::setw(2) << gi << std::setfill('0')
+       << std::setw(2) << bi;
 
     // Return the resulting string
     return ss.str();

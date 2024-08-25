@@ -2,47 +2,34 @@
 
 #include <stdexcept>
 
-#include "sphere.h"
 #include "aabb.h"
+#include "sphere.h"
 
-lix::Capsule::Capsule(const lix::Capsule& other)
-    : Shape{other}, _a{other._a}, _b{other._b}, _radii{other._radii}
-{
-}
+lix::Capsule::Capsule(const lix::Capsule &other)
+    : Shape{other}, _a{other._a}, _b{other._b}, _radii{other._radii} {}
 
-lix::Capsule::Capsule(lix::TRS* trs, const glm::vec3& a, const glm::vec3& b, float radii, bool caps)
-    : Shape{trs}, _a{a}, _b{b}, _radii{radii}, _caps{caps}
-{
+lix::Capsule::Capsule(lix::TRS *trs, const glm::vec3 &a, const glm::vec3 &b,
+                      float radii, bool caps)
+    : Shape{trs}, _a{a}, _b{b}, _radii{radii}, _caps{caps} {}
 
-}
+lix::Capsule::~Capsule() noexcept {}
 
-lix::Capsule::~Capsule() noexcept
-{
+lix::Capsule *lix::Capsule::clone() const { return new lix::Capsule(*this); }
 
-}
-
-lix::Capsule* lix::Capsule::clone() const
-{
-    return new lix::Capsule(*this);
-}
-
-glm::vec3 lix::Capsule::supportPoint(const glm::vec3&)
-{
+glm::vec3 lix::Capsule::supportPoint(const glm::vec3 &) {
     throw std::runtime_error("capsule support point not implemented");
 }
 
-bool lix::Capsule::intersects(Capsule&)
-{
+bool lix::Capsule::intersects(Capsule &) {
     throw std::runtime_error("capsule-capsule collision not implemented");
 }
 
-bool lix::Capsule::intersects(Sphere& sphere)
-{
+bool lix::Capsule::intersects(Sphere &sphere) {
     glm::mat3 m = glm::mat3(_trs->modelMatrix());
     const glm::vec3 A = _trs->translation() + m * _a;
     const glm::vec3 B = _trs->translation() + m * _b;
 
-    const glm::vec3& C = sphere.trs()->translation();
+    const glm::vec3 &C = sphere.trs()->translation();
 
     const glm::vec3 AB = B - A;
     const glm::vec3 AC = C - A;
@@ -55,18 +42,13 @@ bool lix::Capsule::intersects(Sphere& sphere)
 
     float r1 = _radii * _trs->scale().x;
     float r2 = sphere.radii() * sphere.trs()->scale().x;
-    if(_caps)
-    {
-        if(d < -r1 || d > (len + r1))
-        {
+    if (_caps) {
+        if (d < -r1 || d > (len + r1)) {
             return false;
         }
         d = std::min(len, std::max(0.0f, d));
-    }
-    else
-    {
-        if(d < 0 || d > len)
-        {
+    } else {
+        if (d < 0 || d > len) {
             return false;
         }
     }
@@ -78,17 +60,12 @@ bool lix::Capsule::intersects(Sphere& sphere)
     return d2 < (r * r);
 }
 
-bool lix::Capsule::intersects(lix::AABB& aabb)
-{
+bool lix::Capsule::intersects(lix::AABB &aabb) {
     return aabb.intersects(*this);
 }
 
-bool lix::Capsule::intersects(Polygon&)
-{
+bool lix::Capsule::intersects(Polygon &) {
     throw std::runtime_error("capsule-polygon collision not implemented");
 }
 
-bool lix::Capsule::doTest(Shape& shape)
-{
-    return shape.intersects(*this);
-}
+bool lix::Capsule::doTest(Shape &shape) { return shape.intersects(*this); }

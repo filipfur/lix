@@ -638,15 +638,17 @@ void App::init() {
         std::make_shared<lix::Font>(assets::fonts::josefin_sans::create());
     auto text = texts.emplace_back(new lix::Text(
         font, lix::Text::PropBuilder().setTextColor(0x333344), ""));
-    text->setTranslation(glm::vec3{-WINDOW_X * 0.4f * WINDOW_REL_X, -WINDOW_Y * 0.29f * WINDOW_REL_Y, 0.0f});
+    text->setTranslation(glm::vec3{-WINDOW_X * 0.4f * WINDOW_REL_X,
+                                   -WINDOW_Y * 0.29f * WINDOW_REL_Y, 0.0f});
     text->setScale(glm::vec3{WINDOW_REL_X, WINDOW_REL_Y, 1.0f});
 
     console = std::make_shared<lix::Console>(
         "cmd>",
         texts.emplace_back(new lix::Text(
             font, lix::Text::PropBuilder().setTextColor(0x333344), "")));
-    console->textNode->setTranslation(
-        glm::vec3{-WINDOW_X * 0.4f * WINDOW_REL_X, -WINDOW_Y * 0.4f * WINDOW_REL_Y, 0.0f});
+    console->textNode->setTranslation(glm::vec3{-WINDOW_X * 0.4f * WINDOW_REL_X,
+                                                -WINDOW_Y * 0.4f * WINDOW_REL_Y,
+                                                0.0f});
     console->textNode->setVisible(false);
 
     console->commands.emplace_back(new lix::custom_command(
@@ -662,15 +664,15 @@ void App::init() {
         }));
     console->commands.emplace_back(new lix::custom_command(
         "print.nodes", [this](lix::Console &console, const std::string &cmd) {
-            for(const auto& o : objectNodes)
-            {
+            for (const auto &o : objectNodes) {
                 auto p = o->translation();
-                printf("'%s': [%.2f %.2f %.2f]\n", o->name().c_str(), p.x, p.y, p.z);
+                printf("'%s': [%.2f %.2f %.2f]\n", o->name().c_str(), p.x, p.y,
+                       p.z);
             }
-            for(const auto& o : skinnedNodes)
-            {
+            for (const auto &o : skinnedNodes) {
                 auto p = o->translation();
-                printf("'%s': [%.2f %.2f %.2f]\n", o->name().c_str(), p.x, p.y, p.z);
+                printf("'%s': [%.2f %.2f %.2f]\n", o->name().c_str(), p.x, p.y,
+                       p.z);
             }
             return true;
         }));
@@ -687,27 +689,24 @@ void App::init() {
         "sky.low", [this]() -> lix::Color & { return currentSky->low; }));
     console->commands.emplace_back(new lix::iterate_command("sky", currentSky));
 
-    console->commands.emplace_back(new lix::custom_command("tele", [this](lix::Console& console, const std::string& cmd){
-        auto teleTo = cmd.substr(cmd.find('=')+1);
-        printf("teleTo=%s\n", teleTo.c_str());
-        for(const auto& o : objectNodes)
-        {
-            if(o->name() == teleTo)
-            {
-                entities.front().node->setTranslation(o->translation());
-                return true;
+    console->commands.emplace_back(new lix::custom_command(
+        "tele", [this](lix::Console &console, const std::string &cmd) {
+            auto teleTo = cmd.substr(cmd.find('=') + 1);
+            printf("teleTo=%s\n", teleTo.c_str());
+            for (const auto &o : objectNodes) {
+                if (o->name() == teleTo) {
+                    entities.front().node->setTranslation(o->translation());
+                    return true;
+                }
             }
-        }
-        for(const auto& o : skinnedNodes)
-        {
-            if(o->name() == teleTo)
-            {
-                entities.front().node->setTranslation(o->translation());
-                return true;
+            for (const auto &o : skinnedNodes) {
+                if (o->name() == teleTo) {
+                    entities.front().node->setTranslation(o->translation());
+                    return true;
+                }
             }
-        }
-        return false;
-    }));
+            return false;
+        }));
 
     textRendering.reset(
         new lix::TextRendering(glm::vec2{WINDOW_X, WINDOW_Y}, texts));
@@ -729,7 +728,8 @@ void App::init() {
     hudShader->setUniform("u_projection", textRendering->projection());
     hudShader->setUniform("u_view", textRendering->view());
 
-    emplaceHUDElement({0.0f, -WINDOW_Y * WINDOW_REL_Y * 0.3f}, {1100 * WINDOW_REL_X, 120 * WINDOW_REL_Y})
+    emplaceHUDElement({0.0f, -WINDOW_Y * WINDOW_REL_Y * 0.3f},
+                      {1100 * WINDOW_REL_X, 120 * WINDOW_REL_Y})
         ->mesh()
         ->material()
         ->setBaseColor(0xefefe0);
@@ -771,11 +771,14 @@ void App::init() {
             emplaceConsumable(node, sphere);
             objectNodes.push_back(node);
         } else if (obj.mesh->name == "Rat") {
-            auto node = loadCharacter(assets::objects::rat::Rat_node, assets::objects::rat::Rat_skin, assets::objects::rat::Rat_mesh, {
-                &assets::objects::rat::Idle_anim,
-                &assets::objects::rat::Bounce_anim,
-                &assets::objects::rat::Jump_anim,
-            });
+            auto node = loadCharacter(assets::objects::rat::Rat_node,
+                                      assets::objects::rat::Rat_skin,
+                                      assets::objects::rat::Rat_mesh,
+                                      {
+                                          &assets::objects::rat::Idle_anim,
+                                          &assets::objects::rat::Bounce_anim,
+                                          &assets::objects::rat::Jump_anim,
+                                      });
             node->skin()->animations()["Bounce"]->setLooping(false);
             node->skin()->animations()["Jump"]->setLooping(false);
 
@@ -784,7 +787,7 @@ void App::init() {
             node->setScale(obj.scale);
 
             characterControllers.back()->setMaxJumpSpeed(2.0f);
-            
+
             const glm::quat r0 = obj.rotation;
             interactionPoints.emplace_back(
                 node->translation(), [this, r0, node]() {
@@ -826,22 +829,18 @@ void App::tick(float dt) {
     lightBlock.shineColor = currentSky->high;
     lightUBO->bufferData();
 
-    for(const auto& entity : entities)
-    {
-        if(entity.node->name() == "Rat")
-        {
-            if(showDialogue)
-            {
+    for (const auto &entity : entities) {
+        if (entity.node->name() == "Rat") {
+            if (showDialogue) {
                 entity.characterController->stopJump();
-                entity.node->skin()->setCurrentAnimation(entity.node->skin()->animations().find("Idle"));
-            }
-            else
-            if(entity.characterController->movementState ==
-        lix::CharacterController::MovementState::IDLE)
-            {
+                entity.node->skin()->setCurrentAnimation(
+                    entity.node->skin()->animations().find("Idle"));
+            } else if (entity.characterController->movementState ==
+                       lix::CharacterController::MovementState::IDLE) {
                 entity.characterController->jump();
-                entity.node->skin()->setCurrentAnimation(entity.node->skin()->animations().find("Bounce"));
-                auto& anim = entity.node->skin()->currentAnimation()->second;
+                entity.node->skin()->setCurrentAnimation(
+                    entity.node->skin()->animations().find("Bounce"));
+                auto &anim = entity.node->skin()->currentAnimation()->second;
                 anim->setTime(anim->start());
             }
         }
