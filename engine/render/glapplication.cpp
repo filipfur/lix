@@ -5,6 +5,7 @@
 lix::Application *context{nullptr};
 
 void lix::Application::loop() {
+#ifndef __ANDROID__
     static SDL_Event event;
     if (SDL_PollEvent(&event)) {
         switch (event.type) {
@@ -80,14 +81,18 @@ void lix::Application::loop() {
     if (context->_fps > 60) {
         SDL_Delay(1);
     }
+#endif
 }
 
 lix::Application::Application(float windowX, float windowY, const char *title)
-    : _title{title},
+    : drawableSize{static_cast<int>(windowX), static_cast<int>(windowY)},
+      _title{title},
       _windowSize{static_cast<float>(windowX), static_cast<float>(windowY)},
       _mousePosition{} {}
 
+#ifndef __ANDROID__
 SDL_Window *lix::Application::window() const { return _window; }
+#endif
 
 void lix::Application::setOnKeyDown(
     KeySym key, const std::function<void(KeySym, KeyMod)> &keyCallback) {
@@ -123,6 +128,15 @@ lix::InputAdapter *lix::Application::inputAdapter() const {
 }
 
 const glm::vec2 &lix::Application::windowSize() const { return _windowSize; }
+
+void lix::Application::setDrawableSize(int x, int y) {
+    drawableSize.x = x;
+    drawableSize.y = y;
+}
+
+const glm::ivec2 &lix::Application::getDrawableSize() const {
+    return drawableSize;
+}
 
 const glm::vec2 &lix::Application::mousePoistion() const {
     return _mousePosition;
@@ -168,8 +182,9 @@ void lix::Application::initialize() {
         return;
     }
     initialized = true;
+#ifndef __ANDROID__
     SDL_Init(SDL_INIT_EVERYTHING);
-#if __EMSCRIPTEN__
+#ifdef __EMSCRIPTEN__
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
@@ -195,13 +210,16 @@ void lix::Application::initialize() {
     glewInit();
 #endif
 
+#endif // __ANDROID__
+
     context = this;
     this->init();
 }
 
 void lix::Application::run(bool forever) {
     initialize();
-#if __EMSCRIPTEN__
+#ifndef __ANDROID__
+#ifdef __EMSCRIPTEN__
     emscripten_set_main_loop(loop, -1, 1);
 #else
     bool doLoop{true};
@@ -211,9 +229,9 @@ void lix::Application::run(bool forever) {
         doLoop = _forever;
     }
 #endif
-
     SDL_GL_DeleteContext(_glContext);
     SDL_Quit();
+#endif // __ANDROID__
 }
 
 void lix::Application::handleMouseMotion(float x, float y, float xrel,
@@ -270,6 +288,7 @@ void lix::Application::handleMouseWheel(float x, float y) {
 }
 
 void lix::Application::handleKeyDown(lix::KeySym key, lix::KeyMod mod) {
+#ifndef __ANDROID__
     if (_paused) {
         switch (key) {
         case SDLK_c:
@@ -280,6 +299,7 @@ void lix::Application::handleKeyDown(lix::KeySym key, lix::KeyMod mod) {
             break;
         }
     };
+#endif
     if (_inputAdapter) {
         _inputAdapter->onKeyDown(key, mod);
     }

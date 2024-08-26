@@ -1,24 +1,17 @@
 #include "fontproc.h"
 
 #include "imageproc.h"
-
 #include "json.h"
+#include "ttf.h"
 
 void exportFontDeclaration(std::ofstream &ofs, const std::string &fontName) {
     ofs << "#pragma once\n"
-        << "#include <memory>\n"
         << "#include \"gltftypes.h\"\n"
         << "#include \"ttf.h\"\n"
         << "namespace assets {\n"
         << "    namespace fonts {\n"
         << "        namespace " << fontName << " {\n"
-        << "            std::shared_ptr<ttf::Font> create();\n";
-    //        << "        struct " << fontName << " {\n";
-    //    ofs << "            static ttf::Font font;\n";
-    //    ofs << "            static unsigned char imageData[];\n";
-    //    ofs << "            static unsigned int imageWidth;\n";
-    //    ofs << "            static unsigned int imageHeight;\n";
-    //    ofs << "            static unsigned int imageChannels;\n";
+        << "            extern const ttf::Font font;\n";
     ofs << "        }\n    }\n}\n";
     common::log("Write: " + fontName + ".h");
 }
@@ -34,28 +27,48 @@ std::string charToString(char c) {
 }
 
 void exportJsonFont(std::ofstream &ofs, const fs::path &fontPath,
-                    const std::string & /*scope*/) {
+                    const std::string &scope) {
     json::Json obj;
     std::ifstream ifs{fontPath};
     ifs >> obj;
 
-    ofs << std::quoted(obj["name"].value()) << ",\n"
-        << "    " << obj["size"].toInt() << ", " << obj["width"].toInt() << ", "
-        << obj["height"].toInt() << ",{\n";
-    std::string delim{""};
+    ofs << "static const ttf::Character characters[] = {\n";
+
+    std::vector<ttf::Character> characters(256);
     for (const auto &chObj : obj["characters"].children()) {
-        const std::string token = charToString(chObj.first.at(0));
+        char index = chObj.first.at(0);
         const auto &c = chObj.second;
-        ofs << delim << "        {" << token << ", {" << token << ", "
-            << c["x"].toInt() << ".0f" << ", " << c["y"].toInt() << ".0f"
-            << ", " << c["width"].toInt() << ".0f" << ", "
-            << c["height"].toInt() << ".0f" << ", " << c["originX"].toInt()
-            << ".0f" << ", " << c["originY"].toInt() << ".0f" << ", "
-            << c["advance"].toInt() << ".0f"
-            << "}}";
+        ttf::Character &character = characters.at(index);
+        character.token = index;
+        character.x = (float)c["x"].toInt();
+        character.y = (float)c["y"].toInt();
+        character.width = (float)c["width"].toInt();
+        character.height = (float)c["height"].toInt();
+        character.originX = (float)c["originX"].toInt();
+        character.originY = (float)c["originY"].toInt();
+        character.advance = (float)c["advance"].toInt();
+    }
+
+    std::string delim{""};
+    for (int i{32}; i <= 32 + 94; ++i) {
+        auto &character = characters.at(i);
+        char tok = character.token;
+        const std::string token =
+            charToString(tok < ' ' ? ' ' : (tok > '~' ? '~' : tok));
+        ofs << delim << "    {" << token << ", " << character.x << ", "
+            << character.y << ", " << character.width << ", "
+            << character.height << ", " << character.originX << ", "
+            << character.originY << ", " << character.advance << "}";
         delim = ",\n";
     }
-    ofs << "\n    }";
+    ofs << "\n};\n";
+
+    ofs << "const ttf::Font " << scope << "::font{"
+        << std::quoted(obj["name"].value()) << ",\n"
+        << "    " << obj["size"].toInt() << ", " << obj["width"].toInt() << ", "
+        << obj["height"].toInt()
+        << ", characters, imageData, imageWidth, imageHeight, "
+           "imageChannels};\n";
 }
 
 void exportFontDefinition(std::ofstream &ofs, const std::string &fontName,
@@ -69,11 +82,8 @@ void exportFontDefinition(std::ofstream &ofs, const std::string &fontName,
         imageproc::loadImage(imagePath, flipY, width, height, channels);
     ofs << "#include \"" << fontName << ".h\"\n";
 
-    ofs << "std::shared_ptr<ttf::Font> " << scope << "::create() {\n"
-        << "    auto font = std::shared_ptr<ttf::Font>(new ttf::Font{";
-    exportJsonFont(ofs, fontPath, scope);
+    ofs << "static const unsigned char imageData[] = {";
     int numBytes = width * height * channels;
-    ofs << ", {";
     int pixelWidth = width * channels;
     std::ios_base::fmtflags f(ofs.flags());
     for (int b{0}; b < numBytes - 1; ++b) {
@@ -86,14 +96,12 @@ void exportFontDefinition(std::ofstream &ofs, const std::string &fontName,
     ofs << "0x" << std::hex << std::setfill('0') << std::setw(2)
         << static_cast<int>(data[numBytes - 1]);
     ofs.flags(f);
-    ofs << "\n},\n";
+    ofs << "\n};\n";
+    ofs << "static const unsigned int imageWidth{" << width << "};\n";
+    ofs << "static const unsigned int imageHeight{" << height << "};\n";
+    ofs << "static const unsigned int imageChannels{" << channels << "};\n";
 
-    ofs << "    " << width << ", " << height << ", " << channels << "});\n"
-        << "    return font;\n}\n";
-    // ofs << "unsigned int " << scope << "::imageWidth{" << width << "};\n";
-    // ofs << "unsigned int " << scope << "::imageHeight{" << height << "};\n";
-    // ofs << "unsigned int " << scope << "::imageChannels{" << channels <<
-    // "};\n";
+    exportJsonFont(ofs, fontPath, scope);
 
     imageproc::freeImage(data);
 

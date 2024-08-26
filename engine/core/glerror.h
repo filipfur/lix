@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#ifdef __EMSCRIPTEN__
+#if defined(__EMSCRIPTEN__) || defined(__ANDROID__)
 #include <GLES3/gl32.h>
 #else
 #include <GL/glew.h>

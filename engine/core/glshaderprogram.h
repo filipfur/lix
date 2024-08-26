@@ -1,6 +1,6 @@
 #pragma once
 
-#if __EMSCRIPTEN__
+#if defined(__EMSCRIPTEN__) || defined(__ANDROID__)
 #define LIX_SHADER_VERSION "#version 300 es"
 #else
 #define LIX_SHADER_VERSION "#version 330 core"

@@ -17,12 +17,12 @@ struct Character {
 };
 
 struct Font {
-    std::string name;
+    const char *name;
     unsigned int size;
     unsigned int width;
     unsigned int height;
-    std::unordered_map<char, Character> characters;
-    std::vector<unsigned char> imageData;
+    const Character *characters;
+    const unsigned char *imageData;
     unsigned int imageWidth;
     unsigned int imageHeight;
     unsigned int imageChannels;
