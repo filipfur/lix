@@ -44,6 +44,9 @@ class InstancedRendering {
     }
 
     void render(ShaderProgram &shaderProgram, size_t maxCount = SIZE_MAX) {
+        if (_instances.empty()) {
+            return;
+        }
         auto vao = _mesh->vertexArray();
         std::shared_ptr<lix::Material> mat = _mesh->material(0);
         if (mat) {

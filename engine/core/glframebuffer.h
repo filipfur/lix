@@ -24,6 +24,9 @@ class FrameBuffer : public Element {
 
     void attach(GLenum attachment, std::shared_ptr<RenderBuffer> renderBuffer);
 
+    void setTexture(std::shared_ptr<lix::Texture> texture,
+                    GLuint colorAttachment = GL_COLOR_ATTACHMENT0);
+
     std::shared_ptr<lix::Texture>
     createTexture(GLuint colorAttachment = GL_COLOR_ATTACHMENT0,
                   GLuint internalFormat = GL_RGB, GLuint format = GL_RGB,

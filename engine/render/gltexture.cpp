@@ -12,9 +12,9 @@ lix::Texture::Texture(unsigned int width, unsigned int height, GLenum type,
     static unsigned char *nuller = nullptr;
     bind(_active);
     texImage2D(nuller);
-    errorCheck();
-    setUnpackAlignment();
+    // setUnpackAlignment();
     setFilter()->setWrap();
+    errorCheck();
     unbind();
 }
 
@@ -24,9 +24,9 @@ lix::Texture::Texture(unsigned char *bytes, unsigned int width,
     : Texture{width, height, type, internalFormat, colorFormat} {
     bind(_active);
     texImage2D(bytes);
-    errorCheck();
-    setUnpackAlignment();
+    // setUnpackAlignment();
     setFilter()->setWrap();
+    errorCheck();
     unbind();
 }
 
@@ -36,9 +36,9 @@ lix::Texture::Texture(const unsigned char *bytes, unsigned int width,
     : Texture{width, height, type, internalFormat, colorFormat} {
     bind(_active);
     texImage2D(bytes);
-    errorCheck();
-    setUnpackAlignment();
+    // setUnpackAlignment();
     setFilter()->setWrap();
+    errorCheck();
     unbind();
 }
 

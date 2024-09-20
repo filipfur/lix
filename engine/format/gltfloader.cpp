@@ -16,7 +16,7 @@ lix::MeshPtr gltf::loadMesh(const gltf::Mesh &gltfMesh) {
     static std::unordered_map<const gltf::Mesh *, lix::MeshPtr> loadedMeshes;
     auto it = loadedMeshes.find(&gltfMesh);
     if (it != loadedMeshes.end()) {
-        // std::cout << "Already loaded: " << gltfMesh.name << std::endl;
+        // printf("Already loaded: %s\n", gltfMesh.name.c_str());
         return it->second;
     }
     lix::MeshPtr mesh = std::make_shared<lix::Mesh>(gltfMesh.name);

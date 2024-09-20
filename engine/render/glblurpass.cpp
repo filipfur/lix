@@ -13,7 +13,7 @@ void main()
   texCoords = aVertex.zw;
   gl_Position = vec4(aVertex.xy, 0.0, 1.0);
 }
-    )";
+)";
 
 const char *blurFragSrc = LIX_SHADER_VERSION R"(
 precision highp float;
@@ -29,11 +29,6 @@ const float weight[5] = float[] (0.227027, 0.1945946, 0.1216216, 0.054054, 0.016
 void main()
 {             
     vec2 tex_offset = 1.0 / vec2(textureSize(u_texture, 0)); // gets size of single texel
-    if(length(texCoords - 0.5) > 0.4)
-    {
-        FragColor = texture(u_texture, texCoords);
-        return;
-    }
     vec3 result = texture(u_texture, texCoords).rgb * weight[0]; // current fragment's contribution
     if(horizontal)
     {
@@ -53,7 +48,7 @@ void main()
     }
     FragColor = vec4(result, 1.0);
 }
-    )";
+)";
 
 std::shared_ptr<lix::ShaderProgram> sharedShader() {
     static auto shader =
@@ -81,6 +76,12 @@ lix::BlurPass::BlurPass(const glm::ivec2 &resolution,
 void lix::BlurPass::blur(std::shared_ptr<lix::Texture> inputTexture) {
     _shaderProgram->bind();
     size_t amount = 10;
+
+    _blurFBO[0].bind();
+    glClear(GL_COLOR_BUFFER_BIT);
+    _blurFBO[1].bind();
+    glClear(GL_COLOR_BUFFER_BIT);
+
     bool horizontal = true, first_iteration = true;
     for (size_t i = 0; i < amount; i++) {
         _blurFBO[horizontal].bind();
