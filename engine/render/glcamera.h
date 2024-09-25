@@ -4,11 +4,13 @@
 #include "glnode.h"
 #include "gluniformbuffer.h"
 
+namespace lix {
 class Camera : public lix::Node {
   public:
     Camera(const glm::mat4 &projection, const glm::vec3 &position)
         : _block{projection, glm::mat4{1.0f}, position, 0.0f} {
         setTranslation(position);
+        setTarget(glm::vec3{1.0f, 0.0f, 0.0f});
     }
 
     void setTarget(const glm::vec3 &target) {
@@ -87,3 +89,4 @@ class Camera : public lix::Node {
     glm::vec3 _target{0.0f, 0.0f, 0.0f};
     bool _targetInvalid{false};
 };
+}
